@@ -1,0 +1,5 @@
+pandas
+numpy
+pytz
+python-dotenv~=0.19.2
+discord
