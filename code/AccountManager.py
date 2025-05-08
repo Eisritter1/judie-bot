@@ -28,25 +28,19 @@ class AccountManager(commands.Cog):
             return uID
 
     # update to 0.5 check
-    async def checkUser(self, discord_id: str, cursor):
+    async def checkUser(self, discord_id: str, cursor, ctx) -> bool:
 
         cursor.execute("SELECT user_id FROM users WHERE discord_id = ?", [discord_id])
         userIDCheck = cursor.fetchone()
 
         if userIDCheck is None:
-            return "register"
+            embed = await HelperClass.createEmbed(title=f"Error #404 - User {str(ctx.author)} not registered!",
+                                                  text="Please register before playing! (-register)",
+                                                  footer="Contact eisritter if you encounter any issues!")
+            await ctx.send(embed=embed)
+            return False
         else:
-            userID = userIDCheck[0]
-            cursor.execute("SELECT pancho FROM creatures WHERE user_id = ?", [userID])
-            panchoCheck = cursor.fetchone()
-            pancho = None
-            if panchoCheck is not None:
-                pancho = panchoCheck[0]
-
-            if pancho == "Xenomorph":
-                return "update"
-            else:
-                return "good"
+            return True
 
     # COMMANDS & RELATED
 

@@ -25,7 +25,7 @@ class OiaLt(commands.Cog):
     # Current Version: 2.5.1 (4/02/2025)
 
     # CD: 20H = 72k seconds
-    cooldowntime = 72000
+    cooldowntime = 5
 
     async def displayLastGF(self, ctx, time):
         hours = int(time // 3600)
@@ -43,18 +43,7 @@ class OiaLt(commands.Cog):
                                   description=f"Please take this to {self.client.get_channel(self.botSpamChannels[0]).mention}", color=0xFFA800)
             await ctx.send(embed=embed)
         else:
-            checkUser = await self.accountManager.checkUser(discord_id=discordID, cursor=cursor)
-            if checkUser == "register":
-                embed = await self.helperClass.createEmbed(title=f"Error #404 - User {str(ctx.author)} not registered!",
-                                                           text="Please register before playing! (-register)",
-                                                           footer="Contact Eisritter#6969 if you encounter any issues!")
-                await ctx.send(embed=embed)
-            elif checkUser == "update":
-                embed = await self.helperClass.createEmbed(title=f"Error - User {str(ctx.author)} is not up to date!",
-                                                           text="Please update to the newest stand with -update!",
-                                                           footer="Contact Eisritter#6969 if you encounter any issues!")
-                await ctx.send(embed=embed)
-            else:
+            if await self.accountManager.checkUser(discord_id=discordID, cursor=cursor, ctx=ctx):
                 cursor.execute("SELECT last_gf FROM oialt WHERE user_id=?", [uid])
                 lastGf = cursor.fetchone()
                 if lastGf is not None:
@@ -99,20 +88,7 @@ class OiaLt(commands.Cog):
             ctx.command.reset_cooldown(ctx)
             await ctx.send(embed=embed)
         else:
-            checkUser = await self.accountManager.checkUser(discord_id=discordID, cursor=cursor)
-            if checkUser == "register":
-                embed = await self.helperClass.createEmbed(title=f"Error #404 - User {str(ctx.author.display_name)} not registered!",
-                                                           text="Please register before playing! (-register)",
-                                                           footer="Contact Eisritter#6969 if you encounter any issues!")
-                await ctx.send(embed=embed)
-                ctx.command.reset_cooldown(ctx)
-            elif checkUser == "update":
-                embed = await self.helperClass.createEmbed(title=f"Error - User {str(ctx.author.display_name)} is not up to date!",
-                                                           text="Please update to the newest stand with -update!",
-                                                           footer="Contact Eisritter#6969 if you encounter any issues!")
-                await ctx.send(embed=embed)
-                ctx.command.reset_cooldown(ctx)
-            else:
+            if await self.accountManager.checkUser(discord_id=discordID, cursor=cursor, ctx=ctx):
                 # Get UID
                 uid = await self.accountManager.getUserID(discordID, cursor)
                 # Choose a random character
@@ -484,40 +460,6 @@ class OiaLt(commands.Cog):
         db.close()
         return OgfResults(duplicate=duplicate, victim=target, protected=protected)
 
-    @commands.command()
-    async def testogf(self, ctx):
-        if ctx.guild.id == 929416596336812093:
-            db = sqlite3.connect("main.sqlite")
-            cursor = db.cursor()
-
-            discordID = ctx.author.id
-            uID = await self.accountManager.getUserID(discordID, cursor)
-
-            # <editor-fold desc="Orochi Testing">
-            # No Target, No Protection
-            gf = self.characterList.Get("orochi")
-            results = await self.updateDatabase(uid=uID, character=gf)
-            await self.createAndSendEmbed(ctx, character=gf, results=results)
-
-            # Get Favourite Target - Lauren
-            gf = self.characterList.Get("Lauren")
-            results = await self.updateDatabase(uid=uID, character=gf)
-            await self.createAndSendEmbed(ctx, character=gf, results=results)
-
-            # Get Indifferent target - Judie
-            gf = self.characterList.Get("Judie")
-            results = await self.updateDatabase(uid=uID, character=gf)
-            await self.createAndSendEmbed(ctx, character=gf, results=results)
-
-            # Get Orochi - Should target and successfully yoink Lauren
-            gf = self.characterList.Get("orochi")
-            results = await self.updateDatabase(uid=uID, character=gf)
-            await self.createAndSendEmbed(ctx, character=gf, results=results)
-            # </editor-fold>
-
-            db.commit()
-            cursor.close()
-            db.close()
 
     @commands.command()
     async def oharem(self, ctx):
@@ -525,22 +467,12 @@ class OiaLt(commands.Cog):
         cursor = db.cursor()
         discordID = str(ctx.author.id)
         uid = await self.accountManager.getUserID(discordID=discordID, cursor=cursor)
-        user_name = str(ctx.author)
+        user_name = str(ctx.author.display_name)
         count = 0
 
-        checkUser = await self.accountManager.checkUser(discord_id=discordID, cursor=cursor)
-        if checkUser == "register":
-            embed = await HelperClass.createEmbed(title=f"Error #404 - User {str(ctx.author)} not registered!",
-                                                  text="Please register before playing! (-register)",
-                                                  footer="Contact Eisritter#6969 if you encounter any issues!")
-            await ctx.send(embed=embed)
-        elif checkUser == "update":
-            embed = await HelperClass.createEmbed(title=f"Error - User {str(ctx.author)} is not up to date!",
-                                                  text="Please update to the newest stand with -update!",
-                                                  footer="Contact Eisritter#6969 if you encounter any issues!")
-            await ctx.send(embed=embed)
-        else:
+        if await self.accountManager.checkUser(discord_id=discordID, cursor=cursor, ctx=ctx):
             members = []
+            missing = ["Aiko", "Carla", "Iris", "Jasmine", "Judie", "Lauren", "Messy Hair Lauren", "Rebecca"]
             cursor.execute(
                 "SELECT judie, lauren, messy_hair_lauren, carla, iris, aiko, jasmine, rebecca FROM oialt_harem WHERE user_id=?",
                 [uid])
@@ -549,19 +481,24 @@ class OiaLt(commands.Cog):
                 if i != 'NONE':
                     count = count + 1
                     members.append(i)
-            for j in members:
-                if j == "NONE":
-                    members.remove(j)
-                    count = count - 1
 
-            haremlist = ", ".join(members)
+            for i in missing:
+                if i in members:
+                    missing.remove(i)
+
+            haremlist = "\n".join(members)
+            missinglist = "\n".join(missing)
 
             if haremlist == "":
                 haremlist = "You haven't collected anyone for your harem yet..."
 
-            embed_title = f"Harem of **{user_name[:-5]}**:"
-            embed = discord.Embed(title=embed_title, description=haremlist, color=0xFFA800)
-            embed.set_footer(text=f"Progress: {count} / 8")
+            if missinglist == "":
+                missinglist = "You have completed the collection, congrats!"
+
+            embed_title = f"Harem of **{user_name}**:"
+            embed = discord.Embed(title=embed_title, color=HelperClass.orange)
+            embed.add_field(name=f"Claimed ({count}/8):", value=haremlist)
+            embed.add_field(name=f"Missing ({8 - count}/8):", value=missinglist)
             await ctx.send(embed=embed)
 
         cursor.close()
@@ -572,21 +509,10 @@ class OiaLt(commands.Cog):
         cursor = db.cursor()
         discordID = str(ctx.author.id)
         uid = await self.accountManager.getUserID(discordID=discordID, cursor=cursor)
-        user_name = str(ctx.author)
+        user_name = str(ctx.author.display_name)
         count = 0
 
-        checkUser = await self.accountManager.checkUser(discord_id=discordID, cursor=cursor)
-        if checkUser == "register":
-            embed = await HelperClass.createEmbed(title=f"Error #404 - User {str(ctx.author)} not registered!",
-                                                  text="Please register before playing! (-register)",
-                                                  footer="Contact Eisritter#6969 if you encounter any issues!")
-            await ctx.send(embed=embed)
-        elif checkUser == "update":
-            embed = await HelperClass.createEmbed(title=f"Error - User {str(ctx.author)} is not up to date!",
-                                                  text="Please update to the newest stand with -update!",
-                                                  footer="Contact Eisritter#6969 if you encounter any issues!")
-            await ctx.send(embed=embed)
-        else:
+        if await self.accountManager.checkUser(discord_id=discordID, cursor=cursor):
             members = []
             cursor.execute(
                 "SELECT police, hitman, yakuza, priest, exterminator, anastasia FROM stabby_mikes WHERE user_id=?",
@@ -597,17 +523,12 @@ class OiaLt(commands.Cog):
                     count = count + 1
                     members.append(i)
 
-            for j in members:
-                if j == "NONE":
-                    members.remove(j)
-                    count = count - 1
-
             mikes = ", ".join(members)
 
             if mikes == "":
                 mikes = "You haven't collected anyone for your clan yet..."
 
-            embed_title = f"Stabby Clan of {user_name[:-5]}:"
+            embed_title = f"Stabby Clan of {user_name}:"
             embed = discord.Embed(title=embed_title, description=mikes, color=0xFFA800)
             embed.set_footer(text=f"Progress: {count} / 6")
             await ctx.send(embed=embed)
@@ -619,21 +540,10 @@ class OiaLt(commands.Cog):
         cursor = db.cursor()
         discordID = str(ctx.author.id)
         uid = await self.accountManager.getUserID(discordID=discordID, cursor=cursor)
-        user_name = str(ctx.author)
+        user_name = str(ctx.author.display_name)
         count = 0
 
-        checkUser = await self.accountManager.checkUser(discord_id=discordID, cursor=cursor)
-        if checkUser == "register":
-            embed = await HelperClass.createEmbed(title=f"Error #404 - User {str(ctx.author)} not registered!",
-                                                  text="Please register before playing! (-register)",
-                                                  footer="Contact Eisritter#6969 if you encounter any issues!")
-            await ctx.send(embed=embed)
-        elif checkUser == "update":
-            embed = await HelperClass.createEmbed(title=f"Error - User {str(ctx.author)} is not up to date!",
-                                                  text="Please update to the newest stand with -update!",
-                                                  footer="Contact Eisritter#6969 if you encounter any issues!")
-            await ctx.send(embed=embed)
-        else:
+        if await self.accountManager.checkUser(discord_id=discordID, cursor=cursor, ctx=ctx):
             members = []
             cursor.execute("SELECT mc, tom, oliver, fit_jack, asmodeus, hiromi FROM the_boys WHERE user_id=?",
                            [uid])
@@ -643,17 +553,12 @@ class OiaLt(commands.Cog):
                     count = count + 1
                     members.append(i)
 
-            for j in members:
-                if j == "NONE":
-                    members.remove(j)
-                    count = count - 1
-
             bois = ", ".join(members)
 
             if bois == "":
                 bois = "You haven't collected anyone for your boys yet..."
 
-            embed_title = f"The Boys of {user_name[:-5]}:"
+            embed_title = f"The Boys of {user_name}:"
             embed = discord.Embed(title=embed_title, description=bois, color=0xFFA800)
             embed.set_footer(text=f"Progress: {count} / 6")
             await ctx.send(embed=embed)
@@ -665,21 +570,10 @@ class OiaLt(commands.Cog):
         cursor = db.cursor()
         discordID = str(ctx.author.id)
         uid = await self.accountManager.getUserID(discordID=discordID, cursor=cursor)
-        user_name = str(ctx.author)
+        user_name = str(ctx.author.display_name)
         count = 0
 
-        checkUser = await self.accountManager.checkUser(discord_id=discordID, cursor=cursor)
-        if checkUser == "register":
-            embed = await HelperClass.createEmbed(title=f"Error #404 - User {str(ctx.author)} not registered!",
-                                                  text="Please register before playing! (-register)",
-                                                  footer="Contact Eisritter#6969 if you encounter any issues!")
-            await ctx.send(embed=embed)
-        elif checkUser == "update":
-            embed = await HelperClass.createEmbed(title=f"Error - User {str(ctx.author)} is not up to date!",
-                                                  text="Please update to the newest stand with -update!",
-                                                  footer="Contact Eisritter#6969 if you encounter any issues!")
-            await ctx.send(embed=embed)
-        else:
+        if await self.accountManager.checkUser(discord_id=discordID, cursor=cursor, ctx=ctx):
             members = []
             cursor.execute(
                 "SELECT ava, lilith, fit_jack_groupie, train_conductor, shop_girl, stone_elephant FROM li_potential WHERE user_id=?",
@@ -690,17 +584,12 @@ class OiaLt(commands.Cog):
                     count = count + 1
                     members.append(i)
 
-            for j in members:
-                if j == "NONE":
-                    members.remove(j)
-                    count = count - 1
-
             potentials = ", ".join(members)
 
             if potentials == "":
                 potentials = "You haven't collected anyone for your potential LI's yet..."
 
-            embed_title = f"Potential LI's of {user_name[:-5]}:"
+            embed_title = f"Potential LI's of {user_name}:"
             embed = discord.Embed(title=embed_title, description=potentials, color=0xFFA800)
             embed.set_footer(text=f"Progress: {count} / 6")
             await ctx.send(embed=embed)
@@ -711,23 +600,10 @@ class OiaLt(commands.Cog):
         db = sqlite3.connect("main.sqlite")
         cursor = db.cursor()
         discordID = str(ctx.author.id)
-        user_name = str(ctx.author)
+        user_name = str(ctx.author.display_name)
 
         # check if user registered & up to date
-        checkUser = await self.accountManager.checkUser(discord_id=discordID, cursor=cursor)
-        # if no build error embed
-        if checkUser == "register":
-            embed = await self.helperClass.createEmbed(title=f"Error #404 - User {str(ctx.author)} not registered!",
-                                                       text="Please register before playing! (-register)",
-                                                       footer="Contact Eisritter#6969 if you encounter any issues!")
-            await ctx.send(embed=embed)
-        elif checkUser == "update":
-            embed = await self.helperClass.createEmbed(title=f"Error - User {str(ctx.author)} is not up to date!",
-                                                       text="Please update to the newest stand with -update!",
-                                                       footer="Contact Eisritter#6969 if you encounter any issues!")
-            await ctx.send(embed=embed)
-        # if yes:
-        else:
+        if await self.accountManager.checkUser(discord_id=discordID, cursor=cursor, ctx=ctx):
             #   search thru 'eternum_harem' table for entries
             uid = await self.accountManager.getUserID(discordID=discordID, cursor=cursor)
             members = []
@@ -756,7 +632,7 @@ class OiaLt(commands.Cog):
             #   compile entries to list
             protectorlist = "\n".join(members)
 
-            embed_title = f"OiaLt Protectors of **{user_name[:-5]}**:"
+            embed_title = f"OiaLt Protectors of **{user_name}**:"
             #   build embed (color pink) with categories 'got x/y' + names & 'missing z/y' + names --> + emotes?
             embed = discord.Embed(title=embed_title, description=protectorlist, color=HelperClass.orange)
             await ctx.send(embed=embed)
@@ -766,27 +642,14 @@ class OiaLt(commands.Cog):
         db = sqlite3.connect("main.sqlite")
         cursor = db.cursor()
         discordID = str(ctx.author.id)
-        user_name = str(ctx.author)
+        user_name = str(ctx.author.display_name)
         haremcount = 0
         homiecount = 0
         mikecount = 0
         potentialscount = 0
         # check if user registered & up to date
-        checkUser = await self.accountManager.checkUser(discord_id=discordID, cursor=cursor)
-        # if no build error embed
-        if checkUser == "register":
-            embed = await self.helperClass.createEmbed(title=f"Error #404 - User {str(ctx.author)} not registered!",
-                                                       text="Please register before playing! (-register)",
-                                                       footer="Contact Eisritter#6969 if you encounter any issues!")
-            await ctx.send(embed=embed)
-        elif checkUser == "update":
-            embed = await self.helperClass.createEmbed(title=f"Error - User {str(ctx.author)} is not up to date!",
-                                                       text="Please update to the newest stand with -update!",
-                                                       footer="Contact Eisritter#6969 if you encounter any issues!")
-            await ctx.send(embed=embed)
-        # if yes:
-        else:
-            embed_title = f"OiaLt Collections of **{user_name[:-5]}**:"
+        if await self.accountManager.checkUser(discord_id=discordID, cursor=cursor, ctx=ctx):
+            embed_title = f"OiaLt Collections of **{user_name}**:"
             embed = discord.Embed(title=embed_title, color=HelperClass.orange)
 
             #   search thru tables for entries
@@ -801,10 +664,6 @@ class OiaLt(commands.Cog):
                 if i != 'NONE':
                     haremcount = haremcount + 1
                     members.append(i)
-            for j in members:
-                if j == "NONE":
-                    members.remove(j)
-                    haremcount = haremcount - 1
 
             #   compile entries to list
             haremlist = "\n".join(members)
@@ -823,10 +682,6 @@ class OiaLt(commands.Cog):
                 if i != 'NONE':
                     homiecount = homiecount + 1
                     members.append(i)
-            for j in members:
-                if j == "NONE":
-                    members.remove(j)
-                    homiecount = homiecount - 1
 
             #   compile entries to list
             homielist = "\n".join(members)
@@ -847,10 +702,6 @@ class OiaLt(commands.Cog):
                 if i != 'NONE':
                     mikecount = mikecount + 1
                     members.append(i)
-            for j in members:
-                if j == "NONE":
-                    members.remove(j)
-                    mikecount = mikecount - 1
 
             # compile entries to list
             mikelist = "\n".join(members)
@@ -871,10 +722,6 @@ class OiaLt(commands.Cog):
                 if i != 'NONE':
                     potentialscount = potentialscount + 1
                     members.append(i)
-            for j in members:
-                if j == "NONE":
-                    members.remove(j)
-                    potentialscount = potentialscount - 1
 
             #   compile entries to list
             potentialslist = "\n".join(members)

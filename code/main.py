@@ -66,8 +66,21 @@ async def help(ctx, plugin=None):
     field_names = []
     field_values = []
 
+    if plugin is None:
+        field_names.append("__OiaLt__")
+        field_values.append("Commands for the classic Gf game! (-help OiaLt)")
+
+        field_names.append("__Eternum__")
+        field_values.append("Commands for the brand new Eternum GF game! (-help Eternum)")
+
+        field_names.append("__Nsfw__")
+        field_values.append("Commands for our lewds plugin! (-help Nsfw)")
+
+        field_names.append("__General Commands__")
+        field_values.append("Account Management & Miscellaneous Commands! (-help General)")
+
     # <editor-fold desc="Oialt">
-    if plugin.lower() == "oialt" or plugin.lower() == "once in a lifetime":
+    elif plugin.lower() == "oialt" or plugin.lower() == "once in a lifetime":
         title = "Judie's OiaLt gf game!"
         description = "Here are the commands to use the oialt gf system!"
 
@@ -130,9 +143,6 @@ async def help(ctx, plugin=None):
         field_names.append("-register")
         field_values.append("Register to the Judie Bot database! Required to play both gf games.\n"
                             "We only store your discord ID to track your collections :)")
-
-        field_names.append("-update")
-        field_values.append("Update your account to Judie v2.0 (last updated September 2022)!")
 
         field_names.append("-deleteacc")
         field_values.append(

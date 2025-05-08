@@ -429,20 +429,7 @@ class Eternum(commands.Cog):
             ctx.command.reset_cooldown(ctx)
             await ctx.send(embed=embed)
         else:
-            checkUser = await self.accountManager.checkUser(discord_id=discordID, cursor=cursor)
-            if checkUser == "register":
-                embed = await self.HelperClass.createEmbed(title=f"Error #404 - User {str(ctx.author.display_name)} not registered!",
-                                                           text="Please register before playing! (-register)",
-                                                           footer="Contact Eisritter#6969 if you encounter any issues!")
-                await ctx.send(embed=embed)
-                ctx.command.reset_cooldown(ctx)
-            elif checkUser == "update":
-                embed = await self.HelperClass.createEmbed(title=f"Error - User {str(ctx.author.display_name)} is not up to date!",
-                                                           text="Please update to the newest stand with -update!",
-                                                           footer="Contact Eisritter#6969 if you encounter any issues!")
-                await ctx.send(embed=embed)
-                ctx.command.reset_cooldown(ctx)
-            else:
+            if await self.accountManager.checkUser(discord_id=discordID, cursor=cursor, ctx=ctx):
                 uid = await self.accountManager.getUserID(discordID=discordID, cursor=cursor)
                 # choose random character
                 gf = random.choice(self.characters)
@@ -470,20 +457,7 @@ class Eternum(commands.Cog):
             await ctx.send(embed=embed)
         else:
             # check if user registered & up to date
-            checkUser = await self.accountManager.checkUser(discord_id=discordID, cursor=cursor)
-            # if no build error embed
-            if checkUser == "register":
-                embed = await self.HelperClass.createEmbed(title=f"Error #404 - User {str(ctx.author.display_name)} not registered!",
-                                                           text="Please register before playing! (-register)",
-                                                           footer="Contact Eisritter#6969 if you encounter any issues!")
-                await ctx.send(embed=embed)
-            elif checkUser == "update":
-                embed = await self.HelperClass.createEmbed(title=f"Error - User {str(ctx.author.display_name)} is not up to date!",
-                                                           text="Please update to the newest stand with -update!",
-                                                           footer="Contact Eisritter#6969 if you encounter any issues!")
-                await ctx.send(embed=embed)
-            # if yes:
-            else:
+            if await self.accountManager.checkUser(discord_id=discordID, cursor=cursor, ctx=ctx):
                 #   search thru 'eternum_harem' table for entries
                 uid = await self.accountManager.getUserID(discordID=discordID, cursor=cursor)
                 members = []
@@ -548,20 +522,7 @@ class Eternum(commands.Cog):
             await ctx.send(embed=embed)
         else:
             # check if user registered & up to date
-            checkUser = await self.accountManager.checkUser(discord_id=discordID, cursor=cursor)
-            # if no build error embed
-            if checkUser == "register":
-                embed = await self.HelperClass.createEmbed(title=f"Error #404 - User {str(ctx.author.display_name)} not registered!",
-                                                           text="Please register before playing! (-register)",
-                                                           footer="Contact Eisritter#6969 if you encounter any issues!")
-                await ctx.send(embed=embed)
-            elif checkUser == "update":
-                embed = await self.HelperClass.createEmbed(title=f"Error - User {str(ctx.author.display_name)} is not up to date!",
-                                                           text="Please update to the newest stand with -update!",
-                                                           footer="Contact Eisritter#6969 if you encounter any issues!")
-                await ctx.send(embed=embed)
-            # if yes:
-            else:
+            if await self.accountManager.checkUser(discord_id=discordID, cursor=cursor, ctx=ctx):
                 #   search thru 'homies' table for entries
                 uid = await self.accountManager.getUserID(discordID=discordID, cursor=cursor)
                 members = []
@@ -629,20 +590,7 @@ class Eternum(commands.Cog):
             await ctx.send(embed=embed)
         else:
             # check if user registered & up to date
-            checkUser = await self.accountManager.checkUser(discord_id=discordID, cursor=cursor)
-            # if no build error embed
-            if checkUser == "register":
-                embed = await self.HelperClass.createEmbed(title=f"Error #404 - User {str(ctx.author.display_name)} not registered!",
-                                                           text="Please register before playing! (-register)",
-                                                           footer="Contact Eisritter#6969 if you encounter any issues!")
-                await ctx.send(embed=embed)
-            elif checkUser == "update":
-                embed = await self.HelperClass.createEmbed(title=f"Error - User {str(ctx.author.display_name)} is not up to date!",
-                                                           text="Please update to the newest stand with -update!",
-                                                           footer="Contact Eisritter#6969 if you encounter any issues!")
-                await ctx.send(embed=embed)
-            # if yes:
-            else:
+            if await self.accountManager.checkUser(discord_id=discordID, cursor=cursor, ctx=ctx):
                 #   search thru 'homies' table for entries
                 uid = await self.accountManager.getUserID(discordID=discordID, cursor=cursor)
                 members = []
@@ -655,10 +603,6 @@ class Eternum(commands.Cog):
                     if i != 'NONE':
                         count = count + 1
                         members.append(i)
-                for j in members:
-                    if j == "NONE":
-                        members.remove(j)
-                        count = count - 1
 
                 if "Blue Fox Maiden" not in members:
                     missing.append("Blue Fox Maiden")
