@@ -1,11 +1,13 @@
+# DISCORD.PY
 import discord
 from discord import Embed, File
 from discord.ext import commands, tasks
-from discord.ext.commands import cooldown, BucketType
+from discord.ext.commands import CooldownMapping, Cooldown, BucketType
+# OTHER LIBRARIES
 import random
 import sqlite3
-
-from Utilities import HelperClass, OgfCollections, OgfEffects, OgfResults
+# OWN LIBRARIES
+from Utilities import HelperClass, OgfCollections, OgfEffects, OgfResults, TimeObject
 from AccountManager import AccountManager
 from CharacterCard import OgfCharacterCard
 from OgfCharacters import OgfCharacters
@@ -14,80 +16,78 @@ from OgfCharacters import OgfCharacters
 class OiaLt(commands.Cog):
     def __init__(self, client):
         self.client = client
+        client.CogsToActivate.append(self)
         self.characterList = OgfCharacters()
         self.characters = self.characterList.characters
-        self.botSpamChannels = []
-        self.botSpamChannels.append(779873459756335104)
-        self.botSpamChannels.append(929419591573188608)
         self.accountManager = AccountManager(self.client)
-        self.helperClass = HelperClass()
+        self.botSpamChannel = None
 
-    # Current Version: 2.5.1 (4/02/2025)
 
-    # CD: 20H = 72k seconds
-    cooldowntime = 5
+    def activate(self):
+        command = self.client.get_command("ogf")
+        cd = Cooldown(rate=1, per=self.client.config.cooldown)
+        command._buckets = CooldownMapping(cd, type=BucketType.user)
+        self.botSpamChannel = self.client.config.botSpamChannel
+        print("successfully activated OiaLt cog.")
+
+    # HELPER FUNCTIONS - checkUser in AccountManager // createEmbed in Utilities/HelperClass
 
     async def displayLastGF(self, ctx, time):
-        hours = int(time // 3600)
-        minutes = int((time % 3600) // 60)
-        seconds = int((time % 3600) % 60)
-        description = f"You still have {hours}h {minutes} mins and {seconds}s until your next draw!"
+        timer = TimeObject(time)
+        description = f"You still have {timer.hours}h {timer.minutes} mins and {timer.seconds}s until your next draw!"
         db = sqlite3.connect("main.sqlite")
         cursor = db.cursor()
         discordID = str(ctx.author.id)
-        uid = await self.accountManager.getUserID(discordID=discordID, cursor=cursor)
-        channelId = ctx.channel.id
 
-        if channelId not in self.botSpamChannels:
-            embed = discord.Embed(title="Wrong channel!",
-                                  description=f"Please take this to {self.client.get_channel(self.botSpamChannels[0]).mention}", color=0xFFA800)
-            await ctx.send(embed=embed)
-        else:
-            if await self.accountManager.checkUser(discord_id=discordID, cursor=cursor, ctx=ctx):
-                cursor.execute("SELECT last_gf FROM oialt WHERE user_id=?", [uid])
-                lastGf = cursor.fetchone()
-                if lastGf is not None:
-                    name = self.characterList.GetFilename(lastGf[0])
-                else:
-                    name = "None"
+        if await self.accountManager.checkUser(discord_id=discordID, cursor=cursor, ctx=ctx):
+            uid = await self.accountManager.getUserID(discordID=discordID, cursor=cursor)
 
-                if lastGf is not None:
-                    title = "Slow down dude!"
-                    field_name = lastGf[0]
-                    field_value = f"The last pull you made was {field_name}"
-                    footer = "retry later mate..."
-                else:
-                    title = "This is awkward..."
-                    field_name = "Your last pull is... No one?"
-                    field_value = "How could that happen..."
-                    footer = "Might as well contact Eisritter#6969, sumn ain't right"
+            # Get last obtained character
+            cursor.execute("SELECT last_gf FROM oialt WHERE user_id=?", [uid])
+            lastGf = cursor.fetchone()
+            if lastGf is not None:
+                name = self.characterList.GetFilename(lastGf[0])
+            else:
+                name = "None"
 
-                embed = discord.Embed(title=title, description=description, color=0xFFA800)
-                embed.set_footer(text=footer)
+            if lastGf is not None:
+                title = "Slow down dude!"
+                field_name = lastGf[0]
+                field_value = f"The last pull you made was {field_name}"
+                footer = "retry later mate..."
+            else:
+                title = "This is awkward..."
+                field_name = "Your last pull is... No one?"
+                field_value = "How could that happen..."
+                footer = "Might as well contact Eisritter#6969, sumn ain't right"
 
-                embed.add_field(name=field_name, value=field_value, inline=True)
+            embed = discord.Embed(title=title, description=description, color=HelperClass.orange)
+            embed.set_footer(text=footer)
 
-                image = discord.File(f"./gfGameImages/{name}.webp", filename="gf.webp")
-                embed.set_image(url="attachment://gf.webp")
-                await ctx.send(file=image, embed=embed)
+            embed.add_field(name=field_name, value=field_value, inline=True)
+
+            image = discord.File(f"./gfGameImages/{name}.webp", filename="gf.webp")
+            embed.set_image(url="attachment://gf.webp")
+            await ctx.send(file=image, embed=embed)
 
         cursor.close()
+        db.close()
 
     @commands.command(aliases=["oialt gf", "gfo", "gf oialt"])
-    @commands.cooldown(1, cooldowntime, commands.BucketType.user)
     async def ogf(self, ctx):
-        db = sqlite3.connect("main.sqlite")
-        cursor = db.cursor()
-        discordID = str(ctx.author.id)
-        channelId = ctx.channel.id
-
-        if channelId not in self.botSpamChannels:
+        # Check if in correct channel
+        if ctx.channel.id != self.botSpamChannel:
             embed = discord.Embed(title="Wrong channel!",
-                                  description=f"Please take this to {self.client.get_channel(self.botSpamChannels[0]).mention}",
+                                  description=f"Please take this to {self.client.get_channel(self.botSpamChannel).mention}",
                                   color=HelperClass.orange)
             ctx.command.reset_cooldown(ctx)
             await ctx.send(embed=embed)
         else:
+            db = sqlite3.connect("main.sqlite")
+            cursor = db.cursor()
+            discordID = str(ctx.author.id)
+
+        
             if await self.accountManager.checkUser(discord_id=discordID, cursor=cursor, ctx=ctx):
                 # Get UID
                 uid = await self.accountManager.getUserID(discordID, cursor)
@@ -97,8 +97,9 @@ class OiaLt(commands.Cog):
                 results = await self.updateDatabase(uid, gf)
                 # Build and send Embed
                 await self.createAndSendEmbed(ctx, character=gf, results=results)
-        cursor.close()
-        db.close()
+            
+            cursor.close()
+            db.close()
 
     async def createAndSendEmbed(self, ctx, character: OgfCharacterCard, results: OgfResults):
         if not character:
@@ -111,7 +112,8 @@ class OiaLt(commands.Cog):
         image = ""
         text = ""
         footer = character.footer
-        collection_field_name = str(collection)
+        duplicateText = "" if collection == OgfCollections.NONE and effect == OgfEffects.NONE else f"(New) {HelperClass.daliaParty}" if results.duplicate else f"(duplicate) {HelperClass.annieCry}"
+        collection_field_name = f"{str(collection)} {duplicateText}"
         collection_field_value = ""
         effect_field_name = str(effect)
         effect_field_value = effect.Describe()
@@ -202,7 +204,7 @@ class OiaLt(commands.Cog):
 
 
         # <editor-fold desc="Embed compilation and sending">
-        embed = await self.helperClass.createEmbed(title=character.name, text=text, footer=footer)
+        embed = await HelperClass.createEmbed(title=character.name, text=text, footer=footer)
 
         embed.add_field(name=collection_field_name, value=collection_field_value, inline=True)
         embed.add_field(name=effect_field_name, value=effect_field_value, inline=True)
@@ -495,7 +497,7 @@ class OiaLt(commands.Cog):
             if missinglist == "":
                 missinglist = "You have completed the collection, congrats!"
 
-            embed_title = f"Harem of **{user_name}**:"
+            embed_title = f"OiaLt Harem of **{user_name}**:"
             embed = discord.Embed(title=embed_title, color=HelperClass.orange)
             embed.add_field(name=f"Claimed ({count}/8):", value=haremlist)
             embed.add_field(name=f"Missing ({8 - count}/8):", value=missinglist)
@@ -558,7 +560,7 @@ class OiaLt(commands.Cog):
             if bois == "":
                 bois = "You haven't collected anyone for your boys yet..."
 
-            embed_title = f"The Boys of {user_name}:"
+            embed_title = f"The OiaLt Boys of {user_name}:"
             embed = discord.Embed(title=embed_title, description=bois, color=0xFFA800)
             embed.set_footer(text=f"Progress: {count} / 6")
             await ctx.send(embed=embed)
@@ -589,7 +591,7 @@ class OiaLt(commands.Cog):
             if potentials == "":
                 potentials = "You haven't collected anyone for your potential LI's yet..."
 
-            embed_title = f"Potential LI's of {user_name}:"
+            embed_title = f"Potential OiaLt LI's of {user_name}:"
             embed = discord.Embed(title=embed_title, description=potentials, color=0xFFA800)
             embed.set_footer(text=f"Progress: {count} / 6")
             await ctx.send(embed=embed)
@@ -764,9 +766,15 @@ class OiaLt(commands.Cog):
 
     @ogf.error
     async def errorGF(self, ctx, error):
-        if isinstance(error, commands.CommandOnCooldown):
+        if ctx.channel.id != self.botSpamChannel:
+            embed = discord.Embed(title="Wrong channel!",
+                                    description=f"Please take this to {self.client.get_channel(self.botSpamChannel).mention}", 
+                                    color=HelperClass.orange)
+            await ctx.send(embed=embed)
+        elif isinstance(error, commands.CommandOnCooldown):
             await self.displayLastGF(ctx, error.retry_after)
 
 
+# Does this code ever get reached??
 def setup(client):
     client.add_cog(OiaLt(client))

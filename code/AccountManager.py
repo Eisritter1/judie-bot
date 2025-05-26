@@ -10,7 +10,6 @@ from Utilities import HelperClass
 class AccountManager(commands.Cog):
     def __init__(self, client):
         self.client = client
-        self.helperClass = HelperClass()
 
     msgID = ""
     deleteMsg = ""
@@ -81,7 +80,7 @@ class AccountManager(commands.Cog):
             footer = "Welcome aboard!"
             db.commit()
 
-        embed = await HelperClass.createEmbed(self=self.helperClass, title=title, text=text, footer=footer)
+        embed = await HelperClass.createEmbed(title=title, text=text, footer=footer)
         await ctx.send(embed=embed)
 
     @commands.command()

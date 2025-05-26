@@ -11,8 +11,13 @@ from OiaLt import OiaLt
 from Nsfw import Nsfw
 from Eternum import Eternum
 from AccountManager import AccountManager
+from Utilities import HelperClass, TimeObject
+from BotConfig import BotConfig
 
+# Bot config
 client = commands.Bot(command_prefix="-", help_command=None, case_insensitive=True, intents=discord.Intents.all())
+client.config = BotConfig(client)
+client.CogsToActivate = []
 load_dotenv()
 TOKEN = os.getenv("TOKEN")
 
@@ -31,8 +36,17 @@ async def on_ready():
             print(f"loaded extension {extension}!")
         except Exception as error:
             print('{} cannot be loaded. [{}]'.format(extension, error))
+    
+    await client.config.load()
+    HelperClass.init(client)
     await createDatabase()
     changeGameActivity.start()
+
+    print(f"n cogs to activate: {len(client.CogsToActivate)}")
+    for cog in client.CogsToActivate:
+        if hasattr(cog, "activate"):
+            cog.activate()
+
     print("Hello there!")
 
 
@@ -209,6 +223,24 @@ async def help(ctx, plugin=None):
         embed.add_field(name=field_names[i], value=field_values[i], inline=False)
 
     await ctx.send(embed=embed)
+
+
+@client.command()
+async def timers(ctx):
+    ogf = client.get_command("ogf")
+    egf = client.get_command("egf")
+
+    ogfTimeInSecs = ogf._buckets.get_bucket(ctx.message).update_rate_limit()
+    ogfTime = None if ogfTimeInSecs == None else TimeObject(ogfTimeInSecs)
+    ogfText = f"**-ogf**: you __can__ draw now!" if ogfTimeInSecs == None else f"**-ogf**: you can try again in {ogfTime.hours:02}:{ogfTime.minutes:02}:{ogfTime.seconds:02}"
+
+    egfTimeInSecs = egf._buckets.get_bucket(ctx.message).update_rate_limit()
+    egfTime = None if egfTimeInSecs == None else TimeObject(egfTimeInSecs)
+    egfText = f"**-egf**: you __can__ draw now!" if egfTimeInSecs == None else f"**-egf**: you can try again in {egfTime.hours:02}:{egfTime.minutes:02}:{egfTime.seconds:02}"
+
+    embed = await HelperClass.createEmbed(title=f"Cooldown overview for {ctx.author.display_name}:", text=f"{ogfText}\n{egfText}")
+    await ctx.send(embed=embed)
+    
 
 
 async def createDatabase():

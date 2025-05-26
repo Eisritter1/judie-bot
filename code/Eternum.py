@@ -2,12 +2,12 @@
 import discord
 from discord import Embed, File
 from discord.ext import commands, tasks
-from discord.ext.commands import cooldown, BucketType
-# OTHER HELPING
+from discord.ext.commands import CooldownMapping, Cooldown, BucketType
+# OTHER LIBRARIES
 import os
 import random
 import sqlite3
-# OWN HELPING
+# OWN LIBRARIES
 from Utilities import Collections, HelperClass, Results, Effects
 from CharacterCard import CharacterCard
 from AccountManager import AccountManager
@@ -17,18 +17,21 @@ from EgfCharacters import EgfCharacters
 class Eternum(commands.Cog):
     def __init__(self, client):
         self.client = client
+        client.CogsToActivate.append(self)
         self.characterList = EgfCharacters()
         self.characters = self.characterList.characters
-        self.botSpamChannels = []
-        self.botSpamChannels.append(779873459756335104)
-        self.botSpamChannels.append(929419591573188608)
-        self.HelperClass = HelperClass()
+        self.botSpamChannel = None
+        # move to self.client -> self.client.accountManager
         self.accountManager = AccountManager(self.client)
 
     # Development Start 17/08/2022; Version 1.0.
 
-    # CD: 20H = 72k seconds
-    cooldowntime = 72000
+    def activate(self):
+        command = self.client.get_command("egf")
+        cd = Cooldown(rate=1, per=self.client.config.cooldown)
+        command._buckets = CooldownMapping(cd, type=BucketType.user)
+        self.botSpamChannel = self.client.config.botSpamChannel
+        print("successfully activated Eternum cog.")
 
     # HELPER FUNCTIONS - checkUser in AccountManager // createEmbed in Utilities/HelperFunctions
 
@@ -205,7 +208,7 @@ class Eternum(commands.Cog):
         if not image:
             print(f"Error: No image attached to embed of {character} []")
 
-        embed = await self.HelperClass.createEmbed(title=character.name, text=text, color=color, footer=footer)
+        embed = await HelperClass.createEmbed(title=character.name, text=text, color=color, footer=footer)
         embed.add_field(name=field_name, value=field_value)
         embed.set_image(url="attachment://gf.webp")
         await ctx.send(file=image, embed=embed)
@@ -415,20 +418,18 @@ class Eternum(commands.Cog):
     # COMMANDS
 
     @commands.command(aliases=['gfe', 'eternum gf', 'gf eternum'])
-    @commands.cooldown(1, cooldowntime, commands.BucketType.user)
     async def egf(self, ctx):
-        db = sqlite3.connect("main.sqlite")
-        cursor = db.cursor()
-        discordID = str(ctx.author.id)
-        channelId = ctx.channel.id
-
-        if channelId not in self.botSpamChannels:
+        if ctx.channel.id != self.botSpamChannel:
             embed = discord.Embed(title="Wrong channel!",
-                                  description=f"Please take this to {self.client.get_channel(self.botSpamChannels[0]).mention}",
+                                  description=f"Please take this to {self.client.get_channel(self.botSpamChannel).mention}",
                                   color=HelperClass.orange)
             ctx.command.reset_cooldown(ctx)
             await ctx.send(embed=embed)
         else:
+            db = sqlite3.connect("main.sqlite")
+            cursor = db.cursor()
+            discordID = str(ctx.author.id)
+        
             if await self.accountManager.checkUser(discord_id=discordID, cursor=cursor, ctx=ctx):
                 uid = await self.accountManager.getUserID(discordID=discordID, cursor=cursor)
                 # choose random character
@@ -441,21 +442,22 @@ class Eternum(commands.Cog):
             db.commit()
             cursor.close()
 
+
+    # There's work to do...
     @commands.command(aliases=['hareme', 'eternum harem', 'harem eternum'])
     async def eharem(self, ctx):
-        db = sqlite3.connect("main.sqlite")
-        cursor = db.cursor()
-        discordID = str(ctx.author.id)
-        user_name = str(ctx.author.display_name)
-        count = 0
-        channelId = ctx.channel.id
-
-        if channelId not in self.botSpamChannels:
+        if ctx.channel.id != self.botSpamChannel:
             embed = discord.Embed(title="Wrong channel!",
-                                  description=f"Please take this to {self.client.get_channel(self.botSpamChannels[0]).mention}",
+                                  description=f"Please take this to {self.client.get_channel(self.botSpamChannel).mention}",
                                   color=HelperClass.orange)
             await ctx.send(embed=embed)
         else:
+            db = sqlite3.connect("main.sqlite")
+            cursor = db.cursor()
+            discordID = str(ctx.author.id)
+            user_name = str(ctx.author.display_name)
+            count = 0
+        
             # check if user registered & up to date
             if await self.accountManager.checkUser(discord_id=discordID, cursor=cursor, ctx=ctx):
                 #   search thru 'eternum_harem' table for entries
@@ -508,19 +510,18 @@ class Eternum(commands.Cog):
 
     @commands.command(aliases=['thehomies', 'the homies', 'da homies', 'ehomies'])
     async def homies(self, ctx):
-        db = sqlite3.connect("main.sqlite")
-        cursor = db.cursor()
-        discordID = str(ctx.author.id)
-        user_name = str(ctx.author.display_name)
-        count = 0
-        channelId = ctx.channel.id
-
-        if channelId not in self.botSpamChannels:
+        if ctx.channel.id != self.botSpamChannel:
             embed = discord.Embed(title="Wrong channel!",
-                                  description=f"Please take this to {self.client.get_channel(self.botSpamChannels[0]).mention}",
+                                  description=f"Please take this to {self.client.get_channel(self.botSpamChannel).mention}",
                                   color=HelperClass.orange)
             await ctx.send(embed=embed)
         else:
+            db = sqlite3.connect("main.sqlite")
+            cursor = db.cursor()
+            discordID = str(ctx.author.id)
+            user_name = str(ctx.author.display_name)
+            count = 0
+
             # check if user registered & up to date
             if await self.accountManager.checkUser(discord_id=discordID, cursor=cursor, ctx=ctx):
                 #   search thru 'homies' table for entries
@@ -576,19 +577,18 @@ class Eternum(commands.Cog):
 
     @commands.command(aliases=['sidegirls', 'sidechicks', 'esidegirls', 'epotentiallis'])
     async def sidedishes(self, ctx):
-        db = sqlite3.connect("main.sqlite")
-        cursor = db.cursor()
-        discordID = str(ctx.author.id)
-        user_name = str(ctx.author.display_name)
-        count = 0
-        channelId = ctx.channel.id
-
-        if channelId not in self.botSpamChannels:
+        if ctx.channel.id != self.botSpamChannel:
             embed = discord.Embed(title="Wrong channel!",
-                                  description=f"Please take this to {self.client.get_channel(self.botSpamChannels[0]).mention}",
+                                  description=f"Please take this to {self.client.get_channel(self.botSpamChannel).mention}",
                                   color=HelperClass.orange)
             await ctx.send(embed=embed)
         else:
+            db = sqlite3.connect("main.sqlite")
+            cursor = db.cursor()
+            discordID = str(ctx.author.id)
+            user_name = str(ctx.author.display_name)
+            count = 0
+
             # check if user registered & up to date
             if await self.accountManager.checkUser(discord_id=discordID, cursor=cursor, ctx=ctx):
                 #   search thru 'homies' table for entries
@@ -638,19 +638,18 @@ class Eternum(commands.Cog):
 
     @commands.command()
     async def creatures(self, ctx):
-        db = sqlite3.connect("main.sqlite")
-        cursor = db.cursor()
-        discordID = str(ctx.author.id)
-        user_name = str(ctx.author.display_name)
-        count = 0
-        channelId = ctx.channel.id
-
-        if channelId not in self.botSpamChannels:
+        if ctx.channel.id != self.botSpamChannel:
             embed = discord.Embed(title="Wrong channel!",
-                                  description=f"Please take this to {self.client.get_channel(self.botSpamChannels[0]).mention}",
+                                  description=f"Please take this to {self.client.get_channel(self.botSpamChannel).mention}",
                                   color=HelperClass.orange)
             await ctx.send(embed=embed)
         else:
+            db = sqlite3.connect("main.sqlite")
+            cursor = db.cursor()
+            discordID = str(ctx.author.id)
+            user_name = str(ctx.author.display_name)
+            count = 0
+
             # check if user registered & up to date
             checkUser = await self.accountManager.checkUser(discord_id=discordID, cursor=cursor)
             # if no build error embed
@@ -717,18 +716,17 @@ class Eternum(commands.Cog):
 
     @commands.command()
     async def eprotectors(self, ctx):
-        db = sqlite3.connect("main.sqlite")
-        cursor = db.cursor()
-        discordID = str(ctx.author.id)
-        user_name = str(ctx.author.display_name)
-        channelId = ctx.channel.id
-
-        if channelId not in self.botSpamChannels:
+        if ctx.channel.id != self.botSpamChannel:
             embed = discord.Embed(title="Wrong channel!",
-                                  description=f"Please take this to {self.client.get_channel(self.botSpamChannels[0]).mention}",
+                                  description=f"Please take this to {self.client.get_channel(self.botSpamChannel).mention}",
                                   color=HelperClass.orange)
             await ctx.send(embed=embed)
         else:
+            db = sqlite3.connect("main.sqlite")
+            cursor = db.cursor()
+            discordID = str(ctx.author.id)
+            user_name = str(ctx.author.display_name)
+
             # check if user registered & up to date
             checkUser = await self.accountManager.checkUser(discord_id=discordID, cursor=cursor)
             # if no build error embed
@@ -779,22 +777,21 @@ class Eternum(commands.Cog):
 
     @commands.command(aliases=['eternum collections', 'collectionsE', 'collections eternum'])
     async def eCollections(self, ctx):
-        db = sqlite3.connect("main.sqlite")
-        cursor = db.cursor()
-        discordID = str(ctx.author.id)
-        user_name = str(ctx.author.display_name)
-        haremcount = 0
-        homiecount = 0
-        sidescount = 0
-        creaturecount = 0
-        channelId = ctx.channel.id
-
-        if channelId not in self.botSpamChannels:
+        if ctx.channel.id != self.botSpamChannel:
             embed = discord.Embed(title="Wrong channel!",
-                                  description=f"Please take this to {self.client.get_channel(self.botSpamChannels[0]).mention}",
+                                  description=f"Please take this to {self.client.get_channel(self.botSpamChannel).mention}",
                                   color=HelperClass.orange)
             await ctx.send(embed=embed)
         else:
+            db = sqlite3.connect("main.sqlite")
+            cursor = db.cursor()
+            discordID = str(ctx.author.id)
+            user_name = str(ctx.author.display_name)
+            haremcount = 0
+            homiecount = 0
+            sidescount = 0
+            creaturecount = 0
+
             # check if user registered & up to date
             checkUser = await self.accountManager.checkUser(discord_id=discordID, cursor=cursor)
             # if no build error embed
@@ -942,83 +939,83 @@ class Eternum(commands.Cog):
 
     @egf.error
     async def errorEgf(self, ctx, error):
-        # if cooldown not done send last gf from table 'eternum'
-        db = sqlite3.connect("main.sqlite")
-        cursor = db.cursor()
-
-        discordID = str(ctx.author.id)
-        uid = await self.accountManager.getUserID(discordID=discordID, cursor=cursor)
-        checkUser = await self.accountManager.checkUser(discord_id=discordID, cursor=cursor)
-        channelId = ctx.channel.id
-
-        if channelId not in self.botSpamChannels:
+        if ctx.channel.id != self.botSpamChannel:
             embed = discord.Embed(title="Wrong channel!",
-                                  description=f"Please take this to {self.client.get_channel(self.botSpamChannels[0]).mention}",
+                                  description=f"Please take this to {self.client.get_channel(self.botSpamChannel).mention}",
                                   color=HelperClass.orange)
             await ctx.send(embed=embed)
-        elif isinstance(error, commands.CommandOnCooldown):
+        else:
+            # if cooldown not done send last gf from table 'eternum'
+            db = sqlite3.connect("main.sqlite")
+            cursor = db.cursor()
 
-            time = error.retry_after
-            hours = int(time // 3600)
-            minutes = int((time % 3600) // 60)
-            seconds = int((time % 3600) % 60)
+            discordID = str(ctx.author.id)
+            uid = await self.accountManager.getUserID(discordID=discordID, cursor=cursor)
+            checkUser = await self.accountManager.checkUser(discord_id=discordID, cursor=cursor, ctx=ctx)
+        
+            if isinstance(error, commands.CommandOnCooldown):
 
-            description = f"You still have {hours}h {minutes} mins and {seconds}s until your next draw!"
+                time = error.retry_after
+                hours = int(time // 3600)
+                minutes = int((time % 3600) // 60)
+                seconds = int((time % 3600) % 60)
 
-            if checkUser == "register":
-                embed = await self.HelperClass.createEmbed(title=f"Error #404 - User {str(ctx.author.display_name)} not registered!",
-                                                           text="Please register before playing! (-register)",
-                                                           footer="Contact Eisritter#6969 if you encounter any issues!")
-                await ctx.send(embed=embed)
-                ctx.command.reset_cooldown(ctx)
+                description = f"You still have {hours}h {minutes} mins and {seconds}s until your next draw!"
 
-            elif checkUser == "update":
-                embed = await self.HelperClass.createEmbed(title=f"Error - User {str(ctx.author.display_name)} is not up to date!",
-                                                           text="Please update to the newest stand with -update!",
-                                                           footer="Contact Eisritter#6969 if you encounter any issues!")
-                await ctx.send(embed=embed)
-                ctx.command.reset_cooldown(ctx)
-            else:
-                cursor.execute("SELECT last_gf FROM eternum WHERE user_id=?", [uid])
-                lastGf = cursor.fetchone()
-                gf = ""
-                field_name = ""
-                field_value = ""
-                field2_name = ""
-                field2_value = ""
-                number = 0
-                if lastGf is None:
-                    title = "This is awkward..."
-                    field_name = "Your last pull is... No one?"
-                    field_value = "How could that happen..."
-                    footer = "Might as well contact Eisritter#6969, sumn ain't right"
+                if checkUser == "register":
+                    embed = await self.HelperClass.createEmbed(title=f"Error #404 - User {str(ctx.author.display_name)} not registered!",
+                                                               text="Please register before playing! (-register)",
+                                                               footer="Contact Eisritter#6969 if you encounter any issues!")
+                    await ctx.send(embed=embed)
+                    ctx.command.reset_cooldown(ctx)
 
+                elif checkUser == "update":
+                    embed = await self.HelperClass.createEmbed(title=f"Error - User {str(ctx.author.display_name)} is not up to date!",
+                                                               text="Please update to the newest stand with -update!",
+                                                               footer="Contact Eisritter#6969 if you encounter any issues!")
+                    await ctx.send(embed=embed)
+                    ctx.command.reset_cooldown(ctx)
                 else:
-                    for i in range(len(self.characters)):
-                        if self.characters[i].name == lastGf[0]:
-                            gf = self.characters[i]
+                    cursor.execute("SELECT last_gf FROM eternum WHERE user_id=?", [uid])
+                    lastGf = cursor.fetchone()
+                    gf = ""
+                    field_name = ""
+                    field_value = ""
+                    field2_name = ""
+                    field2_value = ""
+                    number = 0
+                    if lastGf is None:
+                        title = "This is awkward..."
+                        field_name = "Your last pull is... No one?"
+                        field_value = "How could that happen..."
+                        footer = "Might as well contact Eisritter#6969, sumn ain't right"
 
-                    title = "Slow down dude!"
-                    field_name = gf.name
-                    field_value = f"The last pull you made was {gf.name}"
-                    field2_name = f"{str(gf.collection)} - {str(gf.effects)}"
-                    field2_value = f"a.k.a. *{gf.aliases}*"
-                    footer = "retry later mate..."
+                    else:
+                        for i in range(len(self.characters)):
+                            if self.characters[i].name == lastGf[0]:
+                                gf = self.characters[i]
 
-                embed = discord.Embed(title=title, description=description, color=HelperClass.eternumBlue)
-                embed.set_footer(text=footer)
+                        title = "Slow down dude!"
+                        field_name = gf.name
+                        field_value = f"The last pull you made was {gf.name}"
+                        field2_name = f"{str(gf.collection)} - {str(gf.effects)}"
+                        field2_value = f"a.k.a. *{gf.aliases}*"
+                        footer = "retry later mate..."
 
-                embed.add_field(name=field_name, value=field_value, inline=True)
-                embed.add_field(name=field2_name, value=field2_value, inline=False)
-                if lastGf is not None:
-                    number = random.randint(1, gf.picNumber)
-                    image = discord.File(f"./EternumGfGameImages/{gf.filename}_{number}.webp", filename="gf.webp")
-                else:
-                    image = discord.File("./EternumGfGameImages/None.webp", filename="gf.webp")
-                embed.set_image(url="attachment://gf.webp")
-                await ctx.send(file=image, embed=embed)
+                    embed = discord.Embed(title=title, description=description, color=HelperClass.eternumBlue)
+                    embed.set_footer(text=footer)
 
-            cursor.close()
+                    embed.add_field(name=field_name, value=field_value, inline=True)
+                    embed.add_field(name=field2_name, value=field2_value, inline=False)
+                    if lastGf is not None:
+                        number = random.randint(1, gf.picNumber)
+                        image = discord.File(f"./EternumGfGameImages/{gf.filename}_{number}.webp", filename="gf.webp")
+                    else:
+                        image = discord.File("./EternumGfGameImages/None.webp", filename="gf.webp")
+                    embed.set_image(url="attachment://gf.webp")
+                    await ctx.send(file=image, embed=embed)
+
+                cursor.close()
 
 
 def setup(client):

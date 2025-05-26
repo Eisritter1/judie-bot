@@ -126,6 +126,31 @@ class OgfEffects(Enum):
 
 
 class HelperClass:
+    daliaParty = ""
+    alexAngry = ""
+    annieCry = ""
+    annieYay = ""
+    novaGun = ""
+    pepeCry2 = ""
+
+    def init(client):
+        emoji_map = {
+                "daliaParty": "ChibiDaliaParty",
+                "alexAngry": "ChibiAlexAngry",
+                "annieCry": "ChibiAnnieCry",
+                "annieYay": "ChibiAnnieYay",
+                "novaGun": "ChibiNovaGun",
+                "pepeCry2": "PepeCry2"
+        }
+
+        for attr_name, emoji_key in emoji_map.items():
+            emoji_id = client.config.emotes.get(emoji_key)
+            if emoji_id:
+                setattr(HelperClass, attr_name, f"<:{emoji_key}:{emoji_id}>")
+            else:
+                setattr(HelperClass, attr_name, f"<missing:{emoji_key}>")
+
+
     orange = 0xffa800  # default
     eternumBlue = 0x00ffcc  # eternum default
     pink = 0xb502b8  # eternum harem
@@ -136,18 +161,11 @@ class HelperClass:
     green = 0x57F287  # eternum creatures
     blue = 0x0028ff  # protectors
 
-    async def createEmbed(self, title, text, color=orange, footer=None):
+    async def createEmbed(title, text, color=orange, footer=None):
         embed = discord.Embed(title=title, description=text, colour=color)
         if footer is not None:
             embed.set_footer(text=footer)
         return embed
-
-    daliaParty = "<:ChibiDaliaParty:1005859600400138391> "
-    alexAngry = "<:ChibiAlexAngry:1001483487016132648>"
-    annieCry = "<:ChibiAnnieCry:1001482701410422795>"
-    annieYay = "<:ChibiAnnieYay:1001481596504920104>"
-    novaGun = "<:ChibiNovaGun:1006135279087788072>"
-    pepeCry2 = "<:PepeCry2:759731151312257075>"
 
 
 class Results():
@@ -157,8 +175,17 @@ class Results():
         self.victim = victim
 
 
+# Isn't this the exact same struct as Results???
 class OgfResults:
     def __init__(self, duplicate: bool = False, protected: bool = False, victim: str = None):
         self.duplicate = duplicate
         self.protected = protected
         self.victim = victim
+
+
+# time = time in seconds until timer ends -> will be used for cooldowns!
+class TimeObject:
+    def __init__(self, time):
+        self.hours = int(time // 3600)
+        self.minutes = int((time % 3600) // 60)
+        self.seconds = int((time % 3600) % 60)
