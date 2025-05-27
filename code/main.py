@@ -1,12 +1,12 @@
+# DISCORD LIBRARIES
 import discord
-import random
+from discord.ext import commands, tasks
+# EXTERNAL LIBRARIES
 import sqlite3
 import os
-from discord import Embed, File
-from discord.ext import commands, tasks
-from discord.ext.commands import cooldown, BucketType
 from dotenv import load_dotenv
 from itertools import cycle
+# JUDIE LIBRARIES
 from OiaLt import OiaLt
 from Nsfw import Nsfw
 from Eternum import Eternum
@@ -14,7 +14,7 @@ from AccountManager import AccountManager
 from Utilities import HelperClass, TimeObject
 from BotConfig import BotConfig
 
-# Bot config
+#region Bot config
 client = commands.Bot(command_prefix="-", help_command=None, case_insensitive=True, intents=discord.Intents.all())
 client.config = BotConfig(client)
 client.CogsToActivate = []
@@ -26,6 +26,28 @@ status = cycle(
     ["-help", "-help misc", "-help oialt", "-help eternum", "-help nsfw", "-ogf", "-oharem", "-stabbyclan", "-theboys",
      "-potentialLis", "-ocollections", "-oprotectors", "-nsfw", "-egf", "-eharem", "-homies", "-sidegirls",
      "-creatures", "-eprotectors", "-ecollections"])
+#endregion
+
+
+async def check_channel(ctx):
+    """
+    Checks whether the channel the command was called from was the designated bot & spam channel.
+
+    Parameters:
+        - ctx: discord.ext.commands.Context
+            the context provided with the message to check.
+
+    Returns:
+        bool: success of the comparison; 
+            true = the channel is the bot & spam channel.
+    """
+    result = ctx.channel.id == client.config.botSpamChannel
+    if not result:
+        embed = discord.Embed(title="Wrong channel!",
+                              description=f"Please take this to {client.get_channel(client.config.botSpamChannel).mention}",
+                              color=HelperClass.orange)
+        await ctx.send(embed=embed)
+    return result
 
 
 @client.event
@@ -68,11 +90,13 @@ async def gn(ctx):
 
 
 @client.command()
+@commands.check(check_channel)
 async def gf(ctx):
     await ctx.send("Command was updated! You're probably looking for **-ogf**!\n-help oialt for the specific commands!")
 
 
 @client.command()
+@commands.check(check_channel)
 async def help(ctx, plugin=None):
     title = "Judie's commands!"
     description = "Which category would you like to get the help commands from?\nJudie supports the following modules:"
@@ -80,6 +104,7 @@ async def help(ctx, plugin=None):
     field_names = []
     field_values = []
 
+    #region default
     if plugin is None:
         field_names.append("__OiaLt__")
         field_values.append("Commands for the classic Gf game! (-help OiaLt)")
@@ -92,8 +117,9 @@ async def help(ctx, plugin=None):
 
         field_names.append("__General Commands__")
         field_values.append("Account Management & Miscellaneous Commands! (-help General)")
+    #endregion
 
-    # <editor-fold desc="Oialt">
+    #region Oialt
     elif plugin.lower() == "oialt" or plugin.lower() == "once in a lifetime":
         title = "Judie's OiaLt gf game!"
         description = "Here are the commands to use the oialt gf system!"
@@ -127,9 +153,9 @@ async def help(ctx, plugin=None):
         field_names.append("-oprotectors (oialt protectors)")
         field_values.append("Check your protections against the different villains!\n--> Contains **Funtime, MC, Aiko "
                             "and 93**.")
-    # </editor-fold>
+    #endregion
 
-    # <editor-fold desc="NSFW Commands">
+    #region NSFW
     elif plugin.lower() in ["nsfw", "not safe for work"]:
         title = "Judie's lewd stash!"
         description = "Please use in appropriate channels!"
@@ -141,9 +167,9 @@ async def help(ctx, plugin=None):
                             " Aiko, Carla, Iris, Jasmine, Judie, Lauren, Rebecca, Alex, Annie, Calypso, Dalia, Eva,"
                             " FoxMaidens (:warning: putting a space won't recognize it as fox maidens!), Luna, Maat, "
                             "Nancy, Nova, Penny, Wenlin, OiaLt, Eternum*")
-    # </editor-fold>
+    #endregion
 
-    # <editor-fold desc="Misc">
+    #region Misc
     elif plugin.lower() in ["general", "miscellaneous", "misc", "gen", "account", "accounts"]:
         title = "Miscellaneous commands!"
         description = "Account management and a few other commands :)"
@@ -161,9 +187,9 @@ async def help(ctx, plugin=None):
         field_names.append("-deleteacc")
         field_values.append(
             "Delete all your entries to the database. *Please note that this action is __irreversible__.*")
-    # </editor-fold>
+    #endregion
 
-    # <editor-fold desc="Eternum">
+    #region Eternum
     elif plugin.lower() == "eternum":
         title = "Judie's Eternum gf game!"
         description = "Here are the commands to use the eternum gf game:"
@@ -193,9 +219,9 @@ async def help(ctx, plugin=None):
         field_names.append("-eprotectors")
         field_values.append("Check your protections against various villains!\n--> Contains **Orion, Calypso, Dalia &"
                             " Pyramid Head**")
-    # </editor-fold>
+    #endregion
 
-    # <editor-fold desc="Main Command">
+    #region default
     else:
         field_names.append("__OiaLt__")
         field_values.append("Commands for the classic Gf game! (-help OiaLt)")
@@ -208,7 +234,7 @@ async def help(ctx, plugin=None):
 
         field_names.append("__General Commands__")
         field_values.append("Account Management & Miscellaneous Commands! (-help General)")
-    # </editor-fold>
+    #endregion
 
     field_names.append("__Further info__")
     field_values.append("For any other kind of information, feel free to contact **eisritter**!")
@@ -216,7 +242,7 @@ async def help(ctx, plugin=None):
     footer = "WARNING: All of Judie's features contain spoilers to players who are not up to the current version" \
              " of Eternum."
 
-    embed = discord.Embed(title=title, description=description, color=0xFFA800)
+    embed = discord.Embed(title=title, description=description, color=HelperClass.orange)
     embed.set_footer(text=footer)
 
     for i in range(0, len(field_names)):
@@ -226,6 +252,7 @@ async def help(ctx, plugin=None):
 
 
 @client.command()
+@commands.check(check_channel)
 async def timers(ctx):
     ogf = client.get_command("ogf")
     egf = client.get_command("egf")
@@ -247,17 +274,17 @@ async def createDatabase():
     db = sqlite3.connect("main.sqlite")
     cursor = db.cursor()
 
-    # <editor-fold desc="Users">
+    #region users
     cursor.execute("""
             CREATE TABLE if NOT EXISTS users(
             user_id INTEGER PRIMARY KEY AUTOINCREMENT,
             discord_id TEXT
             )
             """)
-    # </editor-fold>
+    #endregion
 
-    # <editor-fold desc="Oialt">
-    # <editor-fold desc="Overview: oialt">
+#region Oialt
+    #region Overview: oialt
     cursor.execute("""
             CREATE TABLE if NOT EXISTS oialt(
             user_id INTEGER,
@@ -268,9 +295,9 @@ async def createDatabase():
             last_gf TEXT
             )
             """)
-    # </editor-fold>
+    #endregion
 
-    # <editor-fold desc="Harem: oialt_harem">
+    #region Harem: oialt_harem
     cursor.execute("""
                         CREATE TABLE IF NOT EXISTS oialt_harem(
                         user_id INTEGER,
@@ -285,9 +312,9 @@ async def createDatabase():
                         last_li TEXT
                         )
                         """)
-    # </editor-fold>
+    #endregion
 
-    # <editor-fold desc="Stabby Clan: stabby_mikes">
+    #region Stabby Clan: stabby_mikes
     cursor.execute("""
                         CREATE TABLE IF NOT EXISTS stabby_mikes(
                         user_id INTEGER,
@@ -300,9 +327,9 @@ async def createDatabase():
                         last_mike TEXT
                         )
                         """)
-    # </editor-fold>
+    #endregion
 
-    # <editor-fold desc="The Boys: the_boys">
+    #region The Boys: the_boys
     cursor.execute("""
                     CREATE TABLE IF NOT EXISTS the_boys(
                     user_id INTEGER,
@@ -315,9 +342,9 @@ async def createDatabase():
                     last_boi TEXT
                     )
                     """)
-    # </editor-fold>
+    #endregion
 
-    # <editor-fold desc="Potential LI's: li_potential">
+    #region Potential LI's: li_potential
     cursor.execute("""
                     CREATE TABLE IF NOT EXISTS li_potential(
                     user_id INTEGER,
@@ -330,11 +357,11 @@ async def createDatabase():
                     last_potential_li TEXT
                     )
                     """)
-    # </editor-fold>
-    # </editor-fold>
+    #endregion
+#endregion
 
-    # <editor-fold desc="Eternum">
-    # <editor-fold desc="Overview: eternum">
+#region Eternum
+    #region Overview: eternum
     cursor.execute("""
             CREATE TABLE if NOT EXISTS eternum(
             user_id INTEGER,
@@ -345,9 +372,9 @@ async def createDatabase():
             last_gf TEXT
             )
             """)
-    # </editor-fold>
+    #endregion
 
-    # <editor-fold desc="Harem: eternum_harem">
+    #region Harem: eternum_harem
     cursor.execute("""
                 CREATE TABLE IF NOT EXISTS eternum_harem(
                 user_id INTEGER,
@@ -361,9 +388,9 @@ async def createDatabase():
                 last_girl TEXT
                 )
                 """)
-    # </editor-fold>
+    #endregion
 
-    # <editor-fold desc="The homies: homies">
+    #region The homies: homies
     cursor.execute("""
                 CREATE TABLE IF NOT EXISTS homies(
                 user_id INTEGER,
@@ -378,9 +405,9 @@ async def createDatabase():
                 last_homie TEXT
                 )
                 """)
-    # </editor-fold>
+    #endregion
 
-    # <editor-fold desc="Side Girls: side_girls">
+    #region Side Girls: side_girls
     cursor.execute("""
                 CREATE TABLE IF NOT EXISTS side_girls(
                 user_id INTEGER,
@@ -394,9 +421,9 @@ async def createDatabase():
                 last_affair TEXT
                 )
                 """)
-    # </editor-fold>
+    #endregion
 
-    # <editor-fold desc="Pets: creatures">
+    #region Pets: creatures
     cursor.execute("""
                 CREATE TABLE if NOT EXISTS creatures(
                 user_id INTEGER,
@@ -410,18 +437,19 @@ async def createDatabase():
                 last_creature TEXT
                 )
                 """)
-    # </editor-fold>
-    # </editor-fold>
+    #endregion
+#endregion
 
-    # <editor-fold desc="Patch 2.5.1: Update Chang full name">
-    try:
-        cursor.execute("UPDATE homies SET chang=? WHERE chang=?", ["Chang Wong", "Chang Zhong"])
-    except Exception as e:
-        print(e)
-    # </editor-fold>
+    #region DB update code
+    #try:
+        # SQL here
+    #except Exception as e:
+        #print(e)
+    #endregion
 
     db.commit()
     cursor.close()
+    db.close()
 
 
 if __name__ == '__main__':
