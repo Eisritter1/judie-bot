@@ -1,6 +1,30 @@
 import discord
+from discord.ext.commands import Context
 from discord import Embed, File
 from enum import Enum
+
+
+async def check_channel(ctx: Context) -> bool:
+    """
+    Checks whether the channel the command was called from was the designated bot & spam channel.
+
+    Parameters:
+        - ctx: discord.ext.commands.Context
+            the context provided with the message to check.
+
+    Returns:
+        bool: success of the comparison; 
+            true = the channel is the bot & spam channel.
+    """
+    client = ctx.bot
+    result = ctx.channel.id == client.config.botSpamChannel
+    if not result:
+        embed = discord.Embed(title="Wrong channel!",
+                              description=f"Please take this to {client.get_channel(client.config.botSpamChannel).mention}",
+                              color=HelperClass.orange)
+        await ctx.send(embed=embed)
+    return result
+
 
 class Collections(Enum):
     NONE = 0  # non-collectibles; embedded orange

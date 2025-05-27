@@ -11,7 +11,7 @@ from OiaLt import OiaLt
 from Nsfw import Nsfw
 from Eternum import Eternum
 from AccountManager import AccountManager
-from Utilities import HelperClass, TimeObject
+from Utilities import HelperClass, TimeObject, check_channel
 from BotConfig import BotConfig
 
 #region Bot config
@@ -29,29 +29,13 @@ status = cycle(
 #endregion
 
 
-async def check_channel(ctx):
-    """
-    Checks whether the channel the command was called from was the designated bot & spam channel.
-
-    Parameters:
-        - ctx: discord.ext.commands.Context
-            the context provided with the message to check.
-
-    Returns:
-        bool: success of the comparison; 
-            true = the channel is the bot & spam channel.
-    """
-    result = ctx.channel.id == client.config.botSpamChannel
-    if not result:
-        embed = discord.Embed(title="Wrong channel!",
-                              description=f"Please take this to {client.get_channel(client.config.botSpamChannel).mention}",
-                              color=HelperClass.orange)
-        await ctx.send(embed=embed)
-    return result
-
-
 @client.event
 async def on_ready():
+    """
+    A function called as soon as the bot is loaded up.
+
+    Initializes all the cogs and creates/edits the database
+    """
     for extension in extensions:
         try:
             await client.add_cog(extension)
@@ -64,7 +48,6 @@ async def on_ready():
     await createDatabase()
     changeGameActivity.start()
 
-    print(f"n cogs to activate: {len(client.CogsToActivate)}")
     for cog in client.CogsToActivate:
         if hasattr(cog, "activate"):
             cog.activate()
@@ -74,17 +57,26 @@ async def on_ready():
 
 @tasks.loop(seconds=7)
 async def changeGameActivity():
+    """
+    A looping function that changes the activity status of the bot to "playing" a random command.
+    """
     await client.change_presence(activity=discord.Game(next(status)))
 
 
 @client.command()
 async def gm(ctx):
+    """
+    Sends a beautiful legacy good morning render of Lauren.
+    """
     image = discord.File(f"./GreetingImages/gm.png", filename="gm.png")
     await ctx.send(file=image)
 
 
 @client.command()
 async def gn(ctx):
+    """
+    Sends a beautiful legacy good night render of Judie.
+    """
     image = discord.File(f"./GreetingImages/gn.png", filename="gn.png")
     await ctx.send(file=image)
 
@@ -92,12 +84,23 @@ async def gn(ctx):
 @client.command()
 @commands.check(check_channel)
 async def gf(ctx):
+    """
+    Obsolete command; All it does now is send an easter egg message :D
+    """
     await ctx.send("Command was updated! You're probably looking for **-ogf**!\n-help oialt for the specific commands!")
 
 
 @client.command()
 @commands.check(check_channel)
 async def help(ctx, plugin=None):
+    """
+    :TheyAskedForHaremAgain:
+    Supposed to help people around; Is a massive mess of spaghetti code here. But yeah provides an overview of Judie's commands
+
+    Parameters:
+        - plugin: str - defaults to None
+            The name of a specific section the user wants help for (from a variety of keywords)
+    """
     title = "Judie's commands!"
     description = "Which category would you like to get the help commands from?\nJudie supports the following modules:"
 
@@ -254,6 +257,9 @@ async def help(ctx, plugin=None):
 @client.command()
 @commands.check(check_channel)
 async def timers(ctx):
+    """
+    Provides an overview of the time left until a user can draw a gf in the gf games again.
+    """
     ogf = client.get_command("ogf")
     egf = client.get_command("egf")
 
@@ -271,6 +277,10 @@ async def timers(ctx):
 
 
 async def createDatabase():
+    """
+    Defines the structure of the Judie Bot Database and updates the database's contents afterwards.
+    """
+
     db = sqlite3.connect("main.sqlite")
     cursor = db.cursor()
 
