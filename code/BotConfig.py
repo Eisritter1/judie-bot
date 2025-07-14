@@ -1,3 +1,6 @@
+"""
+Library of codes and values that change from main deployment to test bot - channel and emote IDs, cooldown times etc.
+"""
 CONFIG = {
     # Main Bot
     867731565970718740: {
@@ -28,11 +31,17 @@ CONFIG = {
 }
 
 class BotConfig:
+    """ 
+    Wrapper class for more intuitive access to config data
+    """
     def __init__(self, client):
         self.client = client
         self._config = None
-
+        
     async def load(self):
+        """
+        Initializes config data based on the bot's user ID.
+        """
         await self.client.wait_until_ready()
         self._config = CONFIG.get(self.client.user.id)
         if self._config is None:
@@ -41,5 +50,3 @@ class BotConfig:
         self.cooldown = self._config.get("cooldown")
         self.botSpamChannel = self._config.get("botSpamChannel")
         self.emotes = self._config.get("emojiIDs")
-
-

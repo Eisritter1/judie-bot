@@ -174,41 +174,24 @@ class AccountManager(commands.Cog):
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, payload):
         # If no message marked for deletion, ignore
-        if isinstance(self.deleteRequestMessages, str):
+        if len(self.deleteRequestMessages) == 0:
             return
 
         db = sqlite3.connect("main.sqlite")
         cursor = db.cursor()
         discordID = str(self.deleteRequestMessages.author.id)
+
+        author = self.deleteRequestMessages.author
         uid = await self.getUserID(discordID=discordID, cursor=cursor)
-        oldID = None
-        if uid is None:
-            cursor.execute("SELECT user_id FROM usersnew WHERE discord_id = ?", [discordID])
-            oldIDList = cursor.fetchone()
-            oldID = oldIDList[0]
-        user_name = str(self.deleteRequestMessages.author)
+        user_name = str(author.display_name)
         channel = self.client.get_channel(self.deleteRequestMessages.channel.id)
 
         if self.deletionPromptMsgIDs == payload.message_id:
-            if self.usersRequestingDeletion.id == payload.user_id:
-                if uid is not None:
-                    cursor.execute("DELETE FROM users WHERE user_id = ?", [uid])
-                    cursor.execute("DELETE FROM oialt WHERE user_id=?", [uid])
-                    cursor.execute("DELETE FROM oialt_harem WHERE user_id = ?", [uid])
-                    cursor.execute("DELETE FROM stabby_mikes WHERE user_id = ?", [uid])
-                    cursor.execute("DELETE FROM the_boys WHERE user_id = ?", [uid])
-                    cursor.execute("DELETE FROM li_potential WHERE user_id = ?", [uid])
-                    cursor.execute("DELETE FROM eternum WHERE user_id=?", [uid])
-                    cursor.execute("DELETE FROM eternum_harem WHERE user_id=?", [uid])
-                    cursor.execute("DELETE FROM homies WHERE user_id=?", [uid])
-                    cursor.execute("DELETE FROM side_girls WHERE user_id=?", [uid])
-                    cursor.execute("DELETE FROM creatures WHERE user_id=?", [uid])
-                else:
-                    cursor.execute("DELETE FROM usersnew WHERE user_id=?", [oldID])
-                    cursor.execute("DELETE FROM harem_new WHERE user_id=?", [oldID])
-                    cursor.execute("DELETE FROM stabby_clan WHERE user_id=?", [oldID])
-                    cursor.execute("DELETE FROM the_boys_new WHERE user_id=?", [oldID])
-                    cursor.execute("DELETE FROM li_potential_new WHERE user_id=?", [oldID])
+            if author == payload.user_id:
+                tables = ['users', 'oialt', 'oialt_harem', 'stabby_mikes', 'the_boys', 'li_potential', 
+                          'eternum', 'eternum_harem', 'homies', 'side_girls', 'creatures']
+                for table in tables:
+                    cursor.execute("DELETE FROM %s WHERE user_id = ?" % table, [uid])
 
                 await channel.send(f"User {user_name} has been successfully removed from the database."
                                    f" Have a great time! :wave:")
@@ -216,9 +199,12 @@ class AccountManager(commands.Cog):
 
                 db.commit()
 
-                self.deleteRequestMessages = ""
-                self.usersRequestingDeletion = ""
-                self.deletionPromptMsgIDs = ""
+                self.deleteRequestMessages.pop(author)
+                self.deletionPromptMsgIDs.pop(author)
+                self.usersRequestingDeletion.pop(author)
+
+        cursor.close()
+        db.close()
 
     @commands.command()
     async def update(self, ctx):

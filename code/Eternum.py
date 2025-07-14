@@ -15,6 +15,22 @@ from EgfCharacters import EgfCharacters
 
 
 class Eternum(commands.Cog):
+    """
+    Judie's Eternum GF game cog.
+    ----------------------------------
+    Members:
+        - activate() - initialize data following config data,
+        - buildCharacterEmbed(CharacterCard, Results, discord.ext.Context, int) - builds the egf embed for a given character card,
+        - updateDatabase(int, CharacterCard, sqlite3.Connection, sqlite3.Connection.Cursor) -> Results - performs alterations to the database following a gf pull,
+        - egf(ctx) - attempts to pull a random character from the game Eternum for the user,
+        - eharem(ctx) - provides an overview of the user's progress in the Eternum Harem collection,
+        - homies(ctx) - provides an overview of the user's progress in the Eternum Homies collection,
+        - sidedishes(ctx) - provides an overview of the user's progress in the Eternum Side Girl collection,
+        - creatures(ctx) - provides an overview of the user's progress in the Eternum Pets collection,
+        - eprotectors(ctx) - provides an overview of the user's coverage on the Eternum Insurance Policy(tm),
+        - ecollections(ctx) - provides an overview of the user's progress in all Eternum collections,
+        - errorGf(ctx, error) - catches errors that come up in the -egf command.
+    """
     def __init__(self, client):
         self.client = client
         client.CogsToActivate.append(self)
@@ -27,6 +43,11 @@ class Eternum(commands.Cog):
     # Development Start 17/08/2022; Version 1.0.
 
     def activate(self):
+        """
+        Initializes client data for the gf game - setting channel IDs, cooldown time etc. 
+
+        Required for proper functioning; Required to run only after BotConfig.load() was called.
+        """
         command = self.client.get_command("egf")
         cd = Cooldown(rate=1, per=self.client.config.cooldown)
         command._buckets = CooldownMapping(cd, type=BucketType.user)
@@ -36,6 +57,16 @@ class Eternum(commands.Cog):
     # HELPER FUNCTIONS - checkUser in AccountManager // createEmbed in Utilities/HelperFunctions
 
     async def buildCharacterEmbed(self, character: CharacterCard, results: Results, ctx, n: int = -1):
+        """
+        Builds and sends the egf embed using info from the provided CharacterCard.
+        ---------------------------------------------------------------------------------------------------
+        Parameters:
+            - character : CharacterCard - the character whose card is to be built,
+            - results : Results - a struct used to determine what happened to be displayed,
+            - ctx : discord.ext.Context - discord context object for user info,
+            - n : int - the index of chosen picture; chooses a random picture if n = -1 (defaults to -1).
+        ---------------------------------------------------------------------------------------------------
+        """
         if not character:
             print("Error: Missing character object.")
 
@@ -206,14 +237,27 @@ class Eternum(commands.Cog):
         image = discord.File(filepath, filename="gf.webp")
 
         if not image:
-            print(f"Error: No image attached to embed of {character} []")
+            print(f"Error: No image attached to embed of {character}.")
 
         embed = await HelperClass.createEmbed(title=character.name, text=text, color=color, footer=footer)
         embed.add_field(name=field_name, value=field_value)
         embed.set_image(url="attachment://gf.webp")
         await ctx.send(file=image, embed=embed)
 
-    async def updateDatabase(self, uid: int, character: CharacterCard, db, cursor):
+    async def updateDatabase(self, uid: int, character: CharacterCard, db, cursor) -> Results:
+        """
+        Performs all alterations to the database following a character draw.
+        --------------------------------------------------------------------------------------------------------------------------------------------
+        Parameters:
+            - uid : int - the user's discord ID,
+            - character : CharacterCard - the character prompting the database update,
+            - db : sqlite3.connection - an existing connection to the database (DevNote 15/07/2025 - might want to make connection local to here),
+            - cursor : sqlite3.Connection.Cursor - a cursor to perform SQL actions on the given database.
+        --------------------------------------------------------------------------------------------------------------------------------------------
+        Returns:
+            - Results: A struct containing information whether the character obtained was a duplicate entry, protected from a villain, or what victim it chose as a villain.
+        """
+
         duplicateCharacter = False
         protected = False
         victim = None
@@ -419,6 +463,12 @@ class Eternum(commands.Cog):
 
     @commands.command(aliases=['gfe', 'eternum gf', 'gf eternum'])
     async def egf(self, ctx):
+        """
+        The main command for the egf.
+        ------------------------------------------------
+        Parameters:
+            - ctx : discord.ext.Context - discord-provided context to the command prompt.
+        """
         if ctx.channel.id != self.botSpamChannel:
             embed = discord.Embed(title="Wrong channel!",
                                   description=f"Please take this to {self.client.get_channel(self.botSpamChannel).mention}",
@@ -446,6 +496,12 @@ class Eternum(commands.Cog):
     # There's work to do...
     @commands.command(aliases=['hareme', 'eternum harem', 'harem eternum'])
     async def eharem(self, ctx):
+        """
+        Provides an overview of a user's progress in collecting the eternum harem.
+        ------------------------------------------------
+        Parameters:
+            - ctx : discord.ext.Context - discord-provided context to the command prompt.
+        """
         if ctx.channel.id != self.botSpamChannel:
             embed = discord.Embed(title="Wrong channel!",
                                   description=f"Please take this to {self.client.get_channel(self.botSpamChannel).mention}",
@@ -510,6 +566,12 @@ class Eternum(commands.Cog):
 
     @commands.command(aliases=['thehomies', 'the homies', 'da homies', 'ehomies'])
     async def homies(self, ctx):
+        """
+        Provides an overview of a user's progress in collecting the eternum homies.
+        ------------------------------------------------
+        Parameters:
+            - ctx : discord.ext.Context - discord-provided context to the command prompt.
+        """
         if ctx.channel.id != self.botSpamChannel:
             embed = discord.Embed(title="Wrong channel!",
                                   description=f"Please take this to {self.client.get_channel(self.botSpamChannel).mention}",
@@ -577,6 +639,12 @@ class Eternum(commands.Cog):
 
     @commands.command(aliases=['sidegirls', 'sidechicks', 'esidegirls', 'epotentiallis'])
     async def sidedishes(self, ctx):
+        """
+        Provides an overview of a user's progress in collecting the eternum side girls.
+        ------------------------------------------------
+        Parameters:
+            - ctx : discord.ext.Context - discord-provided context to the command prompt.
+        """
         if ctx.channel.id != self.botSpamChannel:
             embed = discord.Embed(title="Wrong channel!",
                                   description=f"Please take this to {self.client.get_channel(self.botSpamChannel).mention}",
@@ -638,6 +706,13 @@ class Eternum(commands.Cog):
 
     @commands.command()
     async def creatures(self, ctx):
+        """
+        Provides an overview of a user's progress in collecting the eternum pets.
+        DevNote 15/07/2025: might migrate to pets(ctx) instead - keep creatures as an alias or do a shell command like -gf.
+        ------------------------------------------------
+        Parameters:
+            - ctx : discord.ext.Context - discord-provided context to the command prompt.
+        """
         if ctx.channel.id != self.botSpamChannel:
             embed = discord.Embed(title="Wrong channel!",
                                   description=f"Please take this to {self.client.get_channel(self.botSpamChannel).mention}",
@@ -716,6 +791,12 @@ class Eternum(commands.Cog):
 
     @commands.command()
     async def eprotectors(self, ctx):
+        """
+        Provides an overview of a user's progress in collecting the eternum protectors.
+        ------------------------------------------------
+        Parameters:
+            - ctx : discord.ext.Context - discord-provided context to the command prompt.
+        """
         if ctx.channel.id != self.botSpamChannel:
             embed = discord.Embed(title="Wrong channel!",
                                   description=f"Please take this to {self.client.get_channel(self.botSpamChannel).mention}",
@@ -777,6 +858,12 @@ class Eternum(commands.Cog):
 
     @commands.command(aliases=['eternum collections', 'collectionsE', 'collections eternum'])
     async def eCollections(self, ctx):
+        """
+        Provides an overview of a user's progress in all eternum collections.
+        ------------------------------------------------
+        Parameters:
+            - ctx : discord.ext.Context - discord-provided context to the command prompt.
+        """
         if ctx.channel.id != self.botSpamChannel:
             embed = discord.Embed(title="Wrong channel!",
                                   description=f"Please take this to {self.client.get_channel(self.botSpamChannel).mention}",
@@ -939,6 +1026,13 @@ class Eternum(commands.Cog):
 
     @egf.error
     async def errorEgf(self, ctx, error):
+        """
+        Catches various errors in running the -egf command; Mostly cooldown infractions.
+        ------------------------------------------------
+        Parameters:
+            - ctx : discord.ext.Context - discord-provided context to the command prompt,
+            - error : str (?) - the error object to tell what the hell just happened.
+        """
         if ctx.channel.id != self.botSpamChannel:
             embed = discord.Embed(title="Wrong channel!",
                                   description=f"Please take this to {self.client.get_channel(self.botSpamChannel).mention}",

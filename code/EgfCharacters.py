@@ -3,6 +3,12 @@ from Utilities import Collections, Effects
 
 
 class EgfCharacters:
+    """
+    The character manager for the Eternum GF game.
+    --------------------------------------------------------
+    Members:
+        - characters : list - a list of CharacterCard objects.
+    """
     def __init__(self):
         self.characters = []
         self.setup()

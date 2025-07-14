@@ -6,11 +6,18 @@ import random
 import os
 from Utilities import HelperClass
 from CharacterCard import NsfwCharacterCard
-
 import time
 
 
 async def createAndSendEmbed(card: NsfwCharacterCard, number: int, ctx):
+    """
+    Creates and sends an embed using information from the provided NsfwCharacterCard.
+    ----------------------------------------------------------------------------------
+    Parameters:
+        - card : NsfwCharacterCard - the card of the character to display,
+        - number : int - the image number to choose for the character,
+        - ctx : discord.ext.Context - discord-provided context to the command prompt.
+    """
     color = HelperClass.orange
     if card.game == "Eternum":
         color = HelperClass.eternumBlue
@@ -44,6 +51,12 @@ async def createAndSendEmbed(card: NsfwCharacterCard, number: int, ctx):
 
 
 class Nsfw(commands.Cog):
+    """
+    Judie's NSFW Magazine Cog.
+    ---------------------------------
+    Members:
+        - nsfw(discord.ext.Context, any) - displays a given or random charater's lewd scenes.
+    """
     def __init__(self, client):
         self.client = client
 
@@ -282,6 +295,16 @@ class Nsfw(commands.Cog):
 
     @commands.command()
     async def nsfw(self, ctx, parameter=None):
+        """
+        Draws a random character from the pool unless one is specified and shows a random lewd scene of theirs from the Caribdis-verse.
+        /!\ Only works in channels marked to discord as NSFW.
+        ----------------------------------------------------------------------------------------------------------------------
+        Parameters:
+            - ctx : discord.ext.Context - discord-provided context to the command prompt.
+            - parameter : any - filters the pool of characters to choose from (defaults to None).
+                currently supported parameters: [Aiko, Carla, Iris, Jasmine, Judie, Lauren, Rebecca, Alex, Annie, Calypso, Dalia, Eva, 
+                FoxMaidens, Luna, Maat, Nancy, Nova, Penny, Wenlin, OiaLt, Eternum]
+        """
         if ctx.channel.is_nsfw():
             dict = {
                 None: self.options,
