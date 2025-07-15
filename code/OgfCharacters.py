@@ -3,6 +3,12 @@ from Utilities import OgfCollections, OgfEffects, HelperClass
 
 
 class OgfCharacters:
+    """
+    The character manager for the OiaLt GF game.
+    --------------------------------------------------------
+    Members:
+        - characters : list - a list of CharacterCard objects.
+    """
     def __init__(self):
         self.characters = []
         self.Setup()
@@ -627,6 +633,12 @@ class OgfCharacters:
 
     # Resolves a character card with a search through the name
     def Get(self, name: str):
+        """
+        Finds the CharacterCard object of a character from their name or filename.
+        --------------------------------------------------------
+        Parameters:
+            - name : str - the full name of the character to search for.
+        """
         for character in self.characters:
             if character.name == name or character.filename == name:
                 return character
@@ -634,6 +646,12 @@ class OgfCharacters:
 
     # Finds a character from its filename
     def GetName(self, filename: str):
+        """
+        Finds the full name of a character from their filename.
+        --------------------------------------------------------
+        Parameters:
+            - filename : str - the filename of the character to search for.
+        """
         for character in self.characters:
             if character.filename == filename:
                 return character.name
@@ -641,6 +659,12 @@ class OgfCharacters:
 
     # Returns the filename of a character given its full name
     def GetFilename(self, name: str):
+        """
+        Finds the filename of a character from their name.
+        --------------------------------------------------------
+        Parameters:
+            - name : str - the full name of the character to search for.
+        """
         for character in self.characters:
             if character.name == name:
                 return character.filename

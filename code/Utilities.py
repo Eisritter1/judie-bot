@@ -7,7 +7,7 @@ from enum import Enum
 async def check_channel(ctx: Context) -> bool:
     """
     Checks whether the channel the command was called from was the designated bot & spam channel.
-
+    -----------------------------------------------------------------------------------------------
     Parameters:
         - ctx: discord.ext.commands.Context
             the context provided with the message to check.
@@ -27,11 +27,45 @@ async def check_channel(ctx: Context) -> bool:
 
 
 class Collections(Enum):
-    NONE = 0  # non-collectibles; embedded orange
-    HAREM = 1  # kidnapped by Axel, saved by Orion; embedded pink
-    SIDE_DISHES = 2  # kidnapped by TBD, saved by TBD; embedded purple
-    THE_HOMIES = 3  # attacked by Thanatos, saved by Calypso; embedded yellow
-    CREATURES = 4 # attacked by golem, saved by pyramid head
+    """
+    Enum listing all active Collections for the Eternum GF Game.
+    ------------------------------------------------------------
+    Values:
+        0 = NONE
+        1 = HAREM
+        2 = SIDE_DISHES
+        3 = THE_HOMIES
+        4 = CREATURES
+    """
+    NONE = 0
+    """
+    Character is not part of any collection; 
+    Embeds in "Eternum Blue"
+    """
+    HAREM = 1
+    """
+    Character is part of the Eternum Harem collection;
+    Villain: Thanatos - Hero: Calypso;
+    Embeds pink.
+    """
+    SIDE_DISHES = 2
+    """
+    Character is part of the Eternum Side Girls collection;
+    Villain: Axel - Hero: Orion;
+    Embeds purple.
+    """
+    THE_HOMIES = 3
+    """
+    Character is part of the Eternum Homies collection;
+    Villain: Troll - Hero: Dalia;
+    Embeds yellow.
+    """
+    CREATURES = 4
+    """
+    Character is part of the Eternum Pets collection;
+    Villain: Golem - Hero: Pyramid Head;
+    Embeds green.
+    """
 
     def __str__(self):
         if self == Collections.NONE:
@@ -47,11 +81,40 @@ class Collections(Enum):
 
 
 class OgfCollections(Enum):
-    NONE = 0        # non-collectibles;
-    HAREM = 1       # bought by Orochi, saved by Funtime clan leader
-    STABBIES = 2    # Killed by Astaroth, saved by MC
-    BOYS = 3        # Killed by Azazel, saved by Aiko
-    POTENTIALS = 4  # Killed by Monster Lilith, saved by 93
+    """
+    Enum listing all active Collections for the OiaLt GF Game.
+    ------------------------------------------------------------
+    Values:
+        0 = NONE
+        1 = HAREM
+        2 = SIDE_DISHES
+        3 = THE_HOMIES
+        4 = CREATURES
+    """
+    NONE = 0
+    """
+    Character is not part of any collection;
+    """
+    HAREM = 1
+    """
+    Character is part of the OiaLt Harem collection;
+    Villain: Orochi - Hero: Funtime Clan Leader;
+    """
+    STABBIES = 2
+    """
+    Character is part of the OiaLt Stabby Mike collection;
+    Villain: Astaroth - Hero: MC;
+    """
+    BOYS = 3
+    """
+    Character is part of the OiaLt Homies collection;
+    Villain: Azazel - Hero: Aiko;
+    """
+    POTENTIALS = 4
+    """
+    Character is part of the OiaLt Side Girls collection;
+    Villain: Monster Lilith - Hero: 93;
+    """
 
     def __str__(self):
         if self == OgfCollections.NONE:
@@ -67,15 +130,81 @@ class OgfCollections(Enum):
 
 
 class Effects(Enum):
-    NONE = 0  # no effects; embedded orange
-    HAREM_SAVIOUR = 1  # saves harem from Thanatos
-    SIDE_GIRL_SAVIOUR = 2  # saves sides from Axel
-    HOMIE_SAVIOUR = 3  # saves homies from troll
-    HAREM_KILLER = 4  # kills a harem member
-    SIDE_GIRL_KIDNAPPER = 5  # kidnaps a side girl
-    HOMIE_KILLER = 6  # kills a homie
-    CREATURE_SAVIOUR = 7  # saves a creature
-    CREATURE_STOMPER = 8  # kills a creature
+    """
+    Enum listing all active Actors for the Eternum GF Game.
+    ------------------------------------------------------------
+    Values:
+        0 = NONE
+        1 = HAREM_SAVIOUR       [Calypso]
+        2 = SIDE_GIRL_SAVIOUR   [Orion]
+        3 = HOMIE_SAVIOUR       [Dalia]
+        4 = HAREM_KILLER        [Thanatos]
+        5 = SIDE_GIRL_KIDNAPPER [Axel]
+        6 = HOMIE_KILLER        [Troll]
+        7 = CREATURE_SAVIOUR    [Pyramid Head]
+        8 = CREATURE_STOMPER    [Golem]
+    """
+    NONE = 0
+    """
+    Has no effect on collections;
+    No alterations on color.
+    """
+    HAREM_SAVIOUR = 1
+    """
+    [Calypso]
+    Blocks Harem Killer [Thanatos] once; 
+    Protection refreshes with each pull;
+    No alteration on color (collectible as well)
+    """
+    SIDE_GIRL_SAVIOUR = 2
+    """
+    [Orion]
+    Blocks Side Girl Kidnapper [Axel] once; 
+    Protection refreshes with each pull;
+    No alteration on color (collectible as well)
+    """
+    HOMIE_SAVIOUR = 3
+    """
+    [Dalia]
+    Blocks Homie Killer [Troll] once; 
+    Protection refreshes with each pull;
+    No alteration on color (collectible as well)
+    """
+    HAREM_KILLER = 4
+    """
+    [Thanatos]
+    Removes a harem member - preference on Alex & Nova;
+    Thwarted by Calypso;
+    Displays red when blocked, black when successful.
+    """
+    SIDE_GIRL_KIDNAPPER = 5
+    """
+    [Axel]
+    Removes a side girl - no preference;
+    Thwarted by Orion;
+    Displays red when blocked, black when successful.
+    """
+    HOMIE_KILLER = 6
+    """
+    [Troll]
+    Removes a homie - preference on Jerry;
+    Thwarted by Dalia;
+    Displays red when blocked, black when successful.
+    """
+    CREATURE_SAVIOUR = 7
+    """
+    [Pyramid Head]
+    Blocks Creature Stomper [Golem] once; 
+    Protection refreshes with each pull;
+    Displays midnight blue.
+    """
+    CREATURE_STOMPER = 8
+    """
+    [Golem]
+    Removes a pet - preference on Lil' Kermie;
+    Thwarted by Pyramid Head;
+    Displays red when blocked, black when successful.
+    """
 
     def __str__(self):
         if self == Effects.NONE:
@@ -98,15 +227,81 @@ class Effects(Enum):
             return "Creature Stomper: stomps a creature to death, preferrably Kermit."
 
 class OgfEffects(Enum):
-    NONE = 0                # No Effects
-    HAREM_SAVER = 1         # Prevents Orochi from purchasing an LI
-    HAREM_BUYER = 2         # Purchases an LI, preferably Lauren or Messy Hair Lauren
-    STABBY_SAVER = 3        # Stops Astaroth from killing a Mike
-    STABBY_KILLER = 4       # Kills a stabby mike, preferably Father Mitchell
-    BOYS_SAVER = 5          # Kills Azazel before he can take out one of the boys
-    BOYS_KILLER = 6         # Kills one of the boys, preferably the MC
-    POTENTIAL_SAVER = 7     # Stops Monster Lilith from corrupting a potential LI
-    POTENTIAL_MUTATOR = 8   # Mutates a potential LI to monsterhood, preferably Lilith
+    """
+    Enum listing all active Actors for the OiaLt GF Game.
+    ------------------------------------------------------------
+    Values:
+        0 = NONE
+        1 = HAREM_SAVER         [Funtime Clan Leader]
+        2 = HAREM_BUYER         [Orochi Clan Leader]
+        3 = STABBY_SAVER        [MC]
+        4 = STABBY_KILLER       [Astaroth]
+        5 = BOYS_SAVER          [Aiko]
+        6 = BOYS_KILLER         [Azazel]
+        7 = POTENTIAL_SAVER     [93]
+        8 = POTENTIAL_MUTATOR   [Monster Lilith]
+    """
+    NONE = 0
+    """
+    Has no effect on collections;
+    No alterations on color.
+    """
+    HAREM_SAVER = 1
+    """
+    [Funtime Clan Leader]
+    Blocks Harem Buyer [Orochi Clan Leader] once; 
+    Protection refreshes with each pull;
+    Displays midnight blue.
+    """
+    HAREM_BUYER = 2
+    """
+    [Orochi Clan Leader]
+    Removes a harem member - preference on Lauren & Messy Hair Lauren;
+    Thwarted by Funtime Clan Leader;
+    Displays red when blocked, black when successful.
+    """
+    STABBY_SAVER = 3
+    """
+    [MC]
+    Blocks Stabby Killer [Astaroth] once; 
+    Protection refreshes with each pull;
+    No alteration on display color (collectible as well)
+    """
+    STABBY_KILLER = 4
+    """
+    [Astaroth]
+    Removes a Stabby Mike - preference on Father Mitchell;
+    Thwarted by MC;
+    Displays red when blocked, black when successful.
+    """
+    BOYS_SAVER = 5
+    """
+    [Aiko]
+    Blocks Boys Killer [Azazel] once; 
+    Protection refreshes with each pull;
+    No alteration on display color (collectible as well)
+    """
+    BOYS_KILLER = 6
+    """
+    [Azazel]
+    Removes a homie - preference on MC;
+    Thwarted by Aiko;
+    Displays red when blocked, black when successful.
+    """
+    POTENTIAL_SAVER = 7
+    """
+    [93]
+    Blocks Potential Mutator [Monster Lilith] once; 
+    Protection refreshes with each pull;
+    Displays midnight blue.
+    """
+    POTENTIAL_MUTATOR = 8
+    """
+    [Monster Lilith]
+    Removes a Potential LI - preference on Lilith;
+    Thwarted by 93;
+    Displays red when blocked, black when successful.
+    """
 
     def __str__(self):
         if self == OgfEffects.NONE:
@@ -150,6 +345,33 @@ class OgfEffects(Enum):
 
 
 class HelperClass:
+    """
+    Self-explanatory name - contains helpful values and functions.
+    ----------------------------------------------------------------
+    Members:
+        Attributes:
+            Emotes : str
+            - daliaParty
+            - alexAngry
+            - annieCry
+            - annieYay
+            - novaGun
+            - pepeCry2
+
+            Colors : int [hex codes]
+            - orange = ffa800
+            - eternumBlue = 00ffcc
+            - pink = b502b8
+            - purple = 530554
+            - red = ff0000
+            - black = 000000
+            - yellow = eeff00
+            - green = 57f287
+            - blue = 0028ff
+        Methods:
+            - init(discord.Bot) - initializes values according to config data.
+            - createEmbed(title : str, text : str, color : int = orange, footer : str = None) - creates an embed object ready to be sent.
+    """
     daliaParty = ""
     alexAngry = ""
     annieCry = ""
@@ -158,6 +380,11 @@ class HelperClass:
     pepeCry2 = ""
 
     def init(client):
+        """
+        Initializes member parameters using config data 
+
+        Required for proper functioning; Required to run, only after BotConfig.load() was called.
+        """
         emoji_map = {
                 "daliaParty": "ChibiDaliaParty",
                 "alexAngry": "ChibiAlexAngry",
@@ -175,17 +402,56 @@ class HelperClass:
                 setattr(HelperClass, attr_name, f"<missing:{emoji_key}>")
 
 
-    orange = 0xffa800  # default
-    eternumBlue = 0x00ffcc  # eternum default
-    pink = 0xb502b8  # eternum harem
-    purple = 0x530554  # eternum side girls
-    red = 0xff0000  # eternum denied villain
-    black = 0x000000  # eternum successful villain
-    yellow = 0xeeff00  # eternum homies
-    green = 0x57F287  # eternum creatures
-    blue = 0x0028ff  # protectors
+    orange = 0xffa800
+    """
+    OiaLt default color
+    """
+    eternumBlue = 0x00ffcc
+    """
+    Eternum default color
+    """
+    pink = 0xb502b8 
+    """
+    Harem color
+    """
+    purple = 0x530554
+    """
+    Side Girl color
+    """
+    red = 0xff0000
+    """
+    Unsuccessful Villain color
+    """
+    black = 0x000000 
+    """
+    Successful Villain color
+    """
+    yellow = 0xeeff00
+    """
+    Homie color
+    """
+    green = 0x57F287
+    """
+    Eternum Pets color
+    """
+    blue = 0x0028ff
+    """
+    Protector color
+    """
 
-    async def createEmbed(title, text, color=orange, footer=None):
+    async def createEmbed(title : str, text : str, color=orange, footer : str = None) -> discord.Embed:
+        """
+        Compiles parameter to an embed object ready to be sent.
+        -------------------------------------------------------
+        Parameters:
+            - title : str
+            - text : str
+            - color : int (defaults to HelperClass.orange)
+            - footer : str (defaults to None)
+        -------------------------------------------------------
+        Returns:
+            discord.Embed object according to specifications.
+        """
         embed = discord.Embed(title=title, description=text, colour=color)
         if footer is not None:
             embed.set_footer(text=footer)
@@ -193,14 +459,28 @@ class HelperClass:
 
 
 class Results():
+    """
+    Struct containing context following a character draw
+    -----------------------------------------------------
+    Parameters:
+        - duplicate : bool - displays whether the character is already present in the collection (defaults to False).
+        - protected : bool - displays whether a character was targeted unsuccessfully by a villain (defaults to False).
+        - victim : str - displays what character the villain has targeted in this iteration (defaults to None).
+    """
     def __init__(self, duplicate: bool = False, protected: bool = False, victim: str = None):
         self.duplicate = duplicate
         self.protected = protected
         self.victim = victim
 
-
-# Isn't this the exact same struct as Results???
 class OgfResults:
+    """
+    Struct containing context following a character draw
+    -----------------------------------------------------
+    Parameters:
+        - duplicate : bool - displays whether the character is already present in the collection (defaults to False).
+        - protected : bool - displays whether a character was targeted unsuccessfully by a villain (defaults to False).
+        - victim : str - displays what character the villain has targeted in this iteration (defaults to None).
+    """
     def __init__(self, duplicate: bool = False, protected: bool = False, victim: str = None):
         self.duplicate = duplicate
         self.protected = protected
@@ -209,6 +489,14 @@ class OgfResults:
 
 # time = time in seconds until timer ends -> will be used for cooldowns!
 class TimeObject:
+    """
+    Struct for more intuitive use of time. Takes a certain interval in seconds as input.
+    -----------------------------------------------------
+    Parameters:
+        - hours : int
+        - minutes : int
+        - seconds : int
+    """
     def __init__(self, time):
         self.hours = int(time // 3600)
         self.minutes = int((time % 3600) // 60)

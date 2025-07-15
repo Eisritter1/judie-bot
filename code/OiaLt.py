@@ -14,6 +14,13 @@ from OgfCharacters import OgfCharacters
 
 
 class OiaLt(commands.Cog):
+    """
+    Judie's OiaLt GF game cog.
+    -------------------------------------
+    Members:
+        - activate(): Initializes the cog's variables according to config data.
+        - 
+    """
     def __init__(self, client):
         self.client = client
         client.CogsToActivate.append(self)
@@ -24,6 +31,11 @@ class OiaLt(commands.Cog):
 
 
     def activate(self):
+        """
+        Initializes client data for the gf game - setting channel IDs, cooldown time etc. 
+
+        Required for proper functioning; Required to run only after BotConfig.load() was called.
+        """
         command = self.client.get_command("ogf")
         cd = Cooldown(rate=1, per=self.client.config.cooldown)
         command._buckets = CooldownMapping(cd, type=BucketType.user)
@@ -33,6 +45,13 @@ class OiaLt(commands.Cog):
     # HELPER FUNCTIONS - checkUser in AccountManager // createEmbed in Utilities/HelperClass
 
     async def displayLastGF(self, ctx, time):
+        """
+        Shows the last character obtained by a character as cooldown reminder.
+        -------------------------------------------------------------------------
+        Parameters:
+            - ctx : discord.ext.Context - discord-provided context to the command prompt.
+            - time : int - time in seconds left until the cooldown runs out.
+        """
         timer = TimeObject(time)
         description = f"You still have {timer.hours}h {timer.minutes} mins and {timer.seconds}s until your next draw!"
         db = sqlite3.connect("main.sqlite")
@@ -75,6 +94,12 @@ class OiaLt(commands.Cog):
 
     @commands.command(aliases=["oialt gf", "gfo", "gf oialt"])
     async def ogf(self, ctx):
+        """
+        Draws a random character from the OiaLt game - cooldown 20h for public deployment.
+        -------------------------------------------------------------------------
+        Parameters:
+            - ctx : discord.ext.Context - discord-provided context to the command prompt.
+        """
         # Check if in correct channel
         if ctx.channel.id != self.botSpamChannel:
             embed = discord.Embed(title="Wrong channel!",
@@ -102,6 +127,14 @@ class OiaLt(commands.Cog):
             db.close()
 
     async def createAndSendEmbed(self, ctx, character: OgfCharacterCard, results: OgfResults):
+        """
+        Creates and sends an embed using the provided character information.
+        -------------------------------------------------------------------------
+        Parameters:
+            - ctx : discord.ext.Context - discord-provided context to the command prompt.
+            - character : OgfCharacterCard - the card of the character to display.
+            - results : OgfResults - A struct containing context of the consequences of the character draw.
+        """
         if not character:
             print("Error: Missing character object.")
 
@@ -215,6 +248,16 @@ class OiaLt(commands.Cog):
         # </editor-fold>
 
     async def updateDatabase(self, uid: int, character: OgfCharacterCard) -> OgfResults:
+        """
+        Performs the changes to the database following a character's drawing.
+        -------------------------------------------------------------------------
+        Parameters:
+            - uid : int - the user's ID in the database system.
+            - character : OgfCharacterCard - the character drawn.
+        -------------------------------------------------------------------------
+        Returns:
+            - OgfResults: A struct containing context around the draw - duplicate collectible, protected against a villain, and chosen victim.
+        """
         # <editor-fold desc="Setup">
         # Setup: DB connections
         db = sqlite3.connect("main.sqlite")
@@ -465,6 +508,12 @@ class OiaLt(commands.Cog):
 
     @commands.command()
     async def oharem(self, ctx):
+        """
+        Provides an overview of a user's progress in collecting the OiaLt harem.
+        ------------------------------------------------
+        Parameters:
+            - ctx : discord.ext.Context - discord-provided context to the command prompt.
+        """
         db = sqlite3.connect("main.sqlite")
         cursor = db.cursor()
         discordID = str(ctx.author.id)
@@ -507,6 +556,12 @@ class OiaLt(commands.Cog):
 
     @commands.command()
     async def stabbyclan(self, ctx):
+        """
+        Provides an overview of a user's progress in collecting the clan of Stabby Mike personas.
+        ------------------------------------------------
+        Parameters:
+            - ctx : discord.ext.Context - discord-provided context to the command prompt.
+        """
         db = sqlite3.connect("main.sqlite")
         cursor = db.cursor()
         discordID = str(ctx.author.id)
@@ -538,6 +593,12 @@ class OiaLt(commands.Cog):
 
     @commands.command()
     async def theboys(self, ctx):
+        """
+        Provides an overview of a user's progress in collecting the OiaLt homies.
+        ------------------------------------------------
+        Parameters:
+            - ctx : discord.ext.Context - discord-provided context to the command prompt.
+        """
         db = sqlite3.connect("main.sqlite")
         cursor = db.cursor()
         discordID = str(ctx.author.id)
@@ -568,6 +629,12 @@ class OiaLt(commands.Cog):
 
     @commands.command()
     async def potentialLis(self, ctx):
+        """
+        Provides an overview of a user's progress in collecting the OiaLt side girls.
+        ------------------------------------------------
+        Parameters:
+            - ctx : discord.ext.Context - discord-provided context to the command prompt.
+        """
         db = sqlite3.connect("main.sqlite")
         cursor = db.cursor()
         discordID = str(ctx.author.id)
@@ -599,6 +666,12 @@ class OiaLt(commands.Cog):
 
     @commands.command(aliases=["protectorso", "oprotections", "oprotection", "protectionso", "protectiono"])
     async def oprotectors(self, ctx):
+        """
+        Provides an overview of a user's progress in collecting the OiaLt protectors.
+        ------------------------------------------------
+        Parameters:
+            - ctx : discord.ext.Context - discord-provided context to the command prompt.
+        """
         db = sqlite3.connect("main.sqlite")
         cursor = db.cursor()
         discordID = str(ctx.author.id)
@@ -641,6 +714,12 @@ class OiaLt(commands.Cog):
 
     @commands.command(aliases=['oialt collections', 'collectionso', 'collections oialt'])
     async def oCollections(self, ctx):
+        """
+        Provides an overview of a user's progress in all OiaLt collections.
+        ------------------------------------------------
+        Parameters:
+            - ctx : discord.ext.Context - discord-provided context to the command prompt.
+        """
         db = sqlite3.connect("main.sqlite")
         cursor = db.cursor()
         discordID = str(ctx.author.id)
@@ -766,6 +845,13 @@ class OiaLt(commands.Cog):
 
     @ogf.error
     async def errorGF(self, ctx, error):
+        """
+        Handles errors coming up from faulty use of the -egf command.
+        ------------------------------------------------
+        Parameters:
+            - ctx : discord.ext.Context - discord-provided context to the command prompt.
+            - error : str (?) - details of the error.
+        """
         if ctx.channel.id != self.botSpamChannel:
             embed = discord.Embed(title="Wrong channel!",
                                     description=f"Please take this to {self.client.get_channel(self.botSpamChannel).mention}", 
