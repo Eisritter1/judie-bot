@@ -7,8 +7,8 @@ from discord.ext.commands import CooldownMapping, Cooldown, BucketType
 import random
 import sqlite3
 # OWN LIBRARIES
-from Utilities import HelperClass, OgfCollections, OgfEffects, OgfResults, TimeObject
-from AccountManager import AccountManager
+from Utilities import HelperClass, OgfCollections, OgfEffects, OgfResults, TimeObject, check_channel
+from AccountManager import AccountManager, check_user
 from CharacterCard import OgfCharacterCard
 from OgfCharacters import OgfCharacters
 
@@ -58,41 +58,42 @@ class OiaLt(commands.Cog):
         cursor = db.cursor()
         discordID = str(ctx.author.id)
 
-        if await self.accountManager.checkUser(discord_id=discordID, cursor=cursor, ctx=ctx):
-            uid = await self.accountManager.getUserID(discordID=discordID, cursor=cursor)
+        uid = await self.accountManager.getUserID(discordID=discordID, cursor=cursor)
 
-            # Get last obtained character
-            cursor.execute("SELECT last_gf FROM oialt WHERE user_id=?", [uid])
-            lastGf = cursor.fetchone()
-            if lastGf is not None:
-                name = self.characterList.GetFilename(lastGf[0])
-            else:
-                name = "None"
+        # Get last obtained character
+        cursor.execute("SELECT last_gf FROM oialt WHERE user_id=?", [uid])
+        lastGf = cursor.fetchone()
+        if lastGf is not None:
+            name = self.characterList.GetFilename(lastGf[0])
+        else:
+            name = "None"
 
-            if lastGf is not None:
-                title = "Slow down dude!"
-                field_name = lastGf[0]
-                field_value = f"The last pull you made was {field_name}"
-                footer = "retry later mate..."
-            else:
-                title = "This is awkward..."
-                field_name = "Your last pull is... No one?"
-                field_value = "How could that happen..."
-                footer = "Might as well contact Eisritter#6969, sumn ain't right"
+        if lastGf is not None:
+            title = "Slow down dude!"
+            field_name = lastGf[0]
+            field_value = f"The last pull you made was {field_name}"
+            footer = "retry later mate..."
+        else:
+            title = "This is awkward..."
+            field_name = "Your last pull is... No one?"
+            field_value = "How could that happen..."
+            footer = "Might as well contact Eisritter#6969, sumn ain't right"
 
-            embed = discord.Embed(title=title, description=description, color=HelperClass.orange)
-            embed.set_footer(text=footer)
+        embed = discord.Embed(title=title, description=description, color=HelperClass.orange)
+        embed.set_footer(text=footer)
 
-            embed.add_field(name=field_name, value=field_value, inline=True)
+        embed.add_field(name=field_name, value=field_value, inline=True)
 
-            image = discord.File(f"./gfGameImages/{name}.webp", filename="gf.webp")
-            embed.set_image(url="attachment://gf.webp")
-            await ctx.send(file=image, embed=embed)
+        image = discord.File(f"./gfGameImages/{name}.webp", filename="gf.webp")
+        embed.set_image(url="attachment://gf.webp")
+        await ctx.send(file=image, embed=embed)
 
         cursor.close()
         db.close()
 
     @commands.command(aliases=["oialt gf", "gfo", "gf oialt"])
+    @commands.check(check_channel)
+    @check_user()
     async def ogf(self, ctx):
         """
         Draws a random character from the OiaLt game - cooldown 20h for public deployment.
@@ -100,31 +101,21 @@ class OiaLt(commands.Cog):
         Parameters:
             - ctx : discord.ext.Context - discord-provided context to the command prompt.
         """
-        # Check if in correct channel
-        if ctx.channel.id != self.botSpamChannel:
-            embed = discord.Embed(title="Wrong channel!",
-                                  description=f"Please take this to {self.client.get_channel(self.botSpamChannel).mention}",
-                                  color=HelperClass.orange)
-            ctx.command.reset_cooldown(ctx)
-            await ctx.send(embed=embed)
-        else:
-            db = sqlite3.connect("main.sqlite")
-            cursor = db.cursor()
-            discordID = str(ctx.author.id)
+        db = sqlite3.connect("main.sqlite")
+        cursor = db.cursor()
+        discordID = str(ctx.author.id)
 
-        
-            if await self.accountManager.checkUser(discord_id=discordID, cursor=cursor, ctx=ctx):
-                # Get UID
-                uid = await self.accountManager.getUserID(discordID, cursor)
-                # Choose a random character
-                gf = random.choice(self.characters)
-                # Update the DB
-                results = await self.updateDatabase(uid, gf)
-                # Build and send Embed
-                await self.createAndSendEmbed(ctx, character=gf, results=results)
+        # Get UID
+        uid = await self.accountManager.getUserID(discordID, cursor)
+        # Choose a random character
+        gf = random.choice(self.characters)
+        # Update the DB
+        results = await self.updateDatabase(uid, gf)
+        # Build and send Embed
+        await self.createAndSendEmbed(ctx, character=gf, results=results)
             
-            cursor.close()
-            db.close()
+        cursor.close()
+        db.close()
 
     async def createAndSendEmbed(self, ctx, character: OgfCharacterCard, results: OgfResults):
         """
@@ -507,6 +498,8 @@ class OiaLt(commands.Cog):
 
 
     @commands.command()
+    @commands.check(check_channel)
+    @check_user()
     async def oharem(self, ctx):
         """
         Provides an overview of a user's progress in collecting the OiaLt harem.
@@ -521,40 +514,42 @@ class OiaLt(commands.Cog):
         user_name = str(ctx.author.display_name)
         count = 0
 
-        if await self.accountManager.checkUser(discord_id=discordID, cursor=cursor, ctx=ctx):
-            members = []
-            missing = ["Aiko", "Carla", "Iris", "Jasmine", "Judie", "Lauren", "Messy Hair Lauren", "Rebecca"]
-            cursor.execute(
-                "SELECT judie, lauren, messy_hair_lauren, carla, iris, aiko, jasmine, rebecca FROM oialt_harem WHERE user_id=?",
-                [uid])
-            yesno = cursor.fetchone()
-            for i in yesno:
-                if i != 'NONE':
-                    count = count + 1
-                    members.append(i)
+        members = []
+        missing = ["Aiko", "Carla", "Iris", "Jasmine", "Judie", "Lauren", "Messy Hair Lauren", "Rebecca"]
+        cursor.execute(
+            "SELECT judie, lauren, messy_hair_lauren, carla, iris, aiko, jasmine, rebecca FROM oialt_harem WHERE user_id=?",
+            [uid])
+        yesno = cursor.fetchone()
+        for i in yesno:
+            if i != 'NONE':
+                count = count + 1
+                members.append(i)
 
-            for i in missing:
-                if i in members:
-                    missing.remove(i)
+        for i in missing:
+            if i in members:
+                missing.remove(i)
 
-            haremlist = "\n".join(members)
-            missinglist = "\n".join(missing)
+        haremlist = "\n".join(members)
+        missinglist = "\n".join(missing)
 
-            if haremlist == "":
-                haremlist = "You haven't collected anyone for your harem yet..."
+        if haremlist == "":
+            haremlist = "You haven't collected anyone for your harem yet..."
 
-            if missinglist == "":
-                missinglist = "You have completed the collection, congrats!"
+        if missinglist == "":
+            missinglist = "You have completed the collection, congrats!"
 
-            embed_title = f"OiaLt Harem of **{user_name}**:"
-            embed = discord.Embed(title=embed_title, color=HelperClass.orange)
-            embed.add_field(name=f"Claimed ({count}/8):", value=haremlist)
-            embed.add_field(name=f"Missing ({8 - count}/8):", value=missinglist)
-            await ctx.send(embed=embed)
+        embed_title = f"OiaLt Harem of **{user_name}**:"
+        embed = discord.Embed(title=embed_title, color=HelperClass.orange)
+        embed.add_field(name=f"Claimed ({count}/8):", value=haremlist)
+        embed.add_field(name=f"Missing ({8 - count}/8):", value=missinglist)
+        await ctx.send(embed=embed)
 
         cursor.close()
+        db.close()
 
     @commands.command()
+    @commands.check(check_channel)
+    @check_user()
     async def stabbyclan(self, ctx):
         """
         Provides an overview of a user's progress in collecting the clan of Stabby Mike personas.
@@ -569,29 +564,32 @@ class OiaLt(commands.Cog):
         user_name = str(ctx.author.display_name)
         count = 0
 
-        if await self.accountManager.checkUser(discord_id=discordID, cursor=cursor):
-            members = []
-            cursor.execute(
-                "SELECT police, hitman, yakuza, priest, exterminator, anastasia FROM stabby_mikes WHERE user_id=?",
-                [uid])
-            yesno = cursor.fetchone()
-            for i in yesno:
-                if i != 'NONE':
-                    count = count + 1
-                    members.append(i)
+        members = []
+        cursor.execute(
+            "SELECT police, hitman, yakuza, priest, exterminator, anastasia FROM stabby_mikes WHERE user_id=?",
+            [uid])
+        yesno = cursor.fetchone()
+        for i in yesno:
+            if i != 'NONE':
+                count = count + 1
+                members.append(i)
 
-            mikes = ", ".join(members)
+        mikes = ", ".join(members)
 
-            if mikes == "":
-                mikes = "You haven't collected anyone for your clan yet..."
+        if mikes == "":
+            mikes = "You haven't collected anyone for your clan yet..."
 
-            embed_title = f"Stabby Clan of {user_name}:"
-            embed = discord.Embed(title=embed_title, description=mikes, color=0xFFA800)
-            embed.set_footer(text=f"Progress: {count} / 6")
-            await ctx.send(embed=embed)
+        embed_title = f"Stabby Clan of {user_name}:"
+        embed = discord.Embed(title=embed_title, description=mikes, color=0xFFA800)
+        embed.set_footer(text=f"Progress: {count} / 6")
+        await ctx.send(embed=embed)
+
         cursor.close()
+        db.close()
 
     @commands.command()
+    @commands.check(check_channel)
+    @check_user()
     async def theboys(self, ctx):
         """
         Provides an overview of a user's progress in collecting the OiaLt homies.
@@ -606,28 +604,31 @@ class OiaLt(commands.Cog):
         user_name = str(ctx.author.display_name)
         count = 0
 
-        if await self.accountManager.checkUser(discord_id=discordID, cursor=cursor, ctx=ctx):
-            members = []
-            cursor.execute("SELECT mc, tom, oliver, fit_jack, asmodeus, hiromi FROM the_boys WHERE user_id=?",
-                           [uid])
-            yesno = cursor.fetchone()
-            for i in yesno:
-                if i != 'NONE':
-                    count = count + 1
-                    members.append(i)
+        members = []
+        cursor.execute("SELECT mc, tom, oliver, fit_jack, asmodeus, hiromi FROM the_boys WHERE user_id=?",
+                        [uid])
+        yesno = cursor.fetchone()
+        for i in yesno:
+            if i != 'NONE':
+                count = count + 1
+                members.append(i)
 
-            bois = ", ".join(members)
+        bois = ", ".join(members)
 
-            if bois == "":
-                bois = "You haven't collected anyone for your boys yet..."
+        if bois == "":
+            bois = "You haven't collected anyone for your boys yet..."
 
-            embed_title = f"The OiaLt Boys of {user_name}:"
-            embed = discord.Embed(title=embed_title, description=bois, color=0xFFA800)
-            embed.set_footer(text=f"Progress: {count} / 6")
-            await ctx.send(embed=embed)
+        embed_title = f"The OiaLt Boys of {user_name}:"
+        embed = discord.Embed(title=embed_title, description=bois, color=0xFFA800)
+        embed.set_footer(text=f"Progress: {count} / 6")
+        await ctx.send(embed=embed)
+
         cursor.close()
+        db.close()
 
     @commands.command()
+    @commands.check(check_channel)
+    @check_user()
     async def potentialLis(self, ctx):
         """
         Provides an overview of a user's progress in collecting the OiaLt side girls.
@@ -642,29 +643,32 @@ class OiaLt(commands.Cog):
         user_name = str(ctx.author.display_name)
         count = 0
 
-        if await self.accountManager.checkUser(discord_id=discordID, cursor=cursor, ctx=ctx):
-            members = []
-            cursor.execute(
-                "SELECT ava, lilith, fit_jack_groupie, train_conductor, shop_girl, stone_elephant FROM li_potential WHERE user_id=?",
-                [uid])
-            yesno = cursor.fetchone()
-            for i in yesno:
-                if i != 'NONE':
-                    count = count + 1
-                    members.append(i)
+        members = []
+        cursor.execute(
+            "SELECT ava, lilith, fit_jack_groupie, train_conductor, shop_girl, stone_elephant FROM li_potential WHERE user_id=?",
+            [uid])
+        yesno = cursor.fetchone()
+        for i in yesno:
+            if i != 'NONE':
+                count = count + 1
+                members.append(i)
 
-            potentials = ", ".join(members)
+        potentials = ", ".join(members)
 
-            if potentials == "":
-                potentials = "You haven't collected anyone for your potential LI's yet..."
+        if potentials == "":
+            potentials = "You haven't collected anyone for your potential LI's yet..."
 
-            embed_title = f"Potential OiaLt LI's of {user_name}:"
-            embed = discord.Embed(title=embed_title, description=potentials, color=0xFFA800)
-            embed.set_footer(text=f"Progress: {count} / 6")
-            await ctx.send(embed=embed)
+        embed_title = f"Potential OiaLt LI's of {user_name}:"
+        embed = discord.Embed(title=embed_title, description=potentials, color=0xFFA800)
+        embed.set_footer(text=f"Progress: {count} / 6")
+        await ctx.send(embed=embed)
+
         cursor.close()
+        db.close()
 
     @commands.command(aliases=["protectorso", "oprotections", "oprotection", "protectionso", "protectiono"])
+    @commands.check(check_channel)
+    @check_user()
     async def oprotectors(self, ctx):
         """
         Provides an overview of a user's progress in collecting the OiaLt protectors.
@@ -677,42 +681,45 @@ class OiaLt(commands.Cog):
         discordID = str(ctx.author.id)
         user_name = str(ctx.author.display_name)
 
-        # check if user registered & up to date
-        if await self.accountManager.checkUser(discord_id=discordID, cursor=cursor, ctx=ctx):
-            #   search thru 'eternum_harem' table for entries
-            uid = await self.accountManager.getUserID(discordID=discordID, cursor=cursor)
-            members = []
-            cursor.execute("SELECT funtime, mc, aiko, nine_three FROM oialt WHERE user_id = ?", [uid])
-            yesno = cursor.fetchone()
-            harem = "**Harem:**\nFuntime: :x:"
-            if yesno[0] == 1:
-                harem = "**Harem:**\nFuntime: ✅"
-            members.append(harem)
+        #   search thru 'eternum_harem' table for entries
+        uid = await self.accountManager.getUserID(discordID=discordID, cursor=cursor)
+        members = []
+        cursor.execute("SELECT funtime, mc, aiko, nine_three FROM oialt WHERE user_id = ?", [uid])
+        yesno = cursor.fetchone()
+        harem = "**Harem:**\nFuntime: :x:"
+        if yesno[0] == 1:
+            harem = "**Harem:**\nFuntime: ✅"
+        members.append(harem)
 
-            mikes = "**Stabby Clan:**\nMC: :x:"
-            if yesno[1] == 1:
-                mikes = "**Stabby Clan:**\nMC: ✅"
-            members.append(mikes)
+        mikes = "**Stabby Clan:**\nMC: :x:"
+        if yesno[1] == 1:
+            mikes = "**Stabby Clan:**\nMC: ✅"
+        members.append(mikes)
 
-            theboys = "**The Boys:**\nAiko: :x:"
-            if yesno[2] == 1:
-                theboys = "**The Boys:**\nAiko: ✅"
-            members.append(theboys)
+        theboys = "**The Boys:**\nAiko: :x:"
+        if yesno[2] == 1:
+            theboys = "**The Boys:**\nAiko: ✅"
+        members.append(theboys)
 
-            potentialLis = "**Potential LI's:**\n93: :x:"
-            if yesno[3] == 1:
-                potentialLis = "**Potential LI's:**\n93: ✅"
-            members.append(potentialLis)
+        potentialLis = "**Potential LI's:**\n93: :x:"
+        if yesno[3] == 1:
+            potentialLis = "**Potential LI's:**\n93: ✅"
+        members.append(potentialLis)
 
-            #   compile entries to list
-            protectorlist = "\n".join(members)
+        #   compile entries to list
+        protectorlist = "\n".join(members)
 
-            embed_title = f"OiaLt Protectors of **{user_name}**:"
-            #   build embed (color pink) with categories 'got x/y' + names & 'missing z/y' + names --> + emotes?
-            embed = discord.Embed(title=embed_title, description=protectorlist, color=HelperClass.orange)
-            await ctx.send(embed=embed)
+        embed_title = f"OiaLt Protectors of **{user_name}**:"
+        #   build embed (color pink) with categories 'got x/y' + names & 'missing z/y' + names --> + emotes?
+        embed = discord.Embed(title=embed_title, description=protectorlist, color=HelperClass.orange)
+        await ctx.send(embed=embed)
+
+        cursor.close()
+        db.close()
 
     @commands.command(aliases=['oialt collections', 'collectionso', 'collections oialt'])
+    @commands.check(check_channel)
+    @check_user()
     async def oCollections(self, ctx):
         """
         Provides an overview of a user's progress in all OiaLt collections.
@@ -728,122 +735,126 @@ class OiaLt(commands.Cog):
         homiecount = 0
         mikecount = 0
         potentialscount = 0
-        # check if user registered & up to date
-        if await self.accountManager.checkUser(discord_id=discordID, cursor=cursor, ctx=ctx):
-            embed_title = f"OiaLt Collections of **{user_name}**:"
-            embed = discord.Embed(title=embed_title, color=HelperClass.orange)
 
-            #   search thru tables for entries
-            uid = await self.accountManager.getUserID(discordID=discordID, cursor=cursor)
-            members = []
+        embed_title = f"OiaLt Collections of **{user_name}**:"
+        embed = discord.Embed(title=embed_title, color=HelperClass.orange)
 
-            # HAREM
-            cursor.execute(
-                "SELECT judie, lauren, messy_hair_lauren, carla, iris, aiko, jasmine, rebecca FROM oialt_harem WHERE user_id=?", [uid])
-            yesno = cursor.fetchone()
-            for i in yesno:
-                if i != 'NONE':
-                    haremcount = haremcount + 1
-                    members.append(i)
+        #   search thru tables for entries
+        uid = await self.accountManager.getUserID(discordID=discordID, cursor=cursor)
+        members = []
 
-            #   compile entries to list
-            haremlist = "\n".join(members)
+        # HAREM
+        cursor.execute(
+            "SELECT judie, lauren, messy_hair_lauren, carla, iris, aiko, jasmine, rebecca FROM oialt_harem WHERE user_id=?", [uid])
+        yesno = cursor.fetchone()
+        for i in yesno:
+            if i != 'NONE':
+                haremcount = haremcount + 1
+                members.append(i)
 
-            if haremlist == "":
-                haremlist = "You haven't collected anyone for your harem yet..."
-            embed.add_field(name=f"Harem: ({haremcount}/8):", value=haremlist)
+        #   compile entries to list
+        haremlist = "\n".join(members)
 
-            members = []
+        if haremlist == "":
+            haremlist = "You haven't collected anyone for your harem yet..."
+        embed.add_field(name=f"Harem: ({haremcount}/8):", value=haremlist)
 
-            # THE BOYS
-            cursor.execute(
-                "SELECT mc, tom, oliver, fit_jack, asmodeus, hiromi FROM the_boys WHERE user_id=?", [uid])
-            yesno = cursor.fetchone()
-            for i in yesno:
-                if i != 'NONE':
-                    homiecount = homiecount + 1
-                    members.append(i)
+        members = []
 
-            #   compile entries to list
-            homielist = "\n".join(members)
+        # THE BOYS
+        cursor.execute(
+            "SELECT mc, tom, oliver, fit_jack, asmodeus, hiromi FROM the_boys WHERE user_id=?", [uid])
+        yesno = cursor.fetchone()
+        for i in yesno:
+            if i != 'NONE':
+                homiecount = homiecount + 1
+                members.append(i)
 
-            if homielist == "":
-                homielist = "You haven't collected any of the boys yet..."
+        #   compile entries to list
+        homielist = "\n".join(members)
 
-            embed.add_field(name=f"The Boys: ({homiecount}/6):", value=homielist)
+        if homielist == "":
+            homielist = "You haven't collected any of the boys yet..."
 
-            members = []
+        embed.add_field(name=f"The Boys: ({homiecount}/6):", value=homielist)
 
-            # STABBY CLAN
-            cursor.execute(
-                "SELECT police, hitman, yakuza, priest, exterminator, anastasia FROM stabby_mikes WHERE user_id=?",
-                [uid])
-            yesno = cursor.fetchone()
-            for i in yesno:
-                if i != 'NONE':
-                    mikecount = mikecount + 1
-                    members.append(i)
+        members = []
 
-            # compile entries to list
-            mikelist = "\n".join(members)
+        # STABBY CLAN
+        cursor.execute(
+            "SELECT police, hitman, yakuza, priest, exterminator, anastasia FROM stabby_mikes WHERE user_id=?",
+            [uid])
+        yesno = cursor.fetchone()
+        for i in yesno:
+            if i != 'NONE':
+                mikecount = mikecount + 1
+                members.append(i)
 
-            if mikelist == "":
-                mikelist = "You haven't collected any Mike yet..."
-            embed.add_field(name=f"Stabby Clan: ({mikecount}/6):", value=mikelist)
+        # compile entries to list
+        mikelist = "\n".join(members)
 
-            # POTENTIAL LI'S
+        if mikelist == "":
+            mikelist = "You haven't collected any Mike yet..."
+        embed.add_field(name=f"Stabby Clan: ({mikecount}/6):", value=mikelist)
 
-            members = []
+        # POTENTIAL LI'S
 
-            cursor.execute(
-                "SELECT ava, lilith, fit_jack_groupie, train_conductor, shop_girl, stone_elephant FROM li_potential WHERE user_id=?",
-                [uid])
-            yesno = cursor.fetchone()
-            for i in yesno:
-                if i != 'NONE':
-                    potentialscount = potentialscount + 1
-                    members.append(i)
+        members = []
 
-            #   compile entries to list
-            potentialslist = "\n".join(members)
+        cursor.execute(
+            "SELECT ava, lilith, fit_jack_groupie, train_conductor, shop_girl, stone_elephant FROM li_potential WHERE user_id=?",
+            [uid])
+        yesno = cursor.fetchone()
+        for i in yesno:
+            if i != 'NONE':
+                potentialscount = potentialscount + 1
+                members.append(i)
 
-            if potentialslist == "":
-                potentialslist = "You haven't collected any of the potential LI's yet..."
-            embed.add_field(name=f"Potential LI's: ({potentialscount}/6):", value=potentialslist)
+        #   compile entries to list
+        potentialslist = "\n".join(members)
 
-            # Protectors
+        if potentialslist == "":
+            potentialslist = "You haven't collected any of the potential LI's yet..."
+        embed.add_field(name=f"Potential LI's: ({potentialscount}/6):", value=potentialslist)
 
-            members = []
-            cursor.execute("SELECT funtime, mc, aiko, nine_three FROM oialt WHERE user_id = ?", [uid])
-            yesno = cursor.fetchone()
-            harem = "**Harem:**\nFuntime: :x:"
-            if yesno[0] == 1:
-                harem = "**Harem:**\nFuntime: ✅"
-            members.append(harem)
+        # Protectors
 
-            mikes = "**Stabby Clan:**\nMC: :x:"
-            if yesno[1] == 1:
-                mikes = "**Stabby Clan:**\nMC: ✅"
-            members.append(mikes)
+        members = []
+        cursor.execute("SELECT funtime, mc, aiko, nine_three FROM oialt WHERE user_id = ?", [uid])
+        yesno = cursor.fetchone()
+        harem = "**Harem:**\nFuntime: :x:"
+        if yesno[0] == 1:
+            harem = "**Harem:**\nFuntime: ✅"
+        members.append(harem)
 
-            theboys = "**The Boys:**\nAiko: :x:"
-            if yesno[2] == 1:
-                theboys = "**The Boys:**\nAiko: ✅"
-            members.append(theboys)
+        mikes = "**Stabby Clan:**\nMC: :x:"
+        if yesno[1] == 1:
+            mikes = "**Stabby Clan:**\nMC: ✅"
+        members.append(mikes)
 
-            potentialLis = "**Potential LI's:**\n93: :x:"
-            if yesno[3] == 1:
-                potentialLis = "**Potential LI's:**\n93: ✅"
-            members.append(potentialLis)
+        theboys = "**The Boys:**\nAiko: :x:"
+        if yesno[2] == 1:
+            theboys = "**The Boys:**\nAiko: ✅"
+        members.append(theboys)
 
-            #   compile entries to list
-            protectorlist = "\n".join(members)
+        potentialLis = "**Potential LI's:**\n93: :x:"
+        if yesno[3] == 1:
+            potentialLis = "**Potential LI's:**\n93: ✅"
+        members.append(potentialLis)
 
-            embed.add_field(name="Protections:", value=protectorlist)
+        #   compile entries to list
+        protectorlist = "\n".join(members)
 
-            await ctx.send(embed=embed)
+        embed.add_field(name="Protections:", value=protectorlist)
+
+        await ctx.send(embed=embed)
+
+        cursor.close()
+        db.close()
 
     @ogf.error
+    @commands.check(check_channel)
+    @check_user()
     async def errorGF(self, ctx, error):
         """
         Handles errors coming up from faulty use of the -egf command.
@@ -852,12 +863,7 @@ class OiaLt(commands.Cog):
             - ctx : discord.ext.Context - discord-provided context to the command prompt.
             - error : str (?) - details of the error.
         """
-        if ctx.channel.id != self.botSpamChannel:
-            embed = discord.Embed(title="Wrong channel!",
-                                    description=f"Please take this to {self.client.get_channel(self.botSpamChannel).mention}", 
-                                    color=HelperClass.orange)
-            await ctx.send(embed=embed)
-        elif isinstance(error, commands.CommandOnCooldown):
+        if isinstance(error, commands.CommandOnCooldown):
             await self.displayLastGF(ctx, error.retry_after)
 
 

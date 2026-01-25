@@ -1,5 +1,7 @@
 from CharacterCard import CharacterCard
 from Utilities import Collections, Effects
+from os import listdir
+from os.path import isfile, join
 
 
 class EgfCharacters:
@@ -12,6 +14,7 @@ class EgfCharacters:
     def __init__(self):
         self.characters = []
         self.setup()
+        # set picNumbers dynamically? -> scan thru images folder and count number of files that start with 'filename_' => end of setup()
 
     def setup(self):
         # CHARACTER CARDS
@@ -63,7 +66,9 @@ class EgfCharacters:
                     "You just want to see my tits!", "You're a real pain, you know that?",
                     "Who knows what you could do to my precious apartment while I'm pretty much unconscious",
                     "Thank you for rescuing me from those villainous villains with your super strength, Orion!",
-                    "Anyway, let's not get all sappy like a bunch of drama nerds."],
+                    "Anyway, let's not get all sappy like a bunch of drama nerds.",
+                    "You better start talking or I'll paint the snow red with your blood!",
+                    "I have a theory that some of the best activities in life involve a bit of sweat."],
             filename="alex",
             aliases="Alex, Orion's lil' super-soaker, Neptune",
             collection=Collections.HAREM
@@ -173,9 +178,13 @@ class EgfCharacters:
         Arannis = CharacterCard(
             name="Arannis Thornvale",
             picNumber=1,
-            quotes=["It is precisely such mercy that elevates us above your wretched kind."],
+            quotes=["It is precisely such mercy that elevates us above your wretched kind.", 
+                    "You will not grow stronger by sparring with toys.", 
+                    "You speak of strength, and yet all I see is delusion and madness.",
+                    "Strike me now before the eyes of the Ancients! Let the gods bear witness to your treason!",
+                    "A throne won by blood and treachery is a throne cursed to ruin."],
             filename="arannis",
-            aliases="General Arannis, General of the Royal Guard"
+            aliases="General Arannis, General of the Royal Guard, The Morning Sword, Hammer of Iron"
         )
         self.characters.append(Arannis)
 
@@ -263,7 +272,9 @@ class EgfCharacters:
             name="Giuseppe Bellini",
             picNumber=1,
             quotes=["As much as I'm savoring this, I'm here to talk business.",
-                    "Un pasto squisito, amico mio. Truly."],
+                    "Un pasto squisito, amico mio. Truly.",
+                    "Can I offer you some wine, my friend?",
+                    "*Il rispetto non si chiede... si guadagna."],
             filename="bellini"
         )
         self.characters.append(Bellini)
@@ -343,11 +354,16 @@ class EgfCharacters:
                     "They say I am a *weapon*. A *tool*. How dare they... I obey no one!",
                     "You did not just grab me and handle me as if I were some lowly servant.",
                     "What do you mistake me for, some kind of common harlot who gets naked without reciprocation?",
-                    "You shall be granted a special place in my court when I reign over Hyril'ar once more."],
+                    "You shall be granted a special place in my court when I reign over Hyril'ar once more.",
+                    "B-By the grace of the Ancients, Orion... Did your time in the dungeons teach you nothing?",
+                    "Please, remain silent. You are disturbing my inner peace.",
+                    "I am fond of my horse as well, but that does not mean I intend to bed it.",
+                    "G-Get that indecent look off your face!",
+                    "The Princess of Hyril'Ar falling for a human. Can you believe it?"],
             filename="calypso",
             effects=Effects.HAREM_SAVIOUR,
             aliases="Daughter of Raewyn, Princess of the Sy-tel-quessir, Princess of the Hyril'ar Realm, Carrie, Gaia, Caly, Warden of the Eternal Soul",
-            collection=Collections.SIDE_DISHES
+            collection=Collections.HAREM
         )
         self.characters.append(Calypso)
 
@@ -388,9 +404,11 @@ class EgfCharacters:
                     "My future family of 13 is in your hands!",
                     "I'd recognize those broad, masculine, thick, solid, tight shoulders from a mile away!",
                     "\*Sobbing\* My god, you're so fucking beautiful, bro.",
-                    "Agh... Okay I'll be Leia"],
+                    "Agh... Okay I'll be Leia",
+                    "It was a night that would make poets weep and bards retire.",
+                    "If you ever break the heart of that angelic soul, I'm gonna have to kill you."],
             filename="chang",
-            aliases="Chang the Ladies' man, Chang the Socialite, Chang the Heist Meister",
+            aliases="Roberto Canchez, Chang the Ladies' man, Chang the Socialite, Chang the Heist Meister, Chang the Velvet Blade",
             collection=Collections.THE_HOMIES
         )
         self.characters.append(Chang)
@@ -507,7 +525,8 @@ class EgfCharacters:
                     "You're goddamn right! I'm strong! Nothing's gonna stop me!",
                     "Never let it be said that Dalia doesn't honour her bets.",
                     "I'm not one to shy away from a competition, no matter the circumstances.",
-                    "I like it when you get all \"romantico\""],
+                    "I like it when you get all \"romantico\"",
+                    "I swear, whoever's holding him better pray I don't find them first."],
             filename="dalia",
             effects=Effects.HOMIE_SAVIOUR,
             aliases="Dalia the Explorer, Mars",
@@ -738,7 +757,8 @@ class EgfCharacters:
                     "You need to spend more time with us! You've lost your accent!",
                     "I guess you must be Luna's boyfriend.",
                     "OH SHIT, the chilaquiles",
-                    "You see, I'm running a cartel and a human trafficking ring."],
+                    "You see, I'm running a cartel and a human trafficking ring.",
+                    "Órale, que tal. Mira, tengo una chamba para ti."],
             filename="hugo",
             aliases="Luna's uncle"
         )
@@ -749,7 +769,8 @@ class EgfCharacters:
             name="Idriel",
             picNumber=5,
             quotes=["Are you enjoying your experience in Eternum so far?",
-                    "Maybe you're not asking the right questions..."],
+                    "Maybe you're not asking the right questions...",
+                    "What makes something real, I wonder?"],
             filename="idriel",
             aliases="The Eternum Lady, Eternum's AI",
             collection=Collections.SIDE_DISHES
@@ -909,8 +930,10 @@ class EgfCharacters:
         Lorelei = CharacterCard(
             name="Lorelei Thornvale",
             picNumber=1,
-            quotes=["You can... speak so fluently?"],
-            filename="lorelei"
+            quotes=["You can... speak so fluently?",
+                    "I-I merely possess a keen interest in human biology."],
+            filename="lorelei",
+            collection=Collections.SIDE_DISHES
         )
         self.characters.append(Lorelei)
 
@@ -940,18 +963,22 @@ class EgfCharacters:
         Luna = CharacterCard(
             name="Luna Hernandez",
             picNumber=16,
-            quotes=["Thank you for everything you said. It was... sweet.",
-                    "I'm sorry. I didn't mean to scare you.",
-                    "I... like the feel of silk and velvet, that's all.",
-                    "At 1 month and 14 days post-mortem... only the bones remain.",
-                    "At least he doesn't call me a weirdo like everyone else.",
-                    "Don't look into the room on the right. My father's corpse is still there.",
-                    "You have a very... g-good body.",
-                    "Gracias por venir. Me gusta mucho pasar tiempo contigo.",
-                    "I'm sure my family wouldn't mind. They really liked you.",
-                    "I... I feel safe when I'm with you."],
+            quotes=[
+                "Thank you for everything you said. It was... sweet.",
+                "I'm sorry. I didn't mean to scare you.",
+                "I... like the feel of silk and velvet, that's all.",
+                "At 1 month and 14 days post-mortem... only the bones remain.",
+                "At least he doesn't call me a weirdo like everyone else.",
+                "Don't look into the room on the right. My father's corpse is still there.",
+                "You have a very... g-good body.",
+                "Gracias por venir. Me gusta mucho pasar tiempo contigo.",
+                "I'm sure my family wouldn't mind. They really liked you.",
+                "I... I feel safe when I'm with you.",
+                "Y-You goof!",
+                "You mean the world to me. More than you can probably realize."
+            ],
             filename="luna",
-            aliases="Ganymede, Lunita, Luny",
+            aliases="Ganymede, Lunita, Luny, Mia Smith",
             collection=Collections.HAREM
         )
         self.characters.append(Luna)
@@ -1133,7 +1160,8 @@ class EgfCharacters:
                     "Then I'll expand the Empire to other servers. The WRE knows no borders.",
                     "I don't seem to see any Praetorians around... do you?",
                     "It's like we're fighting against fate or destiny or something like that.",
-                    "Ah, young love... my little princesses grew up too fast!"],
+                    "Ah, young love... my little princesses grew up too fast!",
+                    "\*Moans\* Will you... make me... beg...?"],
             filename="nancy",
             aliases="Nan, Empress of the Western Roman Empire, Saturn",
             collection=Collections.HAREM
@@ -1180,7 +1208,8 @@ class EgfCharacters:
                     "\*giggles\* A magician never explains his tricks.",
                     "And that's how you play Eternum!",
                     "I swear, if *anything* goes wrong, I'm gonna die.",
-                    "Any last comments before getting down to business?"],
+                    "Any last comments before getting down to business?",
+                    "\*Mumbling\* The numbers... what do they even mean??"],
             filename="nova",
             aliases="Delilah Warren, Mercury",
             collection=Collections.HAREM
@@ -1207,10 +1236,12 @@ class EgfCharacters:
                     "Damn, these whiskeys sure are taking a while, aren't they?",
                     "As a fan of big speeches myself, I must admit that your boss delivered a pretty good one.",
                     "Sometimes I feel like I can ace pretty much everything I try to do here.",
-                    "(Hmm, these barrels are quite big. I could probably squeeze myself into one.)"],
+                    "(Hmm, these barrels are quite big. I could probably squeeze myself into one.)",
+                    "Dude, you're such a hater.",
+                    "Mmm, I can trade you a cookie for a kiss."],
             filename="orion",
             effects=Effects.SIDE_GIRL_SAVIOUR,
-            aliases="MC, Orion Holmes, Orion the Merciful, Jupiter",
+            aliases="MC, Alek Claimant, Orion Holmes, Orion the Merciful, Jupiter, Sir Grothelborn of Kredon",
             collection=Collections.THE_HOMIES
         )
         self.characters.append(Orion)
@@ -1250,7 +1281,9 @@ class EgfCharacters:
                     "I'm not up to anything. I'm a good girl.",
                     "You're such a dork. You're lucky I think you're cute.",
                     "No matter the occasion, one should always dress sexy and stylish!",
-                    "There are tons of hot guys hitting on me literally EVERY DAY."],
+                    "There are tons of hot guys hitting on me literally EVERY DAY.",
+                    "Did you come up with that comeback on your own? Or did you ask for advice on r/clevercomebacks again?",
+                    "I'll make sure all your Christmases feel special from now on..."],
             filename="penny",
             aliases="Penny, miss_penny, best tits on instagram, Venus, Penelope Paige Carter",
             collection=Collections.HAREM
@@ -1633,7 +1666,8 @@ class EgfCharacters:
                     "You're not even worth the trouble.",
                     "I'm surrounded by idiots fucking everywhere.",
                     "Perhaps I was overestimating you after all."],
-            filename="william"
+            filename="william",
+            aliases="C.E.O. of Ulysses, William 'huge-ass forehead' Bardot, Baldy Bardot"
         )
         self.characters.append(William)
 
@@ -1686,3 +1720,211 @@ class EgfCharacters:
             filename="zippy"
         )
         self.characters.append(Zippy)
+
+        # 142
+        ElfGuard1 = CharacterCard(
+            name="Elven Guard 1",
+            picNumber=1,
+            quotes=["Oh come on, if I can't compliment our Princess' creamy tits to my friend and a few rats, I might as well quit this job."],
+            filename="elf_guard1"
+        )
+        self.characters.append(ElfGuard1)
+
+        #143
+        ElfGuard2 = CharacterCard(
+            name="Elven Guard 2",
+            picNumber=1,
+            quotes=["The bastard really thought he could make a bargain with the Princess' life..."],
+            filename="elf_guard2"
+        )
+        self.characters.append(ElfGuard2)
+
+        #144
+        Sylax = CharacterCard(
+            name="Regent Sylax",
+            picNumber=3,
+            quotes=["The stench is even more nauseating than I anticipated.", 
+                    "The Council will determine the degree of your punishment.", 
+                    "Please. Even the humblest of our farmers could best you in a duel.",
+                    "By Turska's mercy, get to the point.",
+                    "Hyril'Ar demands rebirth."],
+            filename="sylax"
+        )
+        self.characters.append(Sylax)
+
+        # 145
+        Elenwen = CharacterCard(
+            name="Regent Elenwen",
+            picNumber=1,
+            quotes=["You have no rightful place among us.", "Not only is he weak, but his people have lost even the pride that once defined them."],
+            filename="elenwen"
+        )
+        self.characters.append(Elenwen)
+
+        #146
+        Thorund = CharacterCard(
+            name="Regent Thorund",
+            picNumber=2,
+            quotes=["\*Disdainfully\* Silence."],
+            filename="thorund",
+            aliases="High Chancellor of Hyril'Ar"
+        )
+        self.characters.append(Thorund)
+
+        # 147
+        Thorund_Daughter = CharacterCard(
+            name="Regent Thorund's Daughter",
+            picNumber=1,
+            quotes=["If you have any question of your own, speak now."],
+            filename="thorund_daughter"
+        )
+        self.characters.append(Thorund_Daughter)
+
+        # 148
+        Innkeeper = CharacterCard(
+            name="John",
+            picNumber=1,
+            quotes=["I'm as powerless as one can be! No sex dungeons I swear!"],
+            filename="innkeeper",
+            aliases="The Innkeeper"
+        )
+        self.characters.append(Innkeeper)
+
+        # 149
+        ElfGuard3 = CharacterCard(
+            name="Sir Pyrand",
+            picNumber=1,
+            quotes=["You will serve as a reminder that no one defies Hyril'Ar, you filthy human.",
+                    "\*Whispering\* Soon, Lord Sylax will rule as the sole regent and restore this realm to its former glory.",
+                    "\*Whispering\* The age of shame... is over."],
+            filename="elf_guard3",
+            aliases="Elf Guard [3]"
+        )
+        self.characters.append(ElfGuard3)
+
+        #150
+        Thalindra = CharacterCard(
+            name="Thalindra",
+            picNumber=1,
+            quotes=["Lady Calypso!", "Of course, Your Grace!"],
+            filename="thalindra",
+            aliases="Calypso's Maid"
+        )
+        self.characters.append(Thalindra)
+
+        # 151
+        Briena = CharacterCard(
+            name="Lady Briena",
+            picNumber=1,
+            quotes=["Nature thrives on release, not restraint."],
+            filename="briena",
+            aliases="The Druid"
+        )
+        self.characters.append(Briena)
+
+        # 152
+        Chamberlain = CharacterCard(
+            name="Court Chamberlain",
+            picNumber=1,
+            quotes=[
+                "It shall be done as your command.",
+                "For starters, do not speak unless you are given permission, human.",
+                "Make love to the canvas and let it feed upon your passion!"
+            ],
+            filename="chamberlain"
+        )
+        self.characters.append(Chamberlain)
+
+        # 153
+        Fael = CharacterCard(
+            name="Lord Fael of Thirinvale",
+            picNumber=4,
+            quotes=["I seek to unite our noble houses, [and] usher Hyril'Ar into an era of brilliance it has yet to behold[.]"],
+            filename="fael",
+            aliases="Heir of Thirinvale, Victor of the Sunlance Tournament"
+        )
+        self.characters.append(Fael)
+
+        # 154
+        Orym = CharacterCard(
+            name="Lord Orym of Ilvenmyr",
+            picNumber=3,
+            quotes=["I tremble before your radiance, Your Grace."],
+            filename="orym",
+            aliases="Sworn Sword of Honor"
+        )
+        self.characters.append(Orym)
+
+        #155
+        Torion = CharacterCard(
+            name="Lord Torion of Redveil",
+            picNumber=4,
+            quotes=["Choose me, Princess, and I shall give you sons and daughters born of fire and fury. Children who will tower like oaks and march like storms!",
+                    "Should your path ever lead you to Redveil, you would be most welcome. We always open our gates to knights of your caliber."],
+            filename="torion"
+        )
+        self.characters.append(Torion)
+
+        #156
+        Powell = CharacterCard(
+            name="Adrian Powell",
+            picNumber=1,
+            quotes=[
+                "Here at Ulysses, we respect women and believe in gender equality. What the fuck is your problem?",
+                "Any self-respecting gentleman should always wear a nice tie... Not like fucking Toby.",
+                "You two have some *impressive* resumes. Haven't seen ones this polished since that guy who faked his diploma.",
+                "Everyone knows *real* businessmen only use cocaine anyway. Or microdoses of LSD.",
+                "The memory of Tigoryakhovgrad will prevail as long as we remember it.",
+                "Tell that Toby douche to hold an isometric air squat until it's his turn."
+            ],
+            filename="powell"
+        )
+        self.characters.append(Powell)
+
+        # 157
+        Ableman = CharacterCard(
+            name="Ian Ableman",
+            picNumber=1,
+            quotes=["\*Chuckles\* My advice? Don't hold back. If you get a chance to outshine your companion, take it. They'll like that."],
+            filename="ableman"
+        )
+        self.characters.append(Ableman)
+
+        # 158
+        Anderson = CharacterCard(
+            name="Toby Anderson",
+            picNumber=1,
+            quotes=["\*Awkward laugh\* Ha-hah, y-yeah, right."],
+            filename="anderson"
+        )
+        self.characters.append(Anderson)
+
+        # 159
+        Agatha = CharacterCard(
+            name="Agatha",
+            picNumber=1,
+            quotes=["Good evening, folks! Welcome aboard the Cascadian Express."],
+            filename="agatha",
+            aliases="Train Conductor"
+        )
+        self.characters.append(Agatha)
+
+        # 160
+        Rowan = CharacterCard(
+            name="Rowan",
+            picNumber=1,
+            quotes=["The game's about to start and I can't find the damn gin."],
+            filename="rowan"
+        )
+        self.characters.append(Rowan)
+
+
+        egf_path = f"./EternumGfGameImages/"
+        # auto-set picNumber values:
+        for chara in self.characters:
+            # count n(files) with format chara.filename_x
+            matches = []
+            for f in listdir(egf_path):
+               if isfile(join(egf_path, f)) and (f[:-7] == chara.filename or f[:-8] == chara.filename):
+                   matches.append(f);
+            chara.picNumber = len(matches)

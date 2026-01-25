@@ -21,7 +21,7 @@ client.CogsToActivate = []
 load_dotenv()
 TOKEN = os.getenv("TOKEN")
 
-extensions = [OiaLt(client), Nsfw(client), Eternum(client), AccountManager(client)]
+extensions = [AccountManager(client), OiaLt(client), Nsfw(client), Eternum(client)]
 status = cycle(
     ["-help", "-help misc", "-help oialt", "-help eternum", "-help nsfw", "-ogf", "-oharem", "-stabbyclan", "-theboys",
      "-potentialLis", "-ocollections", "-oprotectors", "-nsfw", "-egf", "-eharem", "-homies", "-sidegirls",
@@ -45,6 +45,8 @@ async def on_ready():
     
     await client.config.load()
     HelperClass.init(client)
+    # Lil inconvenient to have AccountManager initialized as both a cog and variable of the client, don't you think?
+    client.accountManager = AccountManager(client)
     await createDatabase()
     changeGameActivity.start()
 
@@ -205,7 +207,7 @@ async def help(ctx, plugin=None):
 
         field_names.append("-eharem (eternum harem)")
         field_values.append(
-            "check your progress in the harem collection\n--> Contains **Alex, Annie, Dalia, Luna, Nancy, Nova & Penny**")
+            "check your progress in the harem collection\n--> Contains **Alex, Annie, Calypso, Dalia, Luna, Nancy, Nova & Penny**")
 
         field_names.append("-homies (the homies)")
         field_values.append(
@@ -213,7 +215,7 @@ async def help(ctx, plugin=None):
 
         field_names.append("-sidegirls")
         field_values.append(
-            "check your progress in the side girl collection\n--> Contains **Blue Fox Maiden, Calypso, Eva, Idriel, Maat, Red Fox Maiden & Wenlin**")
+            "check your progress in the side girl collection\n--> Contains **Blue Fox Maiden, Eva, Idriel, Lorelei, Maat, Red Fox Maiden & Wenlin**")
 
         field_names.append("-creatures")
         field_values.append(
@@ -451,10 +453,47 @@ async def createDatabase():
 #endregion
 
     #region DB update code
-    #try:
+    # SQLite extra guides because I'll forget otherwise:
+        # if EXISTS not supported in ALTER TABLE statements
+        # UPDATE [table_name]
+        # DROP COLUMN not supported as an ALTER TABLE function
+    try:
         # SQL here
-    #except Exception as e:
-        #print(e)
+        cursor.execute("""
+            ALTER TABLE eternum_harem ADD COLUMN calypso TEXT DEFAULT NONE
+        """)
+    except Exception as e:
+        print(f"[Add new column calypso] {e}")
+
+    try:
+        cursor.execute("""
+            UPDATE eternum_harem 
+            SET calypso = (
+                SELECT side_girls.calypso
+                FROM side_girls
+                WHERE eternum_harem.user_id = side_girls.user_id
+            ) WHERE EXISTS (
+                SELECT 1
+                FROM side_girls
+                WHERE eternum_harem.user_id = side_girls.user_id
+            )
+        """)
+    except Exception as e:
+        print(f"[Transfer Calypso values to Harem] {e}")
+
+    try:
+        cursor.execute("""
+            ALTER TABLE side_girls RENAME COLUMN calypso TO lorelei
+        """)
+    except Exception as e:
+        print(f"[Rename old column calypso to lorelei] {e}")
+
+    try:
+        cursor.execute("""
+            UPDATE side_girls SET lorelei = 'NONE'
+        """)
+    except Exception as e:
+        print(f"[Reset lorelei column] {e}")
     #endregion
 
     db.commit()

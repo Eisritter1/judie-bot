@@ -121,12 +121,15 @@ class Nsfw(commands.Cog):
 
     Alex = NsfwCharacterCard(name="Alex",
                              picNumber=9,
-                             quotes=["Oh you didn't know? Orion and I are fucking. Like rabbits."],
+                             quotes=["Oh you didn't know? Orion and I are fucking. Like rabbits.",
+                                     "Now my skin can finally breathe.",
+                                     "Do you wanna give Orion a show he'll never forget...?"],
                              footers=["You wouldn't want my daddy to hear us, would you...?",
                                       "Did you even listen to a word I just said? Because it looked like you were "
                                       "staring at my tits the whole time.",
                                       "I'm just a sweet and innocent princess, I can't possibly imagine what you have "
-                                      "in that dirty mind of yours."],
+                                      "in that dirty mind of yours.",
+                                      "Don't act all shy now!"],
                              game="Eternum")
 
     Annie = NsfwCharacterCard(name="Annie",
@@ -137,14 +140,19 @@ class Nsfw(commands.Cog):
 
     Calypso = NsfwCharacterCard(name="Calypso",
                                 picNumber=1,
-                                quotes=["You look... \"hot as fuck\" as well."],
-                                footers=["Holy Mother of Turska!"],
+                                quotes=[
+                                    "You look... \"hot as fuck\" as well.",
+                                    "\*Whispers\* It is... better than I anticipated..."
+                                ],
+                                footers=["Holy Mother of Turska!", "\*Whispers\* What kind of curse is this...?"],
                                 game="Eternum")
 
     Dalia = NsfwCharacterCard(name="Dalia",
                               picNumber=9,
-                              quotes=["\*Panting\* T-Too much... d-dick... N-Need... oxygen!"],
-                              footers=["*cum in my mouth.*"],
+                              quotes=["\*Panting\* T-Too much... d-dick... N-Need... oxygen!",
+                                      "I don't know how, but somehow... it's always Orion who ends up winning."],
+                              footers=["*cum in my mouth.*",
+                                       "Y-You're both nuts..."],
                               game="Eternum")
 
     EvaTroll = NsfwCharacterCard(name="SnoopWho",
@@ -166,17 +174,37 @@ class Nsfw(commands.Cog):
                                    footers=[""],
                                    game="Eternum")
 
+    Lorelei = NsfwCharacterCard(
+        name="Lorelei",
+        picNumber=0,
+        quotes=[
+            "I-I merely thought that a display of visually stimulating... a-activity might help the Princess.", 
+            "H-Heavens above... I cannot... breathe properly when it is in my mouth..."
+        ],
+        footers=[
+            "I'm curious from a purely academically perspective, naturally.", 
+            "Both the Ancients and the Law will look the other way tonight.",
+            "For you, Your Grace... anything..."
+        ],
+        game="Eternum"
+    )
+
     Luna = NsfwCharacterCard(name="Luna",
                              picNumber=5,
                              quotes=["Thank you for everything you said. It was... sweet.",
                                      "If you really don't mind... I won't say no. You've convinced me!",
                                      "I want you to keep massaging me",
-                                     "OH M-MY GOD. Y-You're inside"],
+                                     "OH M-MY GOD. Y-You're inside",
+                                     "T-THat is... q-quite a sensation...",
+                                     "G-God, w-what are you doing to meeee...?",
+                                     "Por el amor de dios, no pares...",
+                                     "\*T-That was the most intense thirty seconds of my whole life...\*"],
                              footers=["It's amazing!",
                                       "I think that's a treatment plan I can follow",
                                       "I love the feeling of your hands.",
                                       "I-I want you to touch me.",
-                                      "**F-FUCK**"],
+                                      "**F-FUCK**",
+                                      "Make me yours..."],
                              game="Eternum")
 
     Maat = NsfwCharacterCard(name="Maat",
@@ -231,11 +259,13 @@ class Nsfw(commands.Cog):
                                       "In the interest of science... do you wanna feel for yourself? You've caught me in a pretty good mood.",
                                       "Orion Junior over there was constantly poking me down here, in case you didn't notice.",
                                       "How about I give you a little memory that'll truly be unforgettable...",
-                                      "I rejected all their requests, but here I am doing it for free, for some high school kid with a fat dick."],
+                                      "I rejected all their requests, but here I am doing it for free, for some high school kid with a fat dick.",
+                                      "Mom said no snacking before dinner..."],
                               footers=["Isn 't there anything I can do for you to forgive me?",
                                        "Treat yourself...",
                                        "You're a filthy little degenerate.",
-                                       "How'd you convince me to get you off in my archenemy's room?"],
+                                       "How'd you convince me to get you off in my archenemy's room?",
+                                       "Like what you see...?"],
                               game="Eternum")
 
     Wenlin = NsfwCharacterCard(name="Wenlin",

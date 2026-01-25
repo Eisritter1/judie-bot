@@ -52,14 +52,14 @@ def check_user(expectFail: bool = False):
                 footer="Enjoy your time!"
             )
         await ctx.send(embed=embed)
-
-        raise commands.CheckFailure("User registration state does not match expectation.")
+        print(f"[ERROR] User registration state does not match expectation.")
     return commands.check(predicate)
 
 
 class AccountManager(commands.Cog):
     def __init__(self, client):
         self.client = client
+        client.accountManager = self
 
     deletionPromptMsgIDs = {}
     """
@@ -69,14 +69,10 @@ class AccountManager(commands.Cog):
     """
     A dictionary linking users to their message requesting data deletion.
     """
-    usersRequestingDeletion = []
-    """
-    A list of users having requested deletion of their data.
-    """
 
     # HELPER FUNCTIONS
 
-    async def getUserID(discordID, cursor):
+    async def getUserID(self, discordID, cursor):
         """
         Fetches a user's ID in the database paired to their discord ID.
 
@@ -162,8 +158,7 @@ class AccountManager(commands.Cog):
             msg = await ctx.message.reply("Are you sure you want to delete **all** your data?"
                                           "\nThis action is irreversible! (React to the checkmark to confirm. Ignore to cancel)")
             self.deleteRequestMessages.update({ctx.author: ctx.message})
-            self.deletionPromptMsgIDs.update({ctx.author: msg.id})
-            self.usersRequestingDeletion.append(ctx.author)
+            self.deletionPromptMsgIDs.update({msg.id: ctx.author})
             await msg.add_reaction('✅')
 
             # Add scheduling of timeout event here
@@ -177,17 +172,20 @@ class AccountManager(commands.Cog):
         if len(self.deleteRequestMessages) == 0:
             return
 
-        db = sqlite3.connect("main.sqlite")
-        cursor = db.cursor()
-        discordID = str(self.deleteRequestMessages.author.id)
+        if payload.message_id in self.deletionPromptMsgIDs.keys():
+            db = sqlite3.connect("main.sqlite")
+            cursor = db.cursor()
+            author = self.deletionPromptMsgIDs.get(payload.message_id)
 
-        author = self.deleteRequestMessages.author
-        uid = await self.getUserID(discordID=discordID, cursor=cursor)
-        user_name = str(author.display_name)
-        channel = self.client.get_channel(self.deleteRequestMessages.channel.id)
+            if author.id == payload.user_id:
+                discordID = str(author.id)
 
-        if self.deletionPromptMsgIDs == payload.message_id:
-            if author == payload.user_id:
+                uid = await self.getUserID(discordID=discordID, cursor=cursor)
+                user_name = str(author.display_name)
+                request_message = self.deleteRequestMessages.get(author);
+                channel = self.client.get_channel(request_message.channel.id)
+
+
                 tables = ['users', 'oialt', 'oialt_harem', 'stabby_mikes', 'the_boys', 'li_potential', 
                           'eternum', 'eternum_harem', 'homies', 'side_girls', 'creatures']
                 for table in tables:
@@ -195,16 +193,15 @@ class AccountManager(commands.Cog):
 
                 await channel.send(f"User {user_name} has been successfully removed from the database."
                                    f" Have a great time! :wave:")
-                await self.deleteRequestMessages.add_reaction('✅')
+                await request_message.add_reaction('✅')
 
                 db.commit()
 
                 self.deleteRequestMessages.pop(author)
-                self.deletionPromptMsgIDs.pop(author)
-                self.usersRequestingDeletion.pop(author)
+                self.deletionPromptMsgIDs.pop(payload.message_id)
 
-        cursor.close()
-        db.close()
+            cursor.close()
+            db.close()
 
     @commands.command()
     async def update(self, ctx):

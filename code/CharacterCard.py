@@ -13,8 +13,16 @@ class CharacterCard:
         - aliases - a list of aliases given to the character (defaults to 'no aliases'),
         - collection - the collection the character is a part of (defaults to Collections.NONE).
     """
-    def __init__(self, name, picNumber: int, quotes: list, filename: str, effects: Effects = Effects.NONE,
-                 aliases: str = "no aliases", collection: Collections = Collections.NONE):
+    def __init__(
+            self, 
+            name : str, 
+            picNumber: int, 
+            quotes: list, 
+            filename: str, 
+            effects: Effects = Effects.NONE,
+            aliases: str = "no aliases", 
+            collection: Collections = Collections.NONE
+        ):
         self.name = name
         self.picNumber = picNumber
         self.quotes = quotes
@@ -35,7 +43,14 @@ class NsfwCharacterCard:
         - footers - a list of witty lines addressed to the character,
         - game - the name of the game the character is from.
     """
-    def __init__(self, name: str, picNumber: int, quotes: list, footers: list, game: str):
+    def __init__(
+            self, 
+            name: str, 
+            picNumber: int, 
+            quotes: list, 
+            footers: list, 
+            game: str
+        ):
         self.name = name
         self.picNumber = picNumber
         self.quotes = quotes
@@ -54,8 +69,14 @@ class OgfCharacterCard:
         - effects - an action triggered when the character is rolled (defaults to Effects.NONE),
         - collection - the collection the character is a part of (defaults to Collections.NONE).
     """
-    def __init__(self, name: str, footer: str, filename: str,
-                 collection: OgfCollections = OgfCollections.NONE, effect: OgfEffects = OgfEffects.NONE):
+    def __init__(
+            self, 
+            name: str, 
+            footer: str, 
+            filename: str,
+            collection: OgfCollections = OgfCollections.NONE, 
+            effect: OgfEffects = OgfEffects.NONE
+        ):
         self.name = name
         self.footer = footer
         self.filename = filename
