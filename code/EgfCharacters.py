@@ -28,6 +28,15 @@ class EgfCharacters:
         self.characters.append(Abbott)
 
         # 1
+        Ableman = CharacterCard(
+            name="Ian Ableman",
+            picNumber=1,
+            quotes=["\*Chuckles\* My advice? Don't hold back. If you get a chance to outshine your companion, take it. They'll like that."],
+            filename="ableman"
+        )
+        self.characters.append(Ableman)
+
+        # 2
         Abuela = CharacterCard(
             name="Mrs. Hernandez",
             picNumber=1,
@@ -42,7 +51,17 @@ class EgfCharacters:
         )
         self.characters.append(Abuela)
 
-        # 2 [DISCORD CAMEOS ?]
+        # 3
+        Agatha = CharacterCard(
+            name="Agatha",
+            picNumber=1,
+            quotes=["Good evening, folks! Welcome aboard the Cascadian Express."],
+            filename="agatha",
+            aliases="Train Conductor"
+        )
+        self.characters.append(Agatha)
+
+        # 4 [DISCORD CAMEOS ?]
         Akira = CharacterCard(
             name="Akira-San",
             picNumber=2,
@@ -54,7 +73,7 @@ class EgfCharacters:
         )
         self.characters.append(Akira)
 
-        # 3 [HAREM]
+        # 5 [HAREM]
         Alex = CharacterCard(
             name="Alexandra Bardot",
             picNumber=10,
@@ -75,7 +94,7 @@ class EgfCharacters:
         )
         self.characters.append(Alex)
 
-        # 4
+        # 6
         Alfonso = CharacterCard(
             name="Alfonso",
             picNumber=1,
@@ -85,7 +104,7 @@ class EgfCharacters:
         )
         self.characters.append(Alfonso)
 
-        # 5
+        # 7
         Alicia = CharacterCard(
             name="Alicia Flink",
             picNumber=1,
@@ -94,7 +113,16 @@ class EgfCharacters:
         )
         self.characters.append(Alicia)
 
-        # 6
+        # 8
+        Anderson = CharacterCard(
+            name="Toby Anderson",
+            picNumber=1,
+            quotes=["\*Awkward laugh\* Ha-hah, y-yeah, right."],
+            filename="anderson"
+        )
+        self.characters.append(Anderson)
+
+        # 9
         Ambrose = CharacterCard(
             name="Madam Ambrose",
             picNumber=1,
@@ -103,7 +131,7 @@ class EgfCharacters:
         )
         self.characters.append(Ambrose)
 
-        # 7
+        # 10
         Anastasia = CharacterCard(
             name="Anastasia",
             picNumber=1,
@@ -113,7 +141,7 @@ class EgfCharacters:
         )
         self.characters.append(Anastasia)
 
-        # 8
+        # 11
         Anna = CharacterCard(
             name="Anna Kellegan",
             picNumber=1,
@@ -125,7 +153,7 @@ class EgfCharacters:
         )
         self.characters.append(Anna)
 
-        # 9
+        # 12
         Annabelle = CharacterCard(
             name="Princess Annabelle",
             picNumber=1,
@@ -135,7 +163,7 @@ class EgfCharacters:
         )
         self.characters.append(Annabelle)
 
-        # 10 [HAREM]
+        # 13 [HAREM]
         Annie = CharacterCard(
             name="Annie Winters",
             picNumber=17,
@@ -153,7 +181,7 @@ class EgfCharacters:
         )
         self.characters.append(Annie)
 
-        # 11
+        # 14
         Anne = CharacterCard(
             name="Annie Flink",
             picNumber=1,
@@ -163,7 +191,7 @@ class EgfCharacters:
         )
         self.characters.append(Anne)
 
-        # 12
+        # 15
         Apple = CharacterCard(
             name="Apple Salesman",
             picNumber=1,
@@ -174,7 +202,7 @@ class EgfCharacters:
         )
         self.characters.append(Apple)
 
-        # 13
+        # 16
         Arannis = CharacterCard(
             name="Arannis Thornvale",
             picNumber=1,
@@ -188,7 +216,7 @@ class EgfCharacters:
         )
         self.characters.append(Arannis)
 
-        # 14
+        # 17
         Aspen = CharacterCard(
             name="Aspen Simmons",
             picNumber=1,
@@ -198,7 +226,7 @@ class EgfCharacters:
         )
         self.characters.append(Aspen)
 
-        # 15
+        # 18
         Astor = CharacterCard(
             name="Ms. Astor",
             picNumber=1,
@@ -207,7 +235,7 @@ class EgfCharacters:
         )
         self.characters.append(Astor)
 
-        # 16
+        # 19
         Avery = CharacterCard(
             name="Avery",
             picNumber=1,
@@ -218,7 +246,7 @@ class EgfCharacters:
         )
         self.characters.append(Avery)
 
-        # 17 [SIDE GIRL HARASSER]
+        # 20 [SIDE GIRL HARASSER]
         Axel = CharacterCard(
             name="Axel Bardot",
             picNumber=3,
@@ -234,7 +262,7 @@ class EgfCharacters:
         )
         self.characters.append(Axel)
 
-        # 18
+        # 21
         Baek = CharacterCard(
             name="Sister Baek",
             picNumber=1,
@@ -245,7 +273,7 @@ class EgfCharacters:
         )
         self.characters.append(Baek)
 
-        # 19
+        # 22
         Bakhar = CharacterCard(
             name="Father Bakhar",
             picNumber=1,
@@ -258,7 +286,7 @@ class EgfCharacters:
         )
         self.characters.append(Bakhar)
 
-        # 20
+        # 23
         Bartender = CharacterCard(
             name="Saloon Bartender",
             picNumber=1,
@@ -267,7 +295,7 @@ class EgfCharacters:
         )
         self.characters.append(Bartender)
 
-        # 21
+        # 24
         Bellini = CharacterCard(
             name="Giuseppe Bellini",
             picNumber=1,
@@ -279,7 +307,7 @@ class EgfCharacters:
         )
         self.characters.append(Bellini)
 
-        # 22
+        # 25
         Benja = CharacterCard(
             name="Benjamin Dawson",
             picNumber=2,
@@ -290,7 +318,7 @@ class EgfCharacters:
         )
         self.characters.append(Benja)
 
-        # 23 [SIDE GIRL]
+        # 26 [SIDE GIRL]
         BlueFoxMaiden = CharacterCard(
             name="Blue Fox Maiden",
             picNumber=1,
@@ -301,7 +329,17 @@ class EgfCharacters:
         )
         self.characters.append(BlueFoxMaiden)
 
-        # 24
+        # 27
+        Briena = CharacterCard(
+            name="Lady Briena",
+            picNumber=1,
+            quotes=["Nature thrives on release, not restraint."],
+            filename="briena",
+            aliases="The Druid"
+        )
+        self.characters.append(Briena)
+
+        # 28
         Brock = CharacterCard(
             name="Brock Domen",
             picNumber=2,
@@ -315,7 +353,7 @@ class EgfCharacters:
         )
         self.characters.append(Brock)
 
-        # 25
+        # 29
         Bundledore = CharacterCard(
             name="Balbus Bundledore",
             picNumber=2,
@@ -326,7 +364,7 @@ class EgfCharacters:
         )
         self.characters.append(Bundledore)
 
-        # 26
+        # 30
         Burpee = CharacterCard(
             name="Burpee",
             picNumber=1,
@@ -338,7 +376,7 @@ class EgfCharacters:
         )
         self.characters.append(Burpee)
 
-        # 27 [SIDE GIRL; HAREM SAVER]
+        # 31 [HAREM; HAREM SAVER]
         Calypso = CharacterCard(
             name="Calypso",
             picNumber=12,
@@ -367,7 +405,7 @@ class EgfCharacters:
         )
         self.characters.append(Calypso)
 
-        # 28
+        # 32
         Carolyn = CharacterCard(
             name="Carolyn",
             picNumber=3,
@@ -377,7 +415,7 @@ class EgfCharacters:
         )
         self.characters.append(Carolyn)
 
-        # 29
+        # 33
         Cassian = CharacterCard(
             name="Cassian",
             picNumber=1,
@@ -387,7 +425,20 @@ class EgfCharacters:
         )
         self.characters.append(Cassian)
 
-        # 30 [HOMIE]
+        # 34
+        Chamberlain = CharacterCard(
+            name="Court Chamberlain",
+            picNumber=1,
+            quotes=[
+                "It shall be done as your command.",
+                "For starters, do not speak unless you are given permission, human.",
+                "Make love to the canvas and let it feed upon your passion!"
+            ],
+            filename="chamberlain"
+        )
+        self.characters.append(Chamberlain)
+
+        # 35 [HOMIE]
         Chang = CharacterCard(
             name="Chang Wong",
             picNumber=8,
@@ -413,7 +464,7 @@ class EgfCharacters:
         )
         self.characters.append(Chang)
 
-        # 31
+        # 36
         Charlotte = CharacterCard(
             name="Charlotte",
             picNumber=4,
@@ -426,7 +477,7 @@ class EgfCharacters:
         )
         self.characters.append(Charlotte)
 
-        # 32 [HOMIE]
+        # 37 [HOMIE]
         ChopChop = CharacterCard(
             name="Chop-Chop",
             picNumber=5,
@@ -443,7 +494,7 @@ class EgfCharacters:
         )
         self.characters.append(ChopChop)
 
-        # 33
+        # 38
         Claudius = CharacterCard(
             name="Emperor Claudius III",
             picNumber=1,
@@ -457,7 +508,7 @@ class EgfCharacters:
         )
         self.characters.append(Claudius)
 
-        # 34
+        # 39
         Clonk = CharacterCard(
             name="Clonk",
             picNumber=2,
@@ -467,7 +518,7 @@ class EgfCharacters:
         )
         self.characters.append(Clonk)
 
-        # 35 [DISCORD CAMEOS ?]
+        # 40 [DISCORD CAMEOS ?]
         Con = CharacterCard(
             name="Con",
             picNumber=1,
@@ -478,7 +529,7 @@ class EgfCharacters:
         )
         self.characters.append(Con)
 
-        # 36 [DISCORD CAMEOS ?]
+        # 41 [DISCORD CAMEOS ?]
         Connor = CharacterCard(
             name="Professor Connor",
             picNumber=1,
@@ -488,7 +539,7 @@ class EgfCharacters:
         )
         self.characters.append(Connor)
 
-        # 37
+        # 42
         Cook = CharacterCard(
             name="Elliot Cook",
             picNumber=1,
@@ -498,7 +549,7 @@ class EgfCharacters:
         )
         self.characters.append(Cook)
 
-        # 38
+        # 43
         Coyote = CharacterCard(
             name="Boone",
             picNumber=3,
@@ -512,7 +563,7 @@ class EgfCharacters:
         )
         self.characters.append(Coyote)
 
-        # 39 [HAREM; HOMIE SAVER]
+        # 44 [HAREM; HOMIE SAVER]
         Dalia = CharacterCard(
             name="Dalia Carter",
             picNumber=10,
@@ -534,7 +585,7 @@ class EgfCharacters:
         )
         self.characters.append(Dalia)
 
-        # 40
+        # 45
         Dolores = CharacterCard(
             name="Dolores",
             picNumber=1,
@@ -544,7 +595,7 @@ class EgfCharacters:
         )
         self.characters.append(Dolores)
 
-        # 41
+        # 46
         Duke = CharacterCard(
             name="Duke",
             picNumber=1,
@@ -556,7 +607,7 @@ class EgfCharacters:
         )
         self.characters.append(Duke)
 
-        # 42
+        # 47
         DuPont = CharacterCard(
             name="Dr. Du Pont",
             picNumber=1,
@@ -566,7 +617,7 @@ class EgfCharacters:
         )
         self.characters.append(DuPont)
 
-        # 43
+        # 48
         Ed = CharacterCard(
             name="Ed",
             picNumber=1,
@@ -577,7 +628,7 @@ class EgfCharacters:
         )
         self.characters.append(Ed)
 
-        # 44 [DISCORD CAMEOS ?]
+        # 49 [DISCORD CAMEOS ?]
         Eggrik = CharacterCard(
             name="Anton Eggrik",
             picNumber=1,
@@ -586,7 +637,46 @@ class EgfCharacters:
         )
         self.characters.append(Eggrik)
 
-        # 45
+        # 50
+        Elenwen = CharacterCard(
+            name="Regent Elenwen",
+            picNumber=1,
+            quotes=["You have no rightful place among us.", "Not only is he weak, but his people have lost even the pride that once defined them."],
+            filename="elenwen"
+        )
+        self.characters.append(Elenwen)
+
+        # 51
+        ElfGuard1 = CharacterCard(
+            name="Elven Guard 1",
+            picNumber=1,
+            quotes=["Oh come on, if I can't compliment our Princess' creamy tits to my friend and a few rats, I might as well quit this job."],
+            filename="elf_guard1"
+        )
+        self.characters.append(ElfGuard1)
+
+        # 52
+        ElfGuard2 = CharacterCard(
+            name="Elven Guard 2",
+            picNumber=1,
+            quotes=["The bastard really thought he could make a bargain with the Princess' life..."],
+            filename="elf_guard2"
+        )
+        self.characters.append(ElfGuard2)
+
+        # 53
+        ElfGuard3 = CharacterCard(
+            name="Sir Pyrand",
+            picNumber=1,
+            quotes=["You will serve as a reminder that no one defies Hyril'Ar, you filthy human.",
+                    "\*Whispering\* Soon, Lord Sylax will rule as the sole regent and restore this realm to its former glory.",
+                    "\*Whispering\* The age of shame... is over."],
+            filename="elf_guard3",
+            aliases="Elf Guard [3]"
+        )
+        self.characters.append(ElfGuard3)
+
+        # 54
         Eulalie = CharacterCard(
             name="Eulalie",
             picNumber=1,
@@ -597,7 +687,7 @@ class EgfCharacters:
         )
         self.characters.append(Eulalie)
 
-        # 46 [SIDE GIRL]
+        # 55 [SIDE GIRL]
         Eva = CharacterCard(
             name="Eva",
             picNumber=2,
@@ -608,7 +698,17 @@ class EgfCharacters:
         )
         self.characters.append(Eva)
 
-        # 47
+        # 56
+        Fael = CharacterCard(
+            name="Lord Fael of Thirinvale",
+            picNumber=4,
+            quotes=["I seek to unite our noble houses, [and] usher Hyril'Ar into an era of brilliance it has yet to behold[.]"],
+            filename="fael",
+            aliases="Heir of Thirinvale, Victor of the Sunlance Tournament"
+        )
+        self.characters.append(Fael)
+
+        # 57
         FakeCoyote = CharacterCard(
             name="'El Coyote'",
             picNumber=1,
@@ -619,7 +719,7 @@ class EgfCharacters:
         )
         self.characters.append(FakeCoyote)
 
-        # 48
+        # 58
         Fangrend = CharacterCard(
             name="Fangrend",
             picNumber=2,
@@ -630,7 +730,7 @@ class EgfCharacters:
         )
         self.characters.append(Fangrend)
 
-        # 49
+        # 59
         Founder = CharacterCard(
             name="The Founder",
             picNumber=5,
@@ -642,7 +742,7 @@ class EgfCharacters:
         )
         self.characters.append(Founder)
 
-        # 50 [PRAETORIANS ?]
+        # 60 [PRAETORIANS ?]
         Four = CharacterCard(name="Four",
                              picNumber=1,
                              quotes=["..."],
@@ -650,7 +750,7 @@ class EgfCharacters:
                              collection=Collections.NONE)
         self.characters.append(Four)
 
-        # 51
+        # 61
         GarringtonJr = CharacterCard(
             name="Bennie Garrington",
             picNumber=1,
@@ -662,7 +762,7 @@ class EgfCharacters:
         )
         self.characters.append(GarringtonJr)
 
-        # 52
+        # 62
         Garrington = CharacterCard(
             name="Cornelius Garrington",
             picNumber=1,
@@ -672,7 +772,7 @@ class EgfCharacters:
         )
         self.characters.append(Garrington)
 
-        # 53
+        # 63
         Gemini = CharacterCard(
             name="Gemini",
             picNumber=1,
@@ -683,7 +783,7 @@ class EgfCharacters:
         )
         self.characters.append(Gemini)
 
-        # 54
+        # 64
         Gertrude = CharacterCard(
             name="Gertrude",
             picNumber=1,
@@ -696,7 +796,7 @@ class EgfCharacters:
         )
         self.characters.append(Gertrude)
 
-        # 55 [CREATURE STOMPER]
+        # 65 [CREATURE STOMPER]
         Golem = CharacterCard(
             name="Golem",
             picNumber=1,
@@ -706,7 +806,7 @@ class EgfCharacters:
         )
         self.characters.append(Golem)
 
-        # 56
+        # 66
         Harley = CharacterCard(
             name="Harley Jones",
             picNumber=1,
@@ -717,7 +817,7 @@ class EgfCharacters:
         )
         self.characters.append(Harley)
 
-        # 57
+        # 67
         Haskel = CharacterCard(
             name="Haskel",
             picNumber=1,
@@ -726,7 +826,7 @@ class EgfCharacters:
         )
         self.characters.append(Haskel)
 
-        # 58
+        # 68
         Hasler = CharacterCard(
             name="Commander Hasler",
             picNumber=2,
@@ -738,7 +838,7 @@ class EgfCharacters:
         )
         self.characters.append(Hasler)
 
-        # 59
+        # 69
         Hassan = CharacterCard(
             name="Hassan Al-Rashid",
             picNumber=1,
@@ -749,7 +849,7 @@ class EgfCharacters:
         )
         self.characters.append(Hassan)
 
-        # 60
+        # 70
         Hugo = CharacterCard(
             name="Hugo Hernandez",
             picNumber=1,
@@ -764,7 +864,7 @@ class EgfCharacters:
         )
         self.characters.append(Hugo)
 
-        # 61 [SIDE GIRL]
+        # 71 [SIDE GIRL]
         Idriel = CharacterCard(
             name="Idriel",
             picNumber=5,
@@ -777,7 +877,7 @@ class EgfCharacters:
         )
         self.characters.append(Idriel)
 
-        # 62 [PETS]
+        # 72 [PETS]
         Igor = CharacterCard(
             name="Igor",
             picNumber=1,
@@ -788,7 +888,7 @@ class EgfCharacters:
         )
         self.characters.append(Igor)
 
-        # 63
+        # 73
         Iliescu = CharacterCard(
             name="Lazarus Iliescu",
             picNumber=1,
@@ -799,7 +899,17 @@ class EgfCharacters:
         )
         self.characters.append(Iliescu)
 
-        # 64 [DISCORD CAMEOS ?]
+        # 74
+        Innkeeper = CharacterCard(
+            name="John",
+            picNumber=1,
+            quotes=["I'm as powerless as one can be! No sex dungeons I swear!"],
+            filename="innkeeper",
+            aliases="The Innkeeper"
+        )
+        self.characters.append(Innkeeper)
+
+        # 75 [DISCORD CAMEOS ?]
         Jasticus = CharacterCard(
             name="Jasticus the Decapitator",
             picNumber=1,
@@ -810,7 +920,7 @@ class EgfCharacters:
         )
         self.characters.append(Jasticus)
 
-        # 65 [HOMIE]
+        # 76 [HOMIE]
         Jerry = CharacterCard(
             name="Jerry",
             picNumber=7,
@@ -829,7 +939,7 @@ class EgfCharacters:
         )
         self.characters.append(Jerry)
 
-        # 66 [VN CAMEOS ?]
+        # 77 [VN CAMEOS ?]
         Judith = CharacterCard(
             name="Judith",
             picNumber=1,
@@ -838,7 +948,7 @@ class EgfCharacters:
         )
         self.characters.append(Judith)
 
-        # 67
+        # 78
         Junkie = CharacterCard(
             name="Junkie",
             picNumber=1,
@@ -849,7 +959,7 @@ class EgfCharacters:
         )
         self.characters.append(Junkie)
 
-        # 68
+        # 79
         Junkie2 = CharacterCard(
             name="JJ",
             picNumber=1,
@@ -858,7 +968,7 @@ class EgfCharacters:
         )
         self.characters.append(Junkie2)
 
-        # 69 [DISCORD CAMEOS ?]
+        # 80 [DISCORD CAMEOS ?]
         Kai = CharacterCard(
             name="Kai",
             picNumber=2,
@@ -868,7 +978,7 @@ class EgfCharacters:
         )
         self.characters.append(Kai)
 
-        # 70
+        # 81
         Keating = CharacterCard(
             name="Professor Keating",
             picNumber=2,
@@ -878,7 +988,7 @@ class EgfCharacters:
         )
         self.characters.append(Keating)
 
-        # 71 [PETS]
+        # 82 [PETS]
         Kermit = CharacterCard(
             name="Kermit",
             picNumber=1,
@@ -889,7 +999,7 @@ class EgfCharacters:
         )
         self.characters.append(Kermit)
 
-        # 72
+        # 83
         Kimberly = CharacterCard(
             name="Kimberly",
             picNumber=1,
@@ -898,7 +1008,7 @@ class EgfCharacters:
         )
         self.characters.append(Kimberly)
 
-        # 73
+        # 84
         Kitty = CharacterCard(
             name="Kitty",
             picNumber=1,
@@ -908,7 +1018,7 @@ class EgfCharacters:
         )
         self.characters.append(Kitty)
 
-        # 74
+        # 85
         Lily = CharacterCard(
             name="Lily",
             picNumber=1,
@@ -917,7 +1027,7 @@ class EgfCharacters:
         )
         self.characters.append(Lily)
 
-        # 75
+        # 86
         Linus = CharacterCard(
             name="Alastor Linus",
             picNumber=1,
@@ -926,7 +1036,7 @@ class EgfCharacters:
         )
         self.characters.append(Linus)
 
-        # 76
+        # 87 [SIDE GIRL]
         Lorelei = CharacterCard(
             name="Lorelei Thornvale",
             picNumber=1,
@@ -937,7 +1047,7 @@ class EgfCharacters:
         )
         self.characters.append(Lorelei)
 
-        # 77 [DISCORD CAMEOS ?]
+        # 88 [DISCORD CAMEOS ?]
         Lorrdy = CharacterCard(
             name="Lorrdy Silverhook",
             picNumber=1,
@@ -949,7 +1059,7 @@ class EgfCharacters:
         )
         self.characters.append(Lorrdy)
 
-        # 78
+        # 89
         Lucinda = CharacterCard(
             name="Lucinda Garcia",
             picNumber=1,
@@ -959,7 +1069,7 @@ class EgfCharacters:
         )
         self.characters.append(Lucinda)
 
-        # 79 [HAREM]
+        # 90 [HAREM]
         Luna = CharacterCard(
             name="Luna Hernandez",
             picNumber=16,
@@ -983,7 +1093,7 @@ class EgfCharacters:
         )
         self.characters.append(Luna)
 
-        # 80
+        # 91
         Lysa = CharacterCard(
             name="Lysandra Iliescu",
             picNumber=1,
@@ -995,7 +1105,7 @@ class EgfCharacters:
         )
         self.characters.append(Lysa)
 
-        # 81 [SIDE GIRL]
+        # 92 [SIDE GIRL]
         Maat = CharacterCard(
             name="Maat",
             picNumber=3,
@@ -1008,7 +1118,7 @@ class EgfCharacters:
         )
         self.characters.append(Maat)
 
-        # 82
+        # 93
         Mandrake = CharacterCard(
             name="Dona Mandrake",
             picNumber=1,
@@ -1019,7 +1129,7 @@ class EgfCharacters:
         )
         self.characters.append(Mandrake)
 
-        # 83 [PETS]
+        # 94 [PETS]
         Maurice1 = CharacterCard(
             name="Maurice (cat)",
             picNumber=1,
@@ -1029,7 +1139,7 @@ class EgfCharacters:
         )
         self.characters.append(Maurice1)
 
-        # 84 [PETS]
+        # 95 [PETS]
         Maurice2 = CharacterCard(
             name="Maurice (goat)",
             picNumber=1,
@@ -1040,7 +1150,7 @@ class EgfCharacters:
         )
         self.characters.append(Maurice2)
 
-        # 85 [PETS]
+        # 96 [PETS]
         Maurice3 = CharacterCard(
             name="Maurice (toucan)",
             picNumber=1,
@@ -1050,7 +1160,7 @@ class EgfCharacters:
         )
         self.characters.append(Maurice3)
 
-        # 86 [HOMIES ?]
+        # 97 [HOMIES ?]
         Maximo = CharacterCard(
             name="Maximo",
             picNumber=2,
@@ -1064,7 +1174,7 @@ class EgfCharacters:
         )
         self.characters.append(Maximo)
 
-        # 87
+        # 98
         Mercer = CharacterCard(
             name="Irina Mercer",
             picNumber=1,
@@ -1075,7 +1185,7 @@ class EgfCharacters:
         )
         self.characters.append(Mercer)
 
-        # 88
+        # 99
         Mermaid = CharacterCard(
             name="Mermaid",
             picNumber=1,
@@ -1084,7 +1194,7 @@ class EgfCharacters:
         )
         self.characters.append(Mermaid)
 
-        # 89 [HOMIE]
+        # 100 [HOMIE]
         Micaela = CharacterCard(name="Micaela Garcia",
                                 picNumber=4,
                                 quotes=["I know I can have a rather intimidating appearance at first.",
@@ -1093,7 +1203,7 @@ class EgfCharacters:
                                 collection=Collections.THE_HOMIES)
         self.characters.append(Micaela)
 
-        # 90
+        # 101
         Millie = CharacterCard(
             name="Millie",
             picNumber=2,
@@ -1102,7 +1212,7 @@ class EgfCharacters:
         )
         self.characters.append(Millie)
 
-        # 91 [VN CAMEOS ?]
+        # 102 [VN CAMEOS ?]
         Moon = CharacterCard(
             name="Moon",
             picNumber=1,
@@ -1111,7 +1221,7 @@ class EgfCharacters:
         )
         self.characters.append(Moon)
 
-        # 92
+        # 103
         Mortimer = CharacterCard(
             name="Mortimer",
             picNumber=1,
@@ -1123,7 +1233,7 @@ class EgfCharacters:
         )
         self.characters.append(Mortimer)
 
-        # 93
+        # 104
         Morty = CharacterCard(
             name="Morty",
             picNumber=1,
@@ -1135,7 +1245,7 @@ class EgfCharacters:
         )
         self.characters.append(Morty)
 
-        # 94 [DISCORD CAMEOS ?]
+        # 105 [DISCORD CAMEOS ?]
         Mos = CharacterCard(
             name="Mr. Mos",
             picNumber=1,
@@ -1144,7 +1254,7 @@ class EgfCharacters:
         )
         self.characters.append(Mos)
 
-        # 95 [HAREM]
+        # 106 [HAREM]
         Nancy = CharacterCard(
             name="Nancy Carter",
             picNumber=14,
@@ -1168,7 +1278,7 @@ class EgfCharacters:
         )
         self.characters.append(Nancy)
 
-        # 96
+        # 107
         Nikolay = CharacterCard(
             name="Nikolay",
             picNumber=1,
@@ -1177,7 +1287,7 @@ class EgfCharacters:
         )
         self.characters.append(Nikolay)
 
-        # 97 [HOMIES]
+        # 108 [HOMIES]
         Noah = CharacterCard(
             name="Noah",
             picNumber=4,
@@ -1190,7 +1300,7 @@ class EgfCharacters:
         )
         self.characters.append(Noah)
 
-        # 98 [HAREM]
+        # 109 [HAREM]
         Nova = CharacterCard(
             name="Nova Johnson",
             picNumber=17,
@@ -1216,7 +1326,7 @@ class EgfCharacters:
         )
         self.characters.append(Nova)
 
-        # 99 [HOMIE; SIDE GIRL SAVER]
+        # 110 [HOMIE; SIDE GIRL SAVER]
         Orion = CharacterCard(
             name="Orion Richards",
             picNumber=15,
@@ -1246,7 +1356,17 @@ class EgfCharacters:
         )
         self.characters.append(Orion)
 
-        # 100
+        # 111
+        Orym = CharacterCard(
+            name="Lord Orym of Ilvenmyr",
+            picNumber=3,
+            quotes=["I tremble before your radiance, Your Grace."],
+            filename="orym",
+            aliases="Sworn Sword of Honor"
+        )
+        self.characters.append(Orym)
+
+        # 112
         Owler = CharacterCard(
             name="Helga Owler",
             picNumber=1,
@@ -1256,7 +1376,7 @@ class EgfCharacters:
         )
         self.characters.append(Owler)
 
-        # 101 [PETS]
+        # 113 [PETS]
         Pancho = CharacterCard(
             name="Pancho",
             picNumber=1,
@@ -1267,7 +1387,7 @@ class EgfCharacters:
         )
         self.characters.append(Pancho)
 
-        # 102 [HAREM]
+        # 114 [HAREM]
         Penny = CharacterCard(
             name="Penelope Carter",
             picNumber=15,
@@ -1290,7 +1410,7 @@ class EgfCharacters:
         )
         self.characters.append(Penny)
 
-        # 103
+        # 115
         Phil = CharacterCard(
             name="Phil",
             picNumber=1,
@@ -1300,7 +1420,7 @@ class EgfCharacters:
         )
         self.characters.append(Phil)
 
-        # 104
+        # 116
         Philippe = CharacterCard(
             name="Philippe",
             picNumber=1,
@@ -1311,7 +1431,7 @@ class EgfCharacters:
         )
         self.characters.append(Philippe)
 
-        # 106
+        # 117
         Piaget = CharacterCard(
             name="Anna Piaget",
             picNumber=1,
@@ -1321,7 +1441,23 @@ class EgfCharacters:
         )
         self.characters.append(Piaget)
 
-        # 107 [PRAETORIANS ?]
+        #118
+        Powell = CharacterCard(
+            name="Adrian Powell",
+            picNumber=1,
+            quotes=[
+                "Here at Ulysses, we respect women and believe in gender equality. What the fuck is your problem?",
+                "Any self-respecting gentleman should always wear a nice tie... Not like fucking Toby.",
+                "You two have some *impressive* resumes. Haven't seen ones this polished since that guy who faked his diploma.",
+                "Everyone knows *real* businessmen only use cocaine anyway. Or microdoses of LSD.",
+                "The memory of Tigoryakhovgrad will prevail as long as we remember it.",
+                "Tell that Toby douche to hold an isometric air squat until it's his turn."
+            ],
+            filename="powell"
+        )
+        self.characters.append(Powell)
+
+        # 119 [PRAETORIANS ?]
         Praetorian = CharacterCard(
             name="Praetorian 1",
             picNumber=1,
@@ -1331,7 +1467,7 @@ class EgfCharacters:
         )
         self.characters.append(Praetorian)
 
-        # 108 [PRAETORIANS ?]
+        # 120 [PRAETORIANS ?]
         Praetorian2 = CharacterCard(
             name="Praetorian 2",
             picNumber=1,
@@ -1341,7 +1477,7 @@ class EgfCharacters:
         )
         self.characters.append(Praetorian2)
 
-        # 109 [PRAETORIANS ?]
+        # 121 [PRAETORIANS ?]
         Praetorian3 = CharacterCard(
             name="Praetorian 3",
             picNumber=1,
@@ -1350,7 +1486,7 @@ class EgfCharacters:
         )
         self.characters.append(Praetorian3)
 
-        # 110
+        # 122
         Priscilla = CharacterCard(
             name="Priscilla Bardot",
             picNumber=1,
@@ -1359,7 +1495,7 @@ class EgfCharacters:
         )
         self.characters.append(Priscilla)
 
-        # 111 [PET SAVER]
+        # 123 [PET SAVER]
         Pyri = CharacterCard(
             name="Pyramid Head",
             picNumber=1,
@@ -1370,7 +1506,7 @@ class EgfCharacters:
         )
         self.characters.append(Pyri)
 
-        # 112 [HOMIE]
+        # 124 [HOMIE]
         Raul = CharacterCard(
             name="Raul",
             picNumber=4,
@@ -1382,7 +1518,7 @@ class EgfCharacters:
         )
         self.characters.append(Raul)
 
-        # 113 [DISCORD CAMEOS ?]
+        # 125 [DISCORD CAMEOS ?]
         Reddss = CharacterCard(
             name="Blackheart Reddss",
             picNumber=1,
@@ -1393,7 +1529,7 @@ class EgfCharacters:
         )
         self.characters.append(Reddss)
 
-        # 114 [SIDE GIRL]
+        # 126 [SIDE GIRL]
         RedFoxMaiden = CharacterCard(
             name="Red Fox Maiden",
             picNumber=1,
@@ -1404,7 +1540,7 @@ class EgfCharacters:
         )
         self.characters.append(RedFoxMaiden)
 
-        # 115
+        # 127
         Regina = CharacterCard(
             name="Regina",
             picNumber=2,
@@ -1416,7 +1552,16 @@ class EgfCharacters:
         )
         self.characters.append(Regina)
 
-        # 116
+        # 128
+        Rowan = CharacterCard(
+            name="Rowan",
+            picNumber=1,
+            quotes=["The game's about to start and I can't find the damn gin."],
+            filename="rowan"
+        )
+        self.characters.append(Rowan)
+
+        # 129
         Ruiz = CharacterCard(
             name="Clarence Ruiz",
             picNumber=1,
@@ -1426,7 +1571,7 @@ class EgfCharacters:
         )
         self.characters.append(Ruiz)
 
-        # 117
+        # 130
         Ruth = CharacterCard(
             name="Ruth",
             picNumber=1,
@@ -1436,7 +1581,7 @@ class EgfCharacters:
         )
         self.characters.append(Ruth)
 
-        # 118
+        # 131
         Samir = CharacterCard(
             name="Samir",
             picNumber=2,
@@ -1447,7 +1592,7 @@ class EgfCharacters:
         )
         self.characters.append(Samir)
 
-        # 119
+        # 132
         Sandra = CharacterCard(
             name="Sandra Johnson",
             picNumber=1,
@@ -1457,7 +1602,7 @@ class EgfCharacters:
         )
         self.characters.append(Sandra)
 
-        # 120
+        # 133
         Scarlet = CharacterCard(
             name="Red Scarlet",
             picNumber=1,
@@ -1466,7 +1611,7 @@ class EgfCharacters:
         )
         self.characters.append(Scarlet)
 
-        # 121
+        # 134
         Sheriff = CharacterCard(
             name="Sheriff of Blackridge",
             picNumber=1,
@@ -1476,7 +1621,7 @@ class EgfCharacters:
         )
         self.characters.append(Sheriff)
 
-        # 122
+        # 135
         Snuggles = CharacterCard(
             name="Snuggles",
             picNumber=1,
@@ -1489,7 +1634,7 @@ class EgfCharacters:
         )
         self.characters.append(Snuggles)
 
-        # 123
+        # 136
         StoreClerk = CharacterCard(
             name="General Store Clerk",
             picNumber=1,
@@ -1500,7 +1645,20 @@ class EgfCharacters:
         )
         self.characters.append(StoreClerk)
 
-        # 124
+        #137
+        Sylax = CharacterCard(
+            name="Regent Sylax",
+            picNumber=3,
+            quotes=["The stench is even more nauseating than I anticipated.", 
+                    "The Council will determine the degree of your punishment.", 
+                    "Please. Even the humblest of our farmers could best you in a duel.",
+                    "By Turska's mercy, get to the point.",
+                    "Hyril'Ar demands rebirth."],
+            filename="sylax"
+        )
+        self.characters.append(Sylax)
+
+        # 138
         Tartaria = CharacterCard(
             name="Mr. Tartaria",
             picNumber=1,
@@ -1513,7 +1671,7 @@ class EgfCharacters:
         )
         self.characters.append(Tartaria)
 
-        # 125
+        # 139
         Tatiana = CharacterCard(
             name="Tatiana",
             picNumber=1,
@@ -1523,7 +1681,17 @@ class EgfCharacters:
         )
         self.characters.append(Tatiana)
 
-        # 126 [HAREM KILLER]
+        # 140
+        Thalindra = CharacterCard(
+            name="Thalindra",
+            picNumber=1,
+            quotes=["Lady Calypso!", "Of course, Your Grace!"],
+            filename="thalindra",
+            aliases="Calypso's Maid"
+        )
+        self.characters.append(Thalindra)
+
+        # 141 [HAREM KILLER]
         Thanatos = CharacterCard(
             name="Thanatos",
             picNumber=8,
@@ -1539,7 +1707,26 @@ class EgfCharacters:
         )
         self.characters.append(Thanatos)
 
-        # 127
+        # 142
+        Thorund = CharacterCard(
+            name="Regent Thorund",
+            picNumber=2,
+            quotes=["\*Disdainfully\* Silence."],
+            filename="thorund",
+            aliases="High Chancellor of Hyril'Ar"
+        )
+        self.characters.append(Thorund)
+
+        # 143
+        Thorund_Daughter = CharacterCard(
+            name="Regent Thorund's Daughter",
+            picNumber=1,
+            quotes=["If you have any question of your own, speak now."],
+            filename="thorund_daughter"
+        )
+        self.characters.append(Thorund_Daughter)
+
+        # 144
         TicketGuy = CharacterCard(
             name="Tickets Seller",
             picNumber=1,
@@ -1548,7 +1735,7 @@ class EgfCharacters:
         )
         self.characters.append(TicketGuy)
 
-        # 127
+        # 145
         TonyMack = CharacterCard(
             name="Tony Mack",
             picNumber=1,
@@ -1558,7 +1745,17 @@ class EgfCharacters:
         )
         self.characters.append(TonyMack)
 
-        # 128 [DISCORD CAMEOS]
+        # 146
+        Torion = CharacterCard(
+            name="Lord Torion of Redveil",
+            picNumber=4,
+            quotes=["Choose me, Princess, and I shall give you sons and daughters born of fire and fury. Children who will tower like oaks and march like storms!",
+                    "Should your path ever lead you to Redveil, you would be most welcome. We always open our gates to knights of your caliber."],
+            filename="torion"
+        )
+        self.characters.append(Torion)
+
+        # 147 [DISCORD CAMEOS]
         Tissle = CharacterCard(
             name="Tissle",
             picNumber=1,
@@ -1569,7 +1766,7 @@ class EgfCharacters:
         )
         self.characters.append(Tissle)
 
-        # 129 [HOMIE KILLER]
+        # 148 [HOMIE KILLER]
         Troll = CharacterCard(
             name="Troll",
             picNumber=1,
@@ -1579,7 +1776,7 @@ class EgfCharacters:
         )
         self.characters.append(Troll)
 
-        # 130 [PRAETORIANS ?]
+        # 149 [PRAETORIANS ?]
         Twelve = CharacterCard(
             name="Twelve",
             picNumber=1,
@@ -1588,7 +1785,7 @@ class EgfCharacters:
         )
         self.characters.append(Twelve)
 
-        # 131
+        # 150
         Valentino = CharacterCard(
             name="Nico Valentino",
             picNumber=1,
@@ -1601,7 +1798,7 @@ class EgfCharacters:
         )
         self.characters.append(Valentino)
 
-        # 132
+        # 151
         Vasil = CharacterCard(
             name="Vasil",
             picNumber=1,
@@ -1610,7 +1807,7 @@ class EgfCharacters:
         )
         self.characters.append(Vasil)
 
-        # 133 [HOMIE]
+        # 152 [HOMIE]
         Victor = CharacterCard(
             name="Victor Hernandez",
             picNumber=7,
@@ -1632,7 +1829,7 @@ class EgfCharacters:
         )
         self.characters.append(Victor)
 
-        # 134 [DISCORD CAMEOS ???]
+        # 153 [DISCORD CAMEOS ???]
         Wagner = CharacterCard(
             name="Colonel Jasper Wagner",
             picNumber=1,
@@ -1644,7 +1841,7 @@ class EgfCharacters:
         )
         self.characters.append(Wagner)
 
-        # 135 [SIDE GIRL]
+        # 154 [SIDE GIRL]
         Wenlin = CharacterCard(
             name="Wenlin",
             picNumber=4,
@@ -1655,7 +1852,7 @@ class EgfCharacters:
         )
         self.characters.append(Wenlin)
 
-        # 136
+        # 155
         William = CharacterCard(
             name="William Bardot",
             picNumber=3,
@@ -1671,7 +1868,7 @@ class EgfCharacters:
         )
         self.characters.append(William)
 
-        # 137
+        # 156
         WyattsMom = CharacterCard(
             name="Wyatt's Mother",
             picNumber=2,
@@ -1682,7 +1879,7 @@ class EgfCharacters:
         )
         self.characters.append(WyattsMom)
 
-        # 138
+        # 157
         Xeno = CharacterCard(
             name="Xenomorph",
             picNumber=2,
@@ -1691,7 +1888,7 @@ class EgfCharacters:
         )
         self.characters.append(Xeno)
 
-        # 139
+        # 158
         Zahra = CharacterCard(
             name="Zahra Al-Nabi",
             picNumber=1,
@@ -1702,7 +1899,7 @@ class EgfCharacters:
         )
         self.characters.append(Zahra)
 
-        # 140
+        # 159
         Zap = CharacterCard(
             name="Zap",
             picNumber=2,
@@ -1711,7 +1908,7 @@ class EgfCharacters:
         )
         self.characters.append(Zap)
 
-        # 141
+        # 160
         Zippy = CharacterCard(
             name="Zippy",
             picNumber=1,
@@ -1720,203 +1917,6 @@ class EgfCharacters:
             filename="zippy"
         )
         self.characters.append(Zippy)
-
-        # 142
-        ElfGuard1 = CharacterCard(
-            name="Elven Guard 1",
-            picNumber=1,
-            quotes=["Oh come on, if I can't compliment our Princess' creamy tits to my friend and a few rats, I might as well quit this job."],
-            filename="elf_guard1"
-        )
-        self.characters.append(ElfGuard1)
-
-        #143
-        ElfGuard2 = CharacterCard(
-            name="Elven Guard 2",
-            picNumber=1,
-            quotes=["The bastard really thought he could make a bargain with the Princess' life..."],
-            filename="elf_guard2"
-        )
-        self.characters.append(ElfGuard2)
-
-        #144
-        Sylax = CharacterCard(
-            name="Regent Sylax",
-            picNumber=3,
-            quotes=["The stench is even more nauseating than I anticipated.", 
-                    "The Council will determine the degree of your punishment.", 
-                    "Please. Even the humblest of our farmers could best you in a duel.",
-                    "By Turska's mercy, get to the point.",
-                    "Hyril'Ar demands rebirth."],
-            filename="sylax"
-        )
-        self.characters.append(Sylax)
-
-        # 145
-        Elenwen = CharacterCard(
-            name="Regent Elenwen",
-            picNumber=1,
-            quotes=["You have no rightful place among us.", "Not only is he weak, but his people have lost even the pride that once defined them."],
-            filename="elenwen"
-        )
-        self.characters.append(Elenwen)
-
-        #146
-        Thorund = CharacterCard(
-            name="Regent Thorund",
-            picNumber=2,
-            quotes=["\*Disdainfully\* Silence."],
-            filename="thorund",
-            aliases="High Chancellor of Hyril'Ar"
-        )
-        self.characters.append(Thorund)
-
-        # 147
-        Thorund_Daughter = CharacterCard(
-            name="Regent Thorund's Daughter",
-            picNumber=1,
-            quotes=["If you have any question of your own, speak now."],
-            filename="thorund_daughter"
-        )
-        self.characters.append(Thorund_Daughter)
-
-        # 148
-        Innkeeper = CharacterCard(
-            name="John",
-            picNumber=1,
-            quotes=["I'm as powerless as one can be! No sex dungeons I swear!"],
-            filename="innkeeper",
-            aliases="The Innkeeper"
-        )
-        self.characters.append(Innkeeper)
-
-        # 149
-        ElfGuard3 = CharacterCard(
-            name="Sir Pyrand",
-            picNumber=1,
-            quotes=["You will serve as a reminder that no one defies Hyril'Ar, you filthy human.",
-                    "\*Whispering\* Soon, Lord Sylax will rule as the sole regent and restore this realm to its former glory.",
-                    "\*Whispering\* The age of shame... is over."],
-            filename="elf_guard3",
-            aliases="Elf Guard [3]"
-        )
-        self.characters.append(ElfGuard3)
-
-        #150
-        Thalindra = CharacterCard(
-            name="Thalindra",
-            picNumber=1,
-            quotes=["Lady Calypso!", "Of course, Your Grace!"],
-            filename="thalindra",
-            aliases="Calypso's Maid"
-        )
-        self.characters.append(Thalindra)
-
-        # 151
-        Briena = CharacterCard(
-            name="Lady Briena",
-            picNumber=1,
-            quotes=["Nature thrives on release, not restraint."],
-            filename="briena",
-            aliases="The Druid"
-        )
-        self.characters.append(Briena)
-
-        # 152
-        Chamberlain = CharacterCard(
-            name="Court Chamberlain",
-            picNumber=1,
-            quotes=[
-                "It shall be done as your command.",
-                "For starters, do not speak unless you are given permission, human.",
-                "Make love to the canvas and let it feed upon your passion!"
-            ],
-            filename="chamberlain"
-        )
-        self.characters.append(Chamberlain)
-
-        # 153
-        Fael = CharacterCard(
-            name="Lord Fael of Thirinvale",
-            picNumber=4,
-            quotes=["I seek to unite our noble houses, [and] usher Hyril'Ar into an era of brilliance it has yet to behold[.]"],
-            filename="fael",
-            aliases="Heir of Thirinvale, Victor of the Sunlance Tournament"
-        )
-        self.characters.append(Fael)
-
-        # 154
-        Orym = CharacterCard(
-            name="Lord Orym of Ilvenmyr",
-            picNumber=3,
-            quotes=["I tremble before your radiance, Your Grace."],
-            filename="orym",
-            aliases="Sworn Sword of Honor"
-        )
-        self.characters.append(Orym)
-
-        #155
-        Torion = CharacterCard(
-            name="Lord Torion of Redveil",
-            picNumber=4,
-            quotes=["Choose me, Princess, and I shall give you sons and daughters born of fire and fury. Children who will tower like oaks and march like storms!",
-                    "Should your path ever lead you to Redveil, you would be most welcome. We always open our gates to knights of your caliber."],
-            filename="torion"
-        )
-        self.characters.append(Torion)
-
-        #156
-        Powell = CharacterCard(
-            name="Adrian Powell",
-            picNumber=1,
-            quotes=[
-                "Here at Ulysses, we respect women and believe in gender equality. What the fuck is your problem?",
-                "Any self-respecting gentleman should always wear a nice tie... Not like fucking Toby.",
-                "You two have some *impressive* resumes. Haven't seen ones this polished since that guy who faked his diploma.",
-                "Everyone knows *real* businessmen only use cocaine anyway. Or microdoses of LSD.",
-                "The memory of Tigoryakhovgrad will prevail as long as we remember it.",
-                "Tell that Toby douche to hold an isometric air squat until it's his turn."
-            ],
-            filename="powell"
-        )
-        self.characters.append(Powell)
-
-        # 157
-        Ableman = CharacterCard(
-            name="Ian Ableman",
-            picNumber=1,
-            quotes=["\*Chuckles\* My advice? Don't hold back. If you get a chance to outshine your companion, take it. They'll like that."],
-            filename="ableman"
-        )
-        self.characters.append(Ableman)
-
-        # 158
-        Anderson = CharacterCard(
-            name="Toby Anderson",
-            picNumber=1,
-            quotes=["\*Awkward laugh\* Ha-hah, y-yeah, right."],
-            filename="anderson"
-        )
-        self.characters.append(Anderson)
-
-        # 159
-        Agatha = CharacterCard(
-            name="Agatha",
-            picNumber=1,
-            quotes=["Good evening, folks! Welcome aboard the Cascadian Express."],
-            filename="agatha",
-            aliases="Train Conductor"
-        )
-        self.characters.append(Agatha)
-
-        # 160
-        Rowan = CharacterCard(
-            name="Rowan",
-            picNumber=1,
-            quotes=["The game's about to start and I can't find the damn gin."],
-            filename="rowan"
-        )
-        self.characters.append(Rowan)
 
 
         egf_path = f"./EternumGfGameImages/"
@@ -1928,3 +1928,11 @@ class EgfCharacters:
                if isfile(join(egf_path, f)) and (f[:-7] == chara.filename or f[:-8] == chara.filename):
                    matches.append(f);
             chara.picNumber = len(matches)
+
+    def searchNameWithFilename(self, filename: str):
+        # since sorted alphabetically, maybe bin-search?
+        for c in self.characters:
+            if c.filename == filename:
+                return c.name
+        
+        return None

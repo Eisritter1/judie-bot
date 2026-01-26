@@ -2,7 +2,19 @@ import discord
 from discord.ext.commands import Context
 from discord import Embed, File
 from enum import Enum
+import sqlite3
 
+
+async def get_cols(table_name: str, blacklist: list) -> list:
+    db = sqlite3.connect("main.sqlite")
+    cursor = db.cursor()
+
+    cursor.execute("""PRAGMA table_info(%s)""" % table_name)
+    cols = [c[1] for c in cursor.fetchall() if c[1] not in blacklist]
+
+    cursor.close()
+    db.close()
+    return cols
 
 async def check_channel(ctx: Context) -> bool:
     """
@@ -75,9 +87,57 @@ class Collections(Enum):
         elif self == Collections.SIDE_DISHES:
             return "Side Girls"
         elif self == Collections.THE_HOMIES:
-            return "The Homies"
+            return "Homies"
         elif self == Collections.CREATURES:
             return "Creatures"
+
+    def member_desc(self):
+        if self == Collections.NONE:
+            return "character"
+        elif self == Collections.HAREM:
+            return "harem member"
+        elif self == Collections.SIDE_DISHES:
+            return "side girl"
+        elif self == Collections.THE_HOMIES:
+            return "homie"
+        elif self == Collections.CREATURES:
+            return "pet"
+
+    def color(self):
+        if self == Collections.NONE:
+            return HelperClass.eternumBlue
+        elif self == Collections.HAREM:
+            return HelperClass.pink
+        elif self == Collections.SIDE_DISHES:
+            return HelperClass.purple
+        elif self == Collections.THE_HOMIES:
+            return HelperClass.yellow
+        elif self == Collections.CREATURES:
+            return HelperClass.green
+
+    def table(self):
+        if self == Collections.NONE:
+            return None
+        elif self == Collections.HAREM:
+            return "eternum_harem"
+        elif self == Collections.SIDE_DISHES:
+            return "side_girls"
+        elif self == Collections.THE_HOMIES:
+            return "homies"
+        elif self == Collections.CREATURES:
+            return "creatures"
+
+    def blacklist(self):
+        if self == Collections.NONE:
+            return None
+        elif self == Collections.HAREM:
+            return ["user_id", "last_girl"]
+        elif self == Collections.SIDE_DISHES:
+            return ["user_id", "last_affair"]
+        elif self == Collections.THE_HOMIES:
+            return ["user_id", "last_homie"]
+        elif self == Collections.CREATURES:
+            return ["user_id", "last_creature"]
 
 
 class OgfCollections(Enum):
@@ -458,7 +518,7 @@ class HelperClass:
         return embed
 
 
-class Results():
+class Results:
     """
     Struct containing context following a character draw
     -----------------------------------------------------

@@ -45,8 +45,6 @@ async def on_ready():
     
     await client.config.load()
     HelperClass.init(client)
-    # Lil inconvenient to have AccountManager initialized as both a cog and variable of the client, don't you think?
-    client.accountManager = AccountManager(client)
     await createDatabase()
     changeGameActivity.start()
 
@@ -387,6 +385,7 @@ async def createDatabase():
     #endregion
 
     #region Harem: eternum_harem
+    # on Next Deployment: add column Calypso
     cursor.execute("""
                 CREATE TABLE IF NOT EXISTS eternum_harem(
                 user_id INTEGER,
@@ -420,6 +419,7 @@ async def createDatabase():
     #endregion
 
     #region Side Girls: side_girls
+    # On Next Deployment: Rename column calypso to lorelei
     cursor.execute("""
                 CREATE TABLE IF NOT EXISTS side_girls(
                 user_id INTEGER,
