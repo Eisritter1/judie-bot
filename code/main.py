@@ -168,7 +168,7 @@ async def help(ctx, plugin=None):
                             " this command in a channel marked **nsfw**__\nIf you don't add a name"
                             " it will choose a random lewd across all OiaLt and Eternum options!\n\n*Supported options:"
                             " Aiko, Carla, Iris, Jasmine, Judie, Lauren, Rebecca, Alex, Annie, Calypso, Dalia, Eva,"
-                            " FoxMaidens (:warning: putting a space won't recognize it as fox maidens!), Luna, Maat, "
+                            " FoxMaidens (:warning: putting a space won't recognize it as fox maidens!), Lorelei, Luna, Maat, "
                             "Nancy, Nova, Penny, Wenlin, OiaLt, Eternum*")
     #endregion
 
