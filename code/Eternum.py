@@ -76,7 +76,7 @@ class Eternum(commands.Cog):
         text = ""
         footer = ""
         effect_description = ""
-        aliases = f"*a.k.a. {character.aliases}*"
+        aliases = "*No aliases*" if character.aliases == "no aliases" else f"*a.k.a. {character.aliases}*"
         color = HelperClass.eternumBlue
 
         number = n if (n > 0 and n <= character.picNumber) else random.randint(1, character.picNumber)
@@ -85,7 +85,7 @@ class Eternum(commands.Cog):
         # error message & early exit if file unrecognized.
         if not os.path.exists(filepath):
             print(f"Error: file {filepath} not found.")
-            await ctx.send(f"Error building embed for character {character}: Couldn't find image no. {number}")
+            await ctx.send(f"Error building embed for character {character.name}: Couldn't find image no. {number}")
             return
 
         collection = character.collection
@@ -689,7 +689,7 @@ class Eternum(commands.Cog):
 
 
         # HOMIES
-        ho_list, ho_vals = await self.getMembers(ctx.author, Collections.HAREM)
+        ho_list, ho_vals = await self.getMembers(ctx.author, Collections.THE_HOMIES)
 
         homielist = "\n".join(ho_list)
 

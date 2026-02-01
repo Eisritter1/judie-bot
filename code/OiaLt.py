@@ -136,7 +136,7 @@ class OiaLt(commands.Cog):
         image = ""
         text = ""
         footer = character.footer
-        duplicateText = "" if collection == OgfCollections.NONE and effect == OgfEffects.NONE else f"(New) {HelperClass.daliaParty}" if results.duplicate else f"(duplicate) {HelperClass.annieCry}"
+        duplicateText = "" if collection == OgfCollections.NONE and effect == OgfEffects.NONE else f"(New) {HelperClass.daliaParty}" if not results.duplicate else f"(duplicate) {HelperClass.annieCry}"
         collection_field_name = f"{str(collection)} {duplicateText}"
         collection_field_value = ""
         effect_field_name = str(effect)
