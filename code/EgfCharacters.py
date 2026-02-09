@@ -1,4 +1,4 @@
-from CharacterCard import CharacterCard
+from CharacterCard import CharacterCard, Villain
 from Utilities import Collections, Effects
 from os import listdir
 from os.path import isfile, join
@@ -247,7 +247,7 @@ class EgfCharacters:
         self.characters.append(Avery)
 
         # 20 [SIDE GIRL HARASSER]
-        Axel = CharacterCard(
+        Axel = Villain(
             name="Axel Bardot",
             picNumber=3,
             quotes=["You messed with the wrong guy.",
@@ -258,6 +258,10 @@ class EgfCharacters:
                     "I always get what I want in the end, baby.",
                     "You just signed your death warrant, motherfucker!"],
             filename="axel",
+            killMessage="Oh no! Axel kidnapped {victim} from your side girl harem, {author}!",
+            protectedMessage="Orion punched Axel the second he noticed him harassing {author}'s {victim}!",
+            emptyMessage="Axel didn't find anyone to kidnap... Lucky you I guess, {author}",
+            footer="You messed with the wrong guy, cocksucker ({author})!",
             effects=Effects.SIDE_GIRL_KIDNAPPER
         )
         self.characters.append(Axel)
@@ -797,11 +801,15 @@ class EgfCharacters:
         self.characters.append(Gertrude)
 
         # 65 [CREATURE STOMPER]
-        Golem = CharacterCard(
+        Golem = Villain(
             name="Golem",
             picNumber=1,
             quotes=["*groans*"],
             filename="golem",
+            killMessage="The golem has stomped {victim} to death. They are no longer your pet, {author}.",
+            protectedMessage="Pyramid Head managed to kill the golem before it could get its feet on {author}'s {victim}!",
+            emptyMessage="The golem didn't find anyone to trample on... Lucky you I guess, {author}.",
+            footer="*groans* ({author})",
             effects=Effects.CREATURE_STOMPER
         )
         self.characters.append(Golem)
@@ -1692,7 +1700,7 @@ class EgfCharacters:
         self.characters.append(Thalindra)
 
         # 141 [HAREM KILLER]
-        Thanatos = CharacterCard(
+        Thanatos = Villain(
             name="Thanatos",
             picNumber=8,
             quotes=["I must say, you've done more damage here than most.",
@@ -1702,6 +1710,10 @@ class EgfCharacters:
                     "All I am surrounded by... is fear. **And dead men.**",
                     "I can respect the resolve of a warrior."],
             filename="thanatos",
+            killMessage="Thanatos killed {victim}. She is no longer in your harem, {author}.",
+            protectedMessage="Calypso managed to evacuate {author}'s {victim} before Thanatos could kill her!",
+            emptyMessage="Thanatos didn't find anyone to kill... Lucky you I guess, {author}.",
+            footer="You won't be this lucky next time, {author}.",
             effects=Effects.HAREM_KILLER,
             aliases="The best Eternum player, Wyatt R. Pitman"
         )
@@ -1767,11 +1779,15 @@ class EgfCharacters:
         self.characters.append(Tissle)
 
         # 148 [HOMIE KILLER]
-        Troll = CharacterCard(
+        Troll = Villain(
             name="Troll",
             picNumber=1,
             quotes=["*groans*"],
             filename="troll",
+            killMessage="The troll killed {victim}. They are no longer in your homie group, {author}!",
+            protectedMessage="Dalia managed to kill the troll before it could get its hands on {author}'s {victim}!",
+            emptyMessage="The troll didn't find anyone to kill... Lucky you I guess, {author}",
+            footer="*groans* ({author})",
             effects=Effects.HOMIE_KILLER
         )
         self.characters.append(Troll)

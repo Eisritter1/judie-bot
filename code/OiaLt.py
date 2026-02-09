@@ -13,6 +13,58 @@ from CharacterCard import OgfCharacterCard
 from OgfCharacters import OgfCharacters
 
 
+# Help function
+async def help_oialt(ctx):
+    field_names = []
+    field_values = []
+
+    title = "Judie's OiaLt gf game!"
+    description = "Here are the commands to use the oialt gf system!"
+
+    field_names.append("-ogf (oialt gf)")
+    field_values.append("pull a random gf from the OiaLt world! (23h cooldown!)")
+
+    field_names.append("-ocollections (oialt collections)")
+    field_values.append("Get an overview of all your oialt collections!")
+
+    field_names.append("-oharem (oialt harem)")
+    field_values.append(
+        "check your progress in the LI collection!\n--> Contains **Judie, Lauren, Messy Hair Lauren, " \
+        "Carla, Iris, Aiko, Jasmine & Rebecca**.")
+
+    field_names.append("-stabbyclan")
+    field_values.append(
+        "check your progress in the stabby mike collection!\n--> Contains **Stabby Police, Hitman Mike, " \
+        "Anastasia, Yakuza Mike, Priest Mike & Mike the Exterminator**.")
+
+    field_names.append("-theboys")
+    field_values.append(
+        "check your progress in the boys collection!\n--> Contains **MC, Tom, Fit Jack, Oliver, Asmodeus & " \
+        "Hiromi**.")
+
+    field_names.append("-potentialLIs")
+    field_values.append(
+        "check your progress in the potential LI collection!\n--> Contains **Ava, Lilith, Fit Jack's "
+        "Groupie, Train Conductor, Shop Girl & Stone Elephant**.")
+
+    field_names.append("-oprotectors (oialt protectors)")
+    field_values.append("Check your protections against the different villains!\n--> Contains **Funtime, MC, Aiko "
+                        "and 93**.")
+
+    field_names.append("__Further info__")
+    field_values.append("For any other kind of information, feel free to contact **eisritter**!")
+
+    footer = "WARNING: All of Judie's features contain spoilers to players who are not up to the current version" \
+             " of Eternum."
+
+    embed = discord.Embed(title=title, description=description, color=HelperClass.orange)
+    embed.set_footer(text=footer)
+
+    for i in range(0, len(field_names)):
+        embed.add_field(name=field_names[i], value=field_values[i], inline=False)
+
+    await ctx.send(embed=embed)
+
 class OiaLt(commands.Cog):
     """
     Judie's OiaLt GF game cog.

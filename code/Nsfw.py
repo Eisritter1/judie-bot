@@ -7,7 +7,6 @@ import os
 from Utilities import HelperClass
 from CharacterCard import NsfwCharacterCard
 from NsfwCharacters import NsfwCharacters
-import time
 
 
 async def createAndSendEmbed(card: NsfwCharacterCard, number: int, ctx):

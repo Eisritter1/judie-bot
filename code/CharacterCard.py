@@ -1,3 +1,4 @@
+from discord.ext.commands.parameters import empty
 from Utilities import Collections, Effects, OgfCollections, OgfEffects
 
 class CharacterCard:
@@ -31,6 +32,49 @@ class CharacterCard:
         self.aliases = aliases
         self.collection = collection
 
+
+class Villain(CharacterCard):
+    def __init__(
+        self, 
+        name: str, 
+        picNumber: int, 
+        quotes: list, 
+        filename: str,
+        killMessage: str,
+        protectedMessage: str,
+        emptyMessage: str,
+        footer: str,
+        effects: Effects = Effects.NONE, 
+        aliases: str = "no aliases", 
+        collection: Collections = Collections.NONE
+    ):
+        super().__init__(name, picNumber, quotes, filename, effects, aliases, collection)
+        self.killMessage = killMessage
+        self.protectedMessage = protectedMessage
+        self.emptyMessage = emptyMessage
+        self.footer = footer
+
+    def kill_message(self, victim: str, author: str):
+        self.killMessage.format(
+            victim=victim,
+            author=author
+        )
+
+    def protected_message(self, victim: str, author: str):
+        self.protectedMessage.format(
+            victim=victim,
+            author=author
+        )
+
+    def empty_message(self, author: str):
+        self.emptyMessage.format(
+            author=author
+        )
+
+    def get_footer(self, author: str):
+        self.footer.format(
+            author=author
+        )
 
 class NsfwCharacterCard:
     """

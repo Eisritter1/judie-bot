@@ -35,7 +35,8 @@ def check_user(expectFail: bool = False):
 
         is_registered = userIDCheck is not None
 
-        if (is_registered and not expectFail) or (not is_registered and expectFail):
+        # XOR operation. if expect failure you want not_registered, otherwise you don't want not_registered.
+        if is_registered ^ expectFail:
             return True  # allow command to run
 
         # Optional: Send feedback before raising error
@@ -168,6 +169,12 @@ class AccountManager(commands.Cog):
 
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, payload):
+        """
+        A function called when any reaction is added to any message within the bot's scope.
+        ---
+        Used to confirm the deletion of user accounts. 
+        Worthwile warning, ANY reaction would trigger this, the only counter is to ignore the request if the user changed their mind.
+        """
         # If no message marked for deletion, ignore
         if len(self.deleteRequestMessages) == 0:
             return

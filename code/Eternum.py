@@ -11,9 +11,56 @@ import sqlite3
 from time import sleep
 # OWN LIBRARIES
 from Utilities import Collections, HelperClass, Results, Effects, check_channel, get_cols
-from CharacterCard import CharacterCard
+from CharacterCard import CharacterCard, Villain
 from AccountManager import AccountManager, check_user
 from EgfCharacters import EgfCharacters
+
+async def help_eternum(ctx):
+    field_names = []
+    field_values = []
+
+    title = "Judie's Eternum gf game!"
+    description = "Here are the commands to use the eternum gf game:"
+
+    field_names.append("-egf (eternum gf)")
+    field_values.append("pull a random gf from the eternum universe! (23hr cooldown)")
+
+    field_names.append("-eCollections (eternum collections)")
+    field_values.append("get an overview of all your eternum collections!")
+
+    field_names.append("-eharem (eternum harem)")
+    field_values.append(
+        "check your progress in the harem collection\n--> Contains **Alex, Annie, Calypso, Dalia, Luna, Nancy, Nova & Penny**")
+
+    field_names.append("-homies (the homies)")
+    field_values.append(
+        "check your progress in the homie collection\n--> Contains **Chang, Chop Chop, Mr. Hernandez, Jerry, Micaela, Noah, Orion & Raul**")
+
+    field_names.append("-sidegirls")
+    field_values.append(
+        "check your progress in the side girl collection\n--> Contains **Blue Fox Maiden, Eva, Idriel, Lorelei, Maat, Red Fox Maiden & Wenlin**")
+
+    field_names.append("-creatures")
+    field_values.append(
+        "check your progress in the creatures collection\n--> Contains **Carolyn, Igor, Kermit, Maurice, Maurice, Maurice, Pancho**")
+
+    field_names.append("-eprotectors")
+    field_values.append("Check your protections against various villains!\n--> Contains **Orion, Calypso, Dalia &"
+                        " Pyramid Head**")
+
+    field_names.append("__Further info__")
+    field_values.append("For any other kind of information, feel free to contact **eisritter**!")
+
+    footer = "WARNING: All of Judie's features contain spoilers to players who are not up to the current version" \
+             " of Eternum."
+
+    embed = discord.Embed(title=title, description=description, color=HelperClass.orange)
+    embed.set_footer(text=footer)
+
+    for i in range(0, len(field_names)):
+        embed.add_field(name=field_names[i], value=field_values[i], inline=False)
+
+    await ctx.send(embed=embed)
 
 
 class Eternum(commands.Cog):
@@ -70,6 +117,9 @@ class Eternum(commands.Cog):
         """
         if not character:
             print("Error: Missing character object.")
+            return
+
+        author=str(ctx.author.display_name)
 
         embed = ""
         image = ""
@@ -93,85 +143,33 @@ class Eternum(commands.Cog):
         # This needs to include Pyramid Head :PepeBruh:
         if collection == Collections.NONE:
 
-            # average joes
-            if not character.effects in [Effects.HAREM_KILLER, Effects.HOMIE_KILLER, Effects.SIDE_GIRL_KIDNAPPER, Effects.CREATURE_STOMPER]:
+            # villains
+            if isinstance(character, Villain):
+                # case: villain was denied
+                if results.protected:
+                    text = f"{character.protected_message(victim=results.victim, author=author)} {HelperClass.annieYay}"
+                    effect_description = f"{str(character.effects)} (denied) {HelperClass.novaGun}"
+                    color = HelperClass.red
+                    footer = character.get_footer(author=author)
+                    filepath = f"./EternumGfGameImages/{character.filename}_denied.webp"
+                # case: villain unchecked
+                else:
+                    if results.victim != "Nobody":
+                        text = f"{character.kill_message(victim=results.victim, author=author)} {HelperClass.pepeCry2}"
+                        effect_description = f"{str(character.effects)} {HelperClass.alexAngry}"
+                    else:
+                        text = character.empty_message(author=author)
+                        effect_description = f"{str(character.effects)} {HelperClass.alexAngry}"
+                    color = HelperClass.black
+                    footer = random.choice(character.quotes)
+            # pyramid head (only non-collectible protector so far...)
+            elif character.name == "Pyramid Head":
+                color = HelperClass.blue
+            # average joe schmoes
+            else:
                 text = f"{random.choice(character.quotes)}"
                 effect_description = f"{str(collection)} - {str(character.effects)}"
-                footer = f"Better luck next time, {str(ctx.author.display_name)}!"
-            # villains:
-            else:
-                if character.name == "Thanatos":
-                    if results.protected:
-                        text = f"Calypso managed to evacuate {results.victim} before Thanatos could kill her! {HelperClass.annieYay}"
-                        effect_description = f"{str(character.effects)} (denied) {HelperClass.novaGun}"
-                        color = HelperClass.red
-                        footer = f"You won't be this lucky next time, {str(ctx.author.display_name)}..."
-                        filepath = f"./EternumGfGameImages/{character.filename}_denied.webp"
-                    else:
-                        effect_description = f"{str(character.effects)} {HelperClass.alexAngry}"
-                        if results.victim != "Nobody":
-                            text = f"Thanatos killed {results.victim}. She is no longer in your harem, " \
-                                   f"{str(ctx.author.display_name)}! {HelperClass.pepeCry2}"
-                        else:
-                            text = f"Thanatos didn't find anyone to kill... Lucky you I guess, {str(ctx.author.display_name)}."
-                        color = HelperClass.black
-                        footer = random.choice(character.quotes)
-
-                elif character.name == "Troll":
-                    if results.protected:
-                        text = f"Dalia managed to kill the troll before it could get its hands on {str(ctx.author.display_name)}'s" \
-                               f" {results.victim}! {HelperClass.annieYay}"
-                        effect_description = f"{str(character.effects)} (denied) {HelperClass.novaGun}"
-                        color = HelperClass.red
-                        footer = "*groans*"
-                        filepath = f"./EternumGfGameImages/{character.filename}_denied.webp"
-                    else:
-                        effect_description = f"{str(character.effects)} {HelperClass.alexAngry}"
-                        if results.victim != "Nobody":
-                            text = f"The troll killed {results.victim}. They are no longer in your homie group, " \
-                                   f"{str(ctx.author.display_name)}! {HelperClass.pepeCry2}"
-                        else:
-                            text = f"The troll didn't find anyone to kill... Lucky you I guess, {str(ctx.author.display_name)}"
-                        color = HelperClass.black
-                        footer = random.choice(character.quotes)
-
-                elif character.name == "Axel Bardot":
-                    if results.protected:
-                        text = f"Orion punched Axel the second he noticed him harassing {results.victim}! {HelperClass.annieYay}"
-                        effect_description = f"{str(character.effects)} (denied) {HelperClass.novaGun}"
-                        color = HelperClass.red
-                        footer = f"You messed with the wrong guy, cocksucker ({str(ctx.author.display_name)})!"
-                        filepath = f"./EternumGfGameImages/{character.filename}_denied.webp"
-                    else:
-                        if results.victim != "Nobody":
-                            text = f"Oh no! Axel kidnapped {results.victim} from your side girl harem, {str(ctx.author.display_name)}! {HelperClass.pepeCry2}"
-                            effect_description = f"{str(character.effects)} {HelperClass.alexAngry}"
-                        else:
-                            text = f"Axel didn't find anyone to kidnap... Lucky you I guess, {str(ctx.author.display_name)}."
-                            effect_description = f"{str(character.effects)} {HelperClass.alexAngry}"
-                        color = HelperClass.black
-                        footer = random.choice(character.quotes)
-
-                elif character.name == "Golem":
-                    if results.protected:
-                        text = f"Pyramid Head managed to kill the troll before it could get its feet on " \
-                               f"{str(ctx.author.display_name)}'s {results.victim}! {HelperClass.annieYay}"
-                        effect_description = f"{str(character.effects)} (denied) {HelperClass.novaGun}"
-                        color = HelperClass.red
-                        footer = "*groans*"
-                        filepath = f"./EternumGfGameImages/{character.filename}_denied.webp"
-                    else:
-                        if results.victim != "Nobody":
-                            text = f"The golem stomped {results.victim} to death. They are no longer in your creatures " \
-                                   f"group, {str(ctx.author.display_name)}! {HelperClass.pepeCry2}"
-                            effect_description = f"{str(character.effects)} {HelperClass.alexAngry}"
-                        else:
-                            text = f"The golem didn't find anyone to trample on... Lucky you I guess, {str(ctx.author.display_name)}."
-                            effect_description = f"{str(character.effects)} {HelperClass.alexAngry}"
-                        color = HelperClass.black
-                        footer = random.choice(character.quotes)
-            if character.name == "Pyramid Head":
-                color = HelperClass.blue
+                footer = f"Better luck next time, {author}!"
 
         # Collectibles
         else:

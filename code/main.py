@@ -7,9 +7,9 @@ import os
 from dotenv import load_dotenv
 from itertools import cycle
 # JUDIE LIBRARIES
-from OiaLt import OiaLt
+from OiaLt import OiaLt, help_oialt
 from Nsfw import Nsfw
-from Eternum import Eternum
+from Eternum import Eternum, help_eternum
 from AccountManager import AccountManager
 from Utilities import HelperClass, TimeObject, check_channel
 from BotConfig import BotConfig
@@ -107,8 +107,10 @@ async def help(ctx, plugin=None):
     field_names = []
     field_values = []
 
-    #region default
-    if plugin is None:
+    # default
+    if plugin is None or plugin.lower() not in [
+            "eternum", "oialt", "once in a lifetime", "nsfw", "general", "miscellaneous", "misc", "gen", "account", "accounts"
+        ]:
         field_names.append("__OiaLt__")
         field_values.append("Commands for the classic Gf game! (-help OiaLt)")
 
@@ -120,46 +122,14 @@ async def help(ctx, plugin=None):
 
         field_names.append("__General Commands__")
         field_values.append("Account Management & Miscellaneous Commands! (-help General)")
-    #endregion
+    #
 
-    #region Oialt
+    # Oialt
     elif plugin.lower() == "oialt" or plugin.lower() == "once in a lifetime":
-        title = "Judie's OiaLt gf game!"
-        description = "Here are the commands to use the oialt gf system!"
+        help_oialt(ctx)
 
-        field_names.append("-ogf (oialt gf)")
-        field_values.append("pull a random gf from the OiaLt world! (23h cooldown!)")
-
-        field_names.append("-ocollections (oialt collections)")
-        field_values.append("Get an overview of all your oialt collections!")
-
-        field_names.append("-oharem (oialt harem)")
-        field_values.append(
-            "check your progress in the LI collection!\n--> Contains **Judie, Lauren, Messy Hair Lauren, " \
-            "Carla, Iris, Aiko, Jasmine & Rebecca**.")
-
-        field_names.append("-stabbyclan")
-        field_values.append(
-            "check your progress in the stabby mike collection!\n--> Contains **Stabby Police, Hitman Mike, " \
-            "Anastasia, Yakuza Mike, Priest Mike & Mike the Exterminator**.")
-
-        field_names.append("-theboys")
-        field_values.append(
-            "check your progress in the boys collection!\n--> Contains **MC, Tom, Fit Jack, Oliver, Asmodeus & " \
-            "Hiromi**.")
-
-        field_names.append("-potentialLIs")
-        field_values.append(
-            "check your progress in the potential LI collection!\n--> Contains **Ava, Lilith, Fit Jack's "
-            "Groupie, Train Conductor, Shop Girl & Stone Elephant**.")
-
-        field_names.append("-oprotectors (oialt protectors)")
-        field_values.append("Check your protections against the different villains!\n--> Contains **Funtime, MC, Aiko "
-                            "and 93**.")
-    #endregion
-
-    #region NSFW
-    elif plugin.lower() in ["nsfw", "not safe for work"]:
+    # NSFW
+    elif plugin.lower() == "nsfw":
         title = "Judie's lewd stash!"
         description = "Please use in appropriate channels!"
 
@@ -170,9 +140,8 @@ async def help(ctx, plugin=None):
                             " Aiko, Carla, Iris, Jasmine, Judie, Lauren, Rebecca, Alex, Annie, Calypso, Dalia, Eva,"
                             " FoxMaidens (:warning: putting a space won't recognize it as fox maidens!), Lorelei, Luna, Maat, "
                             "Nancy, Nova, Penny, Wenlin, OiaLt, Eternum*")
-    #endregion
 
-    #region Misc
+    # Misc
     elif plugin.lower() in ["general", "miscellaneous", "misc", "gen", "account", "accounts"]:
         title = "Miscellaneous commands!"
         description = "Account management and a few other commands :)"
@@ -190,54 +159,10 @@ async def help(ctx, plugin=None):
         field_names.append("-deleteacc")
         field_values.append(
             "Delete all your entries to the database. *Please note that this action is __irreversible__.*")
-    #endregion
 
-    #region Eternum
+    # eternum
     elif plugin.lower() == "eternum":
-        title = "Judie's Eternum gf game!"
-        description = "Here are the commands to use the eternum gf game:"
-
-        field_names.append("-egf (eternum gf)")
-        field_values.append("pull a random gf from the eternum universe! (23hr cooldown)")
-
-        field_names.append("-eCollections (eternum collections)")
-        field_values.append("get an overview of all your eternum collections!")
-
-        field_names.append("-eharem (eternum harem)")
-        field_values.append(
-            "check your progress in the harem collection\n--> Contains **Alex, Annie, Calypso, Dalia, Luna, Nancy, Nova & Penny**")
-
-        field_names.append("-homies (the homies)")
-        field_values.append(
-            "check your progress in the homie collection\n--> Contains **Chang, Chop Chop, Mr. Hernandez, Jerry, Micaela, Noah, Orion & Raul**")
-
-        field_names.append("-sidegirls")
-        field_values.append(
-            "check your progress in the side girl collection\n--> Contains **Blue Fox Maiden, Eva, Idriel, Lorelei, Maat, Red Fox Maiden & Wenlin**")
-
-        field_names.append("-creatures")
-        field_values.append(
-            "check your progress in the creatures collection\n--> Contains **Carolyn, Igor, Kermit, Maurice, Maurice, Maurice, Pancho**")
-
-        field_names.append("-eprotectors")
-        field_values.append("Check your protections against various villains!\n--> Contains **Orion, Calypso, Dalia &"
-                            " Pyramid Head**")
-    #endregion
-
-    #region default
-    else:
-        field_names.append("__OiaLt__")
-        field_values.append("Commands for the classic Gf game! (-help OiaLt)")
-
-        field_names.append("__Eternum__")
-        field_values.append("Commands for the brand new Eternum GF game! (-help Eternum)")
-
-        field_names.append("__Nsfw__")
-        field_values.append("Commands for our lewds plugin! (-help Nsfw)")
-
-        field_names.append("__General Commands__")
-        field_values.append("Account Management & Miscellaneous Commands! (-help General)")
-    #endregion
+        help_eternum(ctx)
 
     field_names.append("__Further info__")
     field_values.append("For any other kind of information, feel free to contact **eisritter**!")
