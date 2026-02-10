@@ -254,6 +254,7 @@ async def help(ctx, plugin=None):
     await ctx.send(embed=embed)
 
 
+# find a way to prevent/reset cooldowns if TimeInSecs == 0
 @client.command()
 @commands.check(check_channel)
 async def timers(ctx):
@@ -263,13 +264,13 @@ async def timers(ctx):
     ogf = client.get_command("ogf")
     egf = client.get_command("egf")
 
-    ogfTimeInSecs = ogf._buckets.get_bucket(ctx.message).update_rate_limit()
+    ogfTimeInSecs = ogf._buckets.get_bucket(ctx.message).get_retry_after()
     ogfTime = None if ogfTimeInSecs == None else TimeObject(ogfTimeInSecs)
-    ogfText = f"**-ogf**: you __can__ draw now!" if ogfTimeInSecs == None else f"**-ogf**: you can try again in {ogfTime.hours:02}:{ogfTime.minutes:02}:{ogfTime.seconds:02}"
+    ogfText = f"**-ogf**: you __can__ draw now!" if ogfTimeInSecs == 0 else f"**-ogf**: you can try again in {ogfTime.hours:02}:{ogfTime.minutes:02}:{ogfTime.seconds:02}"
 
-    egfTimeInSecs = egf._buckets.get_bucket(ctx.message).update_rate_limit()
+    egfTimeInSecs = egf._buckets.get_bucket(ctx.message).get_retry_after()
     egfTime = None if egfTimeInSecs == None else TimeObject(egfTimeInSecs)
-    egfText = f"**-egf**: you __can__ draw now!" if egfTimeInSecs == None else f"**-egf**: you can try again in {egfTime.hours:02}:{egfTime.minutes:02}:{egfTime.seconds:02}"
+    egfText = f"**-egf**: you __can__ draw now!" if egfTimeInSecs == 0 else f"**-egf**: you can try again in {egfTime.hours:02}:{egfTime.minutes:02}:{egfTime.seconds:02}"
 
     embed = await HelperClass.createEmbed(title=f"Cooldown overview for {ctx.author.display_name}:", text=f"{ogfText}\n{egfText}")
     await ctx.send(embed=embed)
