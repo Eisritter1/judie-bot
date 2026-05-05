@@ -22,7 +22,7 @@ async def help_oialt(ctx):
     description = "Here are the commands to use the oialt gf system!"
 
     field_names.append("-ogf (oialt gf)")
-    field_values.append("pull a random gf from the OiaLt world! (23h cooldown!)")
+    field_values.append("pull a random gf from the OiaLt world! (20h cooldown!)")
 
     field_names.append("-ocollections (oialt collections)")
     field_values.append("Get an overview of all your oialt collections!")

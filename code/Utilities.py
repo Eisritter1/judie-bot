@@ -139,6 +139,17 @@ class Collections(Enum):
         elif self == Collections.CREATURES:
             return ["user_id", "last_creature"]
 
+    def lastColName(self):
+        if self == Collections.NONE:
+            return None
+        elif self == Collections.HAREM:
+            return "last_girl"
+        elif self == Collections.SIDE_DISHES:
+            return "last_affair"
+        elif self == Collections.THE_HOMIES:
+            return "last_homie"
+        elif self == Collections.CREATURES:
+            return "last_creature"
 
 class OgfCollections(Enum):
     """
@@ -285,6 +296,210 @@ class Effects(Enum):
             return "Creature Defender: saves from the Golem once."
         elif self == Effects.CREATURE_STOMPER:
             return "Creature Stomper: stomps a creature to death, preferrably Kermit."
+
+    def action(self):
+        if self == Effects.NONE:
+            return Effects.doNothing
+        elif self == Effects.HAREM_SAVIOUR:
+            return Effects.protectHarem
+        elif self == Effects.SIDE_GIRL_SAVIOUR:
+            return Effects.protectSides
+        elif self == Effects.HOMIE_SAVIOUR:
+            return Effects.protectHomies
+        elif self == Effects.HAREM_KILLER:
+            return Effects.killFromHarem
+        elif self == Effects.SIDE_GIRL_KIDNAPPER:
+            return Effects.kidnapSideGirl
+        elif self == Effects.HOMIE_KILLER:
+            return Effects.killHomie
+        elif self == Effects.CREATURE_SAVIOUR:
+            return Effects.protectCreature
+        elif self == Effects.CREATURE_STOMPER:
+            return Effects.stompCreature
+
+    def doNothing(cursor, uid, _) -> tuple:
+        return (True, "Nobody")
+
+    # 'characters' param discarded for saviours for compatibility w. villains w/o needing to rewrite the class. 
+    # Same reason for the non-relevant output tuple.
+    # Bad practise I know but gimme a break. If it's acceptable for TLS it's fine for Judie.
+    def protectHarem(cursor, uid, _) -> tuple:
+        cursor.execute("UPDATE eternum SET calypso=1 WHERE user_id =?", [uid])
+        return (True, "Nobody")
+
+    def protectSides(cursor, uid, _) -> tuple:
+        cursor.execute("UPDATE eternum SET orion=1 WHERE user_id =?", [uid])
+        return (True, "Nobody")
+
+    def protectHomies(cursor, uid, _) -> tuple:
+        cursor.execute("UPDATE eternum SET dalia=1 WHERE user_id =?", [uid])
+        return (True, "Nobody")
+
+    def killFromHarem(cursor, uid, characters) -> tuple:
+        protected = False
+        victim = "Nobody"
+
+        # search for Alex then Nova then the latest harem member
+        cursor.execute("SELECT alex FROM eternum_harem WHERE user_id=?", [uid])
+        alex = cursor.fetchone()
+
+        if alex[0] == 'Alexandra Bardot':
+            victim = alex[0]
+        else:
+            cursor.execute("SELECT nova FROM eternum_harem WHERE user_id=?", [uid])
+            nova = cursor.fetchone()
+            if nova[0] == 'Nova Johnson':
+                victim = nova[0]
+            else:
+                cursor.execute("SELECT last_girl FROM eternum_harem WHERE user_id=?", [uid])
+                lastgf = cursor.fetchone()
+                if lastgf[0] in ['annie', 'dalia', 'luna', 'nancy', 'penny']:
+                    for i in range(len(characters)):
+                        if characters[i].filename == lastgf[0]:
+                            victim = characters[i].name
+                # if no one in last_li, user is off the hook.
+                else:
+                    victim = "Nobody"
+
+        # check Calypso in eternum for protection
+        cursor.execute("SELECT calypso FROM eternum WHERE user_id=?", [uid])
+        protection = cursor.fetchone()
+
+        if protection[0] == 0 and victim != "Nobody":
+            for i in range(len(characters)):
+                if characters[i].name == victim:
+                    column = characters[i].filename
+                    cursor.execute("UPDATE eternum_harem SET %s=0 WHERE user_id=?" % column, [uid])
+
+            cursor.execute("UPDATE eternum_harem SET last_girl='NONE' WHERE user_id=?", [uid])
+        # if calypso was there, protection expired.
+        else:
+            if victim != "Nobody":
+                cursor.execute("UPDATE eternum SET calypso=0 WHERE user_id=?", [uid])
+                protected = True
+
+        return (protected, victim)
+
+    def kidnapSideGirl(cursor, uid, characters) -> tuple:
+        protected = False
+        victim = "Nobody"
+
+        # select the last side girl collected
+        cursor.execute("SELECT last_affair FROM side_girls WHERE user_id=?", [uid])
+        lastgf = cursor.fetchone()
+        if lastgf[0] in ['bluefoxmaiden', 'calypso', 'eva', 'idriel', 'maat', 'redfoxmaiden', 'wenlin']:
+            for i in range(len(characters)):
+                if characters[i].filename == lastgf[0]:
+                    victim = characters[i].name
+        # if field last_affair is empty, user is off the hook.
+        else:
+            victim = "Nobody"
+            
+        # check for Orion's protection
+        cursor.execute("SELECT orion FROM eternum WHERE user_id=?", [uid])
+        protection = cursor.fetchone()
+
+        if protection[0] == 0 and victim != "Nobody":
+            for i in range(len(characters)):
+                if characters[i].name == victim:
+                    column = characters[i].filename
+                    cursor.execute("UPDATE side_girls SET %s=0 WHERE user_id=?" % column, [uid])
+
+            cursor.execute("UPDATE side_girls SET last_affair='NONE' WHERE user_id=?", [uid])
+        
+        # remove future protection if Orion intervened
+        else:
+            if victim != "Nobody":
+                cursor.execute("UPDATE eternum SET orion=0 WHERE user_id=?", [uid])
+                protected = True
+
+        return (protected, victim)
+
+    def killHomie(cursor, uid, characters) -> tuple:
+        protected = True
+        victim = "Nobody"
+        
+        # check for Jerry, then the last homie collected if Jerry not found.
+        cursor.execute("SELECT jerry FROM homies WHERE user_id=?", [uid])
+        jerry = cursor.fetchone()
+
+        if jerry[0] == 'Jerry':
+            victim = jerry[0]
+        else:
+            cursor.execute("SELECT last_homie FROM homies WHERE user_id=?", [uid])
+            lastgf = cursor.fetchone()
+            if lastgf[0] in ['chang', 'orion', 'chopchop', 'hernandez', 'micaela', 'noah', 'raul']:
+                for i in range(len(characters)):
+                    if characters[i].filename == lastgf[0]:
+                        victim = characters[i].name
+            # if last_homie is empty, user is off the hook.
+            else:
+                victim = "Nobody"
+
+        # check for Dalia's protection
+        cursor.execute("SELECT dalia FROM eternum WHERE user_id=?", [uid])
+        protection = cursor.fetchone()
+
+        if protection[0] == 0 and victim != "Nobody":
+            for i in range(len(characters)):
+                if characters[i].name == victim:
+                    column = characters[i].filename
+                    cursor.execute("UPDATE homies SET %s=0 WHERE user_id=?" % column, [uid])
+
+                cursor.execute("UPDATE homies SET last_homie='NONE' WHERE user_id=?", [uid])
+
+        # remove future protection if Dalia intervened.
+        else:
+            if victim != "Nobody":
+                cursor.execute("UPDATE eternum SET dalia=0 WHERE user_id=?", [uid])
+                protected = True
+
+        return (protected, victim)
+
+    def protectCreature(cursor, uid, _) -> tuple:
+        cursor.execute("UPDATE eternum SET pyramid_head=1 WHERE user_id =?", [uid])
+        return (True, "Nobody")
+
+    def stompCreature(cursor, uid, characters) -> tuple:
+        protected = True
+        victim = "Nobody"
+
+        # check for kermit, then last collected pet if not found.
+        cursor.execute("SELECT kermit FROM creatures WHERE user_id=?", [uid])
+        kermit = cursor.fetchone()
+
+        if kermit[0] == 'Kermit':
+            victim = kermit[0]
+        else:
+            cursor.execute("SELECT last_creature FROM creatures WHERE user_id=?", [uid])
+            lastgf = cursor.fetchone()
+            if lastgf[0] in ['carolyn', 'igor', 'mauricec', 'mauriceg', 'mauricet', 'pancho']:
+                for i in range(len(characters)):
+                    if characters[i].filename == lastgf[0]:
+                        victim = characters[i].name
+            # if last_creature is empty, user is off the hook.
+            else:
+                victim = "Nobody"
+
+        # check for Pyri's protection.
+        cursor.execute("SELECT pyramid_head FROM eternum WHERE user_id=?", [uid])
+        protection = cursor.fetchone()
+
+        if protection[0] == 0 and victim != "Nobody":
+            for i in range(len(characters)):
+                if characters[i].name == victim:
+                    column = characters[i].filename
+                    cursor.execute("UPDATE creatures SET %s=0 WHERE user_id=?" % column, [uid])
+
+                cursor.execute("UPDATE creatures SET last_creature='NONE' WHERE user_id=?", [uid])
+
+        # remove future protection if Pyri intervened.
+        else:
+            if victim != "Nobody":
+                cursor.execute("UPDATE eternum SET pyramid_head=0 WHERE user_id=?", [uid])
+                protected = True
+
+        return (protected, victim)
 
 class OgfEffects(Enum):
     """

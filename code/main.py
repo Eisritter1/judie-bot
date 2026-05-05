@@ -9,7 +9,7 @@ from itertools import cycle
 # JUDIE LIBRARIES
 from OiaLt import OiaLt, help_oialt
 from Nsfw import Nsfw
-from Eternum import Eternum, help_eternum
+from Eternum import Eternum, check_deployment, help_eternum
 from AccountManager import AccountManager
 from Utilities import HelperClass, TimeObject, check_channel
 from BotConfig import BotConfig
@@ -45,7 +45,7 @@ async def on_ready():
     
     await client.config.load()
     HelperClass.init(client)
-    await createDatabase()
+    await createAndUpdateDatabase()
     changeGameActivity.start()
 
     for cog in client.CogsToActivate:
@@ -199,16 +199,21 @@ async def timers(ctx):
 
     embed = await HelperClass.createEmbed(title=f"Cooldown overview for {ctx.author.display_name}:", text=f"{ogfText}\n{egfText}")
     await ctx.send(embed=embed)
-    
 
 
-async def createDatabase():
+async def createAndUpdateDatabase():
     """
     Defines the structure of the Judie Bot Database and updates the database's contents afterwards.
     """
 
     db = sqlite3.connect("main.sqlite")
     cursor = db.cursor()
+
+    print("Checking DB Integrity")
+    
+    # updates are already done in test phase most likely
+    if(check_deployment("DEBUG")):
+        return
 
     #region users
     cursor.execute("""
@@ -311,7 +316,6 @@ async def createDatabase():
     #endregion
 
     #region Harem: eternum_harem
-    # on Next Deployment: add column Calypso
     cursor.execute("""
                 CREATE TABLE IF NOT EXISTS eternum_harem(
                 user_id INTEGER,
@@ -322,7 +326,8 @@ async def createDatabase():
                 nancy TEXT DEFAULT NONE,
                 nova TEXT DEFAULT NONE,
                 penny TEXT DEFAULT NONE,
-                last_girl TEXT
+                last_girl TEXT,
+                calypso TEXT DEFAULT NONE
                 )
                 """)
     #endregion
@@ -345,12 +350,11 @@ async def createDatabase():
     #endregion
 
     #region Side Girls: side_girls
-    # On Next Deployment: Rename column calypso to lorelei
     cursor.execute("""
                 CREATE TABLE IF NOT EXISTS side_girls(
                 user_id INTEGER,
                 bluefoxmaiden TEXT DEFAULT NONE,
-                calypso TEXT DEFAULT NONE,
+                lorelei TEXT DEFAULT NONE,
                 eva TEXT DEFAULT NONE,
                 idriel TEXT DEFAULT NONE,
                 maat TEXT DEFAULT NONE,
@@ -383,43 +387,368 @@ async def createDatabase():
         # if EXISTS not supported in ALTER TABLE statements
         # UPDATE [table_name]
         # DROP COLUMN not supported as an ALTER TABLE function
-    try:
-        # SQL here
-        cursor.execute("""
-            ALTER TABLE eternum_harem ADD COLUMN calypso TEXT DEFAULT NONE
-        """)
-    except Exception as e:
-        print(f"[Add new column calypso] {e}")
+    print("Performing Database Updates.")
 
+    #region table oialt_harem to integer
     try:
+        # create a temp table with the new type
         cursor.execute("""
-            UPDATE eternum_harem 
-            SET calypso = (
-                SELECT side_girls.calypso
-                FROM side_girls
-                WHERE eternum_harem.user_id = side_girls.user_id
-            ) WHERE EXISTS (
-                SELECT 1
-                FROM side_girls
-                WHERE eternum_harem.user_id = side_girls.user_id
+            CREATE TABLE oharem_temp(
+                user_id INTEGER,
+                judie INTEGER DEFAULT 0,
+                lauren INTEGER DEFAULT 0,
+                messy_hair_lauren INTEGER DEFAULT 0,
+                carla INTEGER DEFAULT 0,
+                iris INTEGER DEFAULT 0,
+                aiko INTEGER DEFAULT 0,
+                jasmine INTEGER DEFAULT 0,
+                rebecca INTEGER DEFAULT 0,
+                last_li TEXT
             )
         """)
-    except Exception as e:
-        print(f"[Transfer Calypso values to Harem] {e}")
 
-    try:
+        # insert values derived from 'old' table
         cursor.execute("""
-            ALTER TABLE side_girls RENAME COLUMN calypso TO lorelei
+            INSERT INTO oharem_temp (user_id, judie, lauren, messy_hair_lauren, carla, iris, aiko, jasmine, rebecca, last_li)
+            SELECT
+                user_id,
+                CASE WHEN COALESCE(judie, 'NONE') = 'NONE' THEN 0 ELSE 1 END,
+                CASE WHEN COALESCE(lauren, 'NONE') = 'NONE' THEN 0 ELSE 1 END,
+                CASE WHEN COALESCE(messy_hair_lauren, 'NONE') = 'NONE' THEN 0 ELSE 1 END,
+                CASE WHEN COALESCE(carla, 'NONE') = 'NONE' THEN 0 ELSE 1 END,
+                CASE WHEN COALESCE(iris, 'NONE') = 'NONE' THEN 0 ELSE 1 END,
+                CASE WHEN COALESCE(aiko, 'NONE') = 'NONE' THEN 0 ELSE 1 END,
+                CASE WHEN COALESCE(jasmine, 'NONE') = 'NONE' THEN 0 ELSE 1 END,
+                CASE WHEN COALESCE(rebecca, 'NONE') = 'NONE' THEN 0 ELSE 1 END,
+                last_li
+            FROM oialt_harem
         """)
-    except Exception as e:
-        print(f"[Rename old column calypso to lorelei] {e}")
 
-    try:
-        cursor.execute("""
-            UPDATE side_girls SET lorelei = 'NONE'
-        """)
+        # drop old table
+        cursor.execute("DROP TABLE oialt_harem")
+
+        # rename 'new' table to oialt_harem
+        cursor.execute("ALTER TABLE oharem_temp RENAME TO oialt_harem")
+
+        db.commit()
+
     except Exception as e:
-        print(f"[Reset lorelei column] {e}")
+        print(f"[oialt_harem to int] {e}")
+    #endregion
+
+    #region table stabby_mikes to integer
+    try:
+        # create a temp table with the new type
+        cursor.execute("""
+            CREATE TABLE mikes_temp(
+                user_id INTEGER,
+                police INTEGER DEFAULT 0,
+                hitman INTEGER DEFAULT 0,
+                yakuza INTEGER DEFAULT 0,
+                priest INTEGER DEFAULT 0,
+                exterminator INTEGER DEFAULT 0,
+                anastasia INTEGER DEFAULT 0,
+                last_mike TEXT
+            )
+        """)
+
+        # insert values derived from 'old' table
+        cursor.execute("""
+            INSERT INTO mikes_temp (user_id, police, hitman, yakuza, priest, exterminator, anastasia, last_mike)
+            SELECT
+                user_id,
+                CASE WHEN COALESCE(police, 'NONE') = 'NONE' THEN 0 ELSE 1 END,
+                CASE WHEN COALESCE(hitman, 'NONE') = 'NONE' THEN 0 ELSE 1 END,
+                CASE WHEN COALESCE(yakuza, 'NONE') = 'NONE' THEN 0 ELSE 1 END,
+                CASE WHEN COALESCE(priest, 'NONE') = 'NONE' THEN 0 ELSE 1 END,
+                CASE WHEN COALESCE(exterminator, 'NONE') = 'NONE' THEN 0 ELSE 1 END,
+                CASE WHEN COALESCE(anastasia, 'NONE') = 'NONE' THEN 0 ELSE 1 END,
+                last_mike
+            FROM stabby_mikes
+        """)
+
+        # drop old table
+        cursor.execute("DROP TABLE stabby_mikes")
+
+        # rename 'new' table to oialt_harem
+        cursor.execute("ALTER TABLE mikes_temp RENAME TO stabby_mikes")
+
+        db.commit()
+
+    except Exception as e:
+        print(f"[stabby_mikes to int] {e}")
+    #endregion
+
+    #region table the_boys to integer
+    try:
+        # create a temp table with the new type
+        cursor.execute("""
+            CREATE TABLE boys_temp(
+                user_id INTEGER,
+                mc INTEGER DEFAULT 0,
+                tom INTEGER DEFAULT 0,
+                oliver INTEGER DEFAULT 0,
+                fit_jack INTEGER DEFAULT 0,
+                asmodeus INTEGER DEFAULT 0,
+                hiromi INTEGER DEFAULT 0,
+                last_boi TEXT
+            )
+        """)
+
+        # insert values derived from 'old' table
+        cursor.execute("""
+            INSERT INTO boys_temp (user_id, mc, tom, oliver, fit_jack, asmodeus, hiromi, last_boi)
+            SELECT
+                user_id,
+                CASE WHEN COALESCE(mc, 'NONE') = 'NONE' THEN 0 ELSE 1 END,
+                CASE WHEN COALESCE(tom, 'NONE') = 'NONE' THEN 0 ELSE 1 END,
+                CASE WHEN COALESCE(oliver, 'NONE') = 'NONE' THEN 0 ELSE 1 END,
+                CASE WHEN COALESCE(fit_jack, 'NONE') = 'NONE' THEN 0 ELSE 1 END,
+                CASE WHEN COALESCE(asmodeus, 'NONE') = 'NONE' THEN 0 ELSE 1 END,
+                CASE WHEN COALESCE(hiromi, 'NONE') = 'NONE' THEN 0 ELSE 1 END,
+                last_boi
+            FROM the_boys
+        """)
+
+        # drop old table
+        cursor.execute("DROP TABLE the_boys")
+
+        # rename 'new' table to oialt_harem
+        cursor.execute("ALTER TABLE boys_temp RENAME TO the_boys")
+
+        db.commit()
+
+    except Exception as e:
+        print(f"[the_boys to int] {e}")
+    #endregion
+
+    #region table li_potential to integer
+    try:
+        # create a temp table with the new type
+        cursor.execute("""
+            CREATE TABLE potlis_temp(
+                user_id INTEGER,
+                ava INTEGER DEFAULT 0,
+                lilith INTEGER DEFAULT 0,
+                fit_jack_groupie INTEGER DEFAULT 0,
+                train_conductor INTEGER DEFAULT 0,
+                shop_girl INTEGER DEFAULT 0,
+                stone_elephant INTEGER DEFAULT 0,
+                last_potential_li TEXT
+            )
+        """)
+
+        # insert values derived from 'old' table
+        cursor.execute("""
+            INSERT INTO potlis_temp (user_id, ava, lilith, fit_jack_groupie, train_conductor, shop_girl, stone_elephant, last_potential_li)
+            SELECT
+                user_id,
+                CASE WHEN COALESCE(ava, 'NONE') = 'NONE' THEN 0 ELSE 1 END,
+                CASE WHEN COALESCE(lilith, 'NONE') = 'NONE' THEN 0 ELSE 1 END,
+                CASE WHEN COALESCE(fit_jack_groupie, 'NONE') = 'NONE' THEN 0 ELSE 1 END,
+                CASE WHEN COALESCE(train_conductor, 'NONE') = 'NONE' THEN 0 ELSE 1 END,
+                CASE WHEN COALESCE(shop_girl, 'NONE') = 'NONE' THEN 0 ELSE 1 END,
+                CASE WHEN COALESCE(stone_elephant, 'NONE') = 'NONE' THEN 0 ELSE 1 END,
+                last_potential_li
+            FROM li_potential
+        """)
+
+        # drop old table
+        cursor.execute("DROP TABLE li_potential")
+
+        # rename 'new' table to oialt_harem
+        cursor.execute("ALTER TABLE potlis_temp RENAME TO li_potential")
+
+        db.commit()
+
+    except Exception as e:
+        print(f"[li_potential to int] {e}")
+    #endregion
+
+    #region table eternum_harem to integer
+    try:
+        # create a temp table with the new type
+        cursor.execute("""
+            CREATE TABLE eharem_temp(
+                user_id INTEGER,
+                alex INTEGER DEFAULT 0,
+                annie INTEGER DEFAULT 0,
+                dalia INTEGER DEFAULT 0,
+                luna INTEGER DEFAULT 0,
+                nancy INTEGER DEFAULT 0,
+                nova INTEGER DEFAULT 0,
+                penny INTEGER DEFAULT 0,
+                last_girl TEXT,
+                calypso INTEGER DEFAULT 0
+            )
+        """)
+
+        # insert values derived from 'old' table
+        cursor.execute("""
+            INSERT INTO eharem_temp (user_id, alex, annie, dalia, luna, nancy, nova, penny, last_girl, calypso)
+            SELECT
+                user_id,
+                CASE WHEN COALESCE(alex, 'NONE') = 'NONE' THEN 0 ELSE 1 END,
+                CASE WHEN COALESCE(annie, 'NONE') = 'NONE' THEN 0 ELSE 1 END,
+                CASE WHEN COALESCE(dalia, 'NONE') = 'NONE' THEN 0 ELSE 1 END,
+                CASE WHEN COALESCE(luna, 'NONE') = 'NONE' THEN 0 ELSE 1 END,
+                CASE WHEN COALESCE(nancy, 'NONE') = 'NONE' THEN 0 ELSE 1 END,
+                CASE WHEN COALESCE(nova, 'NONE') = 'NONE' THEN 0 ELSE 1 END,
+                CASE WHEN COALESCE(penny, 'NONE') = 'NONE' THEN 0 ELSE 1 END,
+                last_girl,
+                CASE WHEN COALESCE(calypso, 'NONE') = 'NONE' THEN 0 ELSE 1 END
+            FROM eternum_harem
+        """)
+
+        # drop old table
+        cursor.execute("DROP TABLE eternum_harem")
+
+        # rename 'new' table to oialt_harem
+        cursor.execute("ALTER TABLE eharem_temp RENAME TO eternum_harem")
+
+        db.commit()
+
+    except Exception as e:
+        print(f"[eternum_harem to int] {e}")
+    #endregion
+
+    #region table homies to integer
+    try:
+        # create a temp table with the new type
+        cursor.execute("""
+            CREATE TABLE homies_temp(
+                user_id INTEGER,
+                chang INTEGER DEFAULT 0,
+                chopchop INTEGER DEFAULT 0,
+                victor INTEGER DEFAULT 0,
+                jerry INTEGER DEFAULT 0,
+                micaela INTEGER DEFAULT 0,
+                noah INTEGER DEFAULT 0,
+                orion INTEGER DEFAULT 0,
+                raul INTEGER DEFAULT 0,
+                last_homie TEXT
+            )
+        """)
+
+        # insert values derived from 'old' table
+        cursor.execute("""
+            INSERT INTO homies_temp (user_id, chang, chopchop, victor, jerry, micaela, noah, orion, raul, last_homie)
+            SELECT
+                user_id,
+                CASE WHEN COALESCE(chang, 'NONE') = 'NONE' THEN 0 ELSE 1 END,
+                CASE WHEN COALESCE(chopchop, 'NONE') = 'NONE' THEN 0 ELSE 1 END,
+                CASE WHEN COALESCE(victor, 'NONE') = 'NONE' THEN 0 ELSE 1 END,
+                CASE WHEN COALESCE(jerry, 'NONE') = 'NONE' THEN 0 ELSE 1 END,
+                CASE WHEN COALESCE(micaela, 'NONE') = 'NONE' THEN 0 ELSE 1 END,
+                CASE WHEN COALESCE(noah, 'NONE') = 'NONE' THEN 0 ELSE 1 END,
+                CASE WHEN COALESCE(orion, 'NONE') = 'NONE' THEN 0 ELSE 1 END,
+                CASE WHEN COALESCE(raul, 'NONE') = 'NONE' THEN 0 ELSE 1 END,
+                last_homie
+            FROM homies
+        """)
+
+        # drop old table
+        cursor.execute("DROP TABLE homies")
+
+        # rename 'new' table to oialt_harem
+        cursor.execute("ALTER TABLE homies_temp RENAME TO homies")
+
+        db.commit()
+
+    except Exception as e:
+        print(f"[homies to int] {e}")
+    #endregion
+
+    #region table side_girls to integer
+    try:
+        # create a temp table with the new type
+        cursor.execute("""
+            CREATE TABLE sides_temp(
+                user_id INTEGER,
+                bluefoxmaiden INTEGER DEFAULT 0,
+                lorelei INTEGER DEFAULT 0,
+                eva INTEGER DEFAULT 0,
+                idriel INTEGER DEFAULT 0,
+                maat INTEGER DEFAULT 0,
+                redfoxmaiden INTEGER DEFAULT 0,
+                wenlin INTEGER DEFAULT 0,
+                last_affair TEXT
+            )
+        """)
+
+        # insert values derived from 'old' table
+        cursor.execute("""
+            INSERT INTO sides_temp (user_id, bluefoxmaiden, lorelei, eva, idriel, maat, redfoxmaiden, wenlin, last_affair)
+            SELECT
+                user_id,
+                CASE WHEN COALESCE(bluefoxmaiden, 'NONE') = 'NONE' THEN 0 ELSE 1 END,
+                CASE WHEN COALESCE(lorelei, 'NONE') = 'NONE' THEN 0 ELSE 1 END,
+                CASE WHEN COALESCE(eva, 'NONE') = 'NONE' THEN 0 ELSE 1 END,
+                CASE WHEN COALESCE(idriel, 'NONE') = 'NONE' THEN 0 ELSE 1 END,
+                CASE WHEN COALESCE(maat, 'NONE') = 'NONE' THEN 0 ELSE 1 END,
+                CASE WHEN COALESCE(redfoxmaiden, 'NONE') = 'NONE' THEN 0 ELSE 1 END,
+                CASE WHEN COALESCE(wenlin, 'NONE') = 'NONE' THEN 0 ELSE 1 END,
+                last_affair
+            FROM side_girls
+        """)
+
+        # drop old table
+        cursor.execute("DROP TABLE side_girls")
+
+        # rename 'new' table to oialt_harem
+        cursor.execute("ALTER TABLE sides_temp RENAME TO side_girls")
+
+        db.commit()
+
+    except Exception as e:
+        print(f"[side_girls to int] {e}")
+    #endregion
+
+    #region table creatures to integer
+    try:
+        # create a temp table with the new type
+        cursor.execute("""
+            CREATE TABLE pets_temp(
+                user_id INTEGER,
+                carolyn INTEGER DEFAULT 0,
+                igor INTEGER DEFAULT 0,
+                kermit INTEGER DEFAULT 0,
+                mauricec INTEGER DEFAULT 0,
+                mauriceg INTEGER DEFAULT 0,
+                mauricet INTEGER DEFAULT 0,
+                pancho INTEGER DEFAULT 0,
+                last_creature TEXT
+            )
+        """)
+
+        # insert values derived from 'old' table
+        cursor.execute("""
+            INSERT INTO pets_temp (user_id, carolyn, igor, kermit, mauricec, mauriceg, mauricet, pancho, last_creature)
+            SELECT
+                user_id,
+                CASE WHEN COALESCE(carolyn, 'NONE') = 'NONE' THEN 0 ELSE 1 END,
+                CASE WHEN COALESCE(igor, 'NONE') = 'NONE' THEN 0 ELSE 1 END,
+                CASE WHEN COALESCE(kermit, 'NONE') = 'NONE' THEN 0 ELSE 1 END,
+                CASE WHEN COALESCE(mauricec, 'NONE') = 'NONE' THEN 0 ELSE 1 END,
+                CASE WHEN COALESCE(mauriceg, 'NONE') = 'NONE' THEN 0 ELSE 1 END,
+                CASE WHEN COALESCE(mauricet, 'NONE') = 'NONE' THEN 0 ELSE 1 END,
+                CASE WHEN COALESCE(pancho, 'NONE') = 'NONE' THEN 0 ELSE 1 END,
+                last_creature
+            FROM creatures
+        """)
+
+        # drop old table
+        cursor.execute("DROP TABLE creatures")
+
+        # rename 'new' table to oialt_harem
+        cursor.execute("ALTER TABLE pets_temp RENAME TO creatures")
+
+        db.commit()
+
+    except Exception as e:
+        print(f"[creatures to int] {e}")
+    #endregion
+
     #endregion
 
     db.commit()

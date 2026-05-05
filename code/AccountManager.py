@@ -4,10 +4,65 @@ from discord import Embed, File
 from discord.ext import commands, tasks
 from discord.ext.commands import cooldown, BucketType
 # EXTERNAL LIBRARIES
-import random
+import random, enum
 import sqlite3
 # JUDIE LIBRARIES
 from Utilities import HelperClass, check_channel
+
+
+class RoleHierarchy(enum.Enum):
+    MEMBER = 0
+    MASTER_BOTTER = 1
+    MODERATOR = 2
+    DEV = 3
+
+    def to_hierarchy(role_id):
+        client = AccountManager.static_client
+        if client is None:
+            print("Invalid client")
+            return RoleHierarchy.MEMBER
+
+        if int(role_id) == int(client.config.cari_role):
+            return RoleHierarchy.DEV
+        
+        if int(role_id) == int(client.config.mod_role):
+            return RoleHierarchy.MODERATOR
+
+        if int(role_id) == int(client.config.botter_role):
+            return RoleHierarchy.MASTER_BOTTER
+        
+        return RoleHierarchy.MEMBER
+
+    def compareTo(self, other) -> bool:
+        """
+        Checks whether a role passes the priority check over the other role.\n
+        Should absolutely be used as roleToCheck.check(expectedPriority)!\n
+        checking the other way around may cause issues (access granting for inverse priority, 
+        e.g. member check against admin, admin prio > member)
+
+        @params
+            - other: RoleHierarchy - a RoleHierarchy priority level the 'self' priority is to be checked against.
+            Using any other object will automatically fail the test.
+        """
+
+        if isinstance(other, RoleHierarchy):
+            # case universal access (no access restriction, or server admin)
+            if other == RoleHierarchy.MEMBER or self == RoleHierarchy.DEV:
+                return True
+
+            if self == RoleHierarchy.MEMBER:
+                return False                # only true if other == MEMBER -> see case above, hence no way to get access.
+
+            # Master Botter lowest above Member -> only true if other == role
+            if self == RoleHierarchy.MASTER_BOTTER:
+                return other == RoleHierarchy.MASTER_BOTTER
+
+            # Moderator 2nd highest -> only false if admin-only
+            if self == RoleHierarchy.MODERATOR:
+                return other != RoleHierarchy.DEV
+        else:
+            print("Invalid comparison object.")
+
 
 
 def check_user(expectFail: bool = False):
@@ -53,14 +108,59 @@ def check_user(expectFail: bool = False):
                 footer="Enjoy your time!"
             )
         await ctx.send(embed=embed)
-        print(f"[ERROR] User registration state does not match expectation.")
+        print(f"[REGISTRATION ERROR] User registration state does not match expectation.")
     return commands.check(predicate)
 
 
+def check_deployment(_type: str):
+    """
+        Supported types by default: 'DEBUG', 'BUILD'. 
+        Any unsupported value will automatically lead to failure.
+    """
+    async def predicate(ctx):
+        client = ctx.bot
+        return client.config.deployment == _type
+    return commands.check(predicate)
+
+
+def check_permission(expected_role: RoleHierarchy) -> bool:
+    """
+    """
+    async def predicate(ctx):
+        expected_priority = expected_role
+        try:
+            author = ctx.author
+            print(f"Evaluating access of user {ctx.author.display_name}.")
+        except:
+            print(f"[Error] Invalid type of author presented to permission checker. Expecting 'discord.member.Member', got {type(ctx.author)}")
+            await ctx.send(f"Error checking permissions for user")
+            return False
+
+        highest_role = None
+        for role in author.roles:
+            user_priority = RoleHierarchy.to_hierarchy(role.id)
+            if highest_role is None or user_priority.compareTo(highest_role):
+                highest_role = user_priority
+
+            # if any role passes the access priority check, return success
+            if user_priority.compareTo(expected_priority):
+                (f"User access granted")
+                return True
+
+        # if no role passes the access priority check, return failure.
+        await ctx.send(f"Insufficient permissions (Internal role: {highest_role}) to use this command (expecting {expected_role} or higher).")
+        return False
+    return commands.check(predicate)
+        
+
 class AccountManager(commands.Cog):
+    static_client = None
+    """A stop-gap for the permissions system. Please use the [AccountManager-instance].client variable for all intents and purposes."""
+
     def __init__(self, client):
         self.client = client
         client.accountManager = self
+        AccountManager.static_client = client
 
     deletionPromptMsgIDs = {}
     """
@@ -167,6 +267,33 @@ class AccountManager(commands.Cog):
         cursor.close()
         db.close()
 
+    async def removeUserFromDB(self, ctx, discord_id):
+        db = sqlite3.connect("main.sqlite")
+        cursor = db.cursor()
+
+        uid = await self.getUserID(discord_id, cursor)
+        if uid is None:
+            await ctx.send(f"User {discord_id} is not registered!")
+            return
+
+        # check if user in DB
+        cursor.execute("SELECT * FROM users WHERE user_id = ?", [uid])
+        if cursor.fetchone():
+            # if so delete all related entries
+            tables = [ 
+                "oialt", "oialt_harem", "stabby_mikes", "the_boys", "li_potential", 
+                "eternum", "eternum_harem", "homies", "side_girls", "creatures", "users"
+            ]
+
+            for table in tables:
+                cursor.execute("DELETE FROM %s WHERE user_id = ?" % table, [uid])
+            db.commit()
+
+        await ctx.send(f"Successfully removed user {discord_id} from Judie's database!")
+
+        cursor.close()
+        db.close()
+
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, payload):
         """
@@ -211,6 +338,13 @@ class AccountManager(commands.Cog):
             db.close()
 
     @commands.command()
+    @commands.check(check_channel)
+    @commands.check(check_permission)
+    @check_permission(RoleHierarchy.MODERATOR)
+    async def portProgress(self, ctx, oldUserID, newUserID):
+        pass
+
+    @commands.command()
     async def update(self, ctx):
         """
         Relic from times where the dev didn't know anything about SQL;
@@ -218,7 +352,10 @@ class AccountManager(commands.Cog):
         """
         await ctx.send("This command is now obsolete :)")
 
-    async def forceDelete(self, uid):
+    @commands.command()
+    @commands.check(check_permission)
+    @check_permission(RoleHierarchy.MODERATOR)          # Command available to master botter and higher in the hierarchy.
+    async def forceDelete(self, ctx, discord_id):
         """
         [MOD ONLY] Deletes the data of a given user
 
@@ -229,24 +366,13 @@ class AccountManager(commands.Cog):
         Returns:
             Nothing.
         """
-        db = sqlite3.connect("main.sqlite")
-        cursor = db.cursor()
-
-        # check if user in DB
-        cursor.execute("SELECT * FROM users WHERE user_id = ?", [uid])
-        if cursor.fetchone():
-            # if so delete all related entries
-            tables = [ 
-                "oialt", "oialt_harem", "stabby_mikes", "the_boys", "li_potential", 
-                "eternum", "eternum_harem", "homies", "side_girls", "creatures"
-            ]
-
-            for table in tables:
-                cursor.execute("DELETE FROM %s WHERE user_id = ?" % table, [uid])
-            db.commit()
-
-        cursor.close()
-        db.close()
+        # SQL Injection prevention: Only accept discord_ids that can be converted to integers. 
+        # invalid ctx would just result in a regular error.
+        try:
+            int(discord_id)
+            await self.removeUserFromDB(ctx, discord_id)
+        except:
+            await ctx.send("Unsafe input, please only supply discord ID's as integers to this command!")
 
 
 def setup(client):

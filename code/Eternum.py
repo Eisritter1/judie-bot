@@ -12,7 +12,7 @@ from time import sleep
 # OWN LIBRARIES
 from Utilities import Collections, HelperClass, Results, Effects, check_channel, get_cols
 from CharacterCard import CharacterCard, Villain
-from AccountManager import AccountManager, check_user
+from AccountManager import AccountManager, check_deployment, check_user
 from EgfCharacters import EgfCharacters
 
 async def help_eternum(ctx):
@@ -23,7 +23,7 @@ async def help_eternum(ctx):
     description = "Here are the commands to use the eternum gf game:"
 
     field_names.append("-egf (eternum gf)")
-    field_values.append("pull a random gf from the eternum universe! (23hr cooldown)")
+    field_values.append("pull a random gf from the eternum universe! (20hr cooldown)")
 
     field_names.append("-eCollections (eternum collections)")
     field_values.append("get an overview of all your eternum collections!")
@@ -119,6 +119,7 @@ class Eternum(commands.Cog):
             print("Error: Missing character object.")
             return
 
+        # variable initialization
         author=str(ctx.author.display_name)
 
         embed = ""
@@ -199,6 +200,7 @@ class Eternum(commands.Cog):
         embed.set_image(url="attachment://gf.webp")
         await ctx.send(file=image, embed=embed)
 
+
     async def updateDatabase(self, uid: int, character: CharacterCard, db, cursor) -> Results:
         """
         Performs all alterations to the database following a character draw.
@@ -215,200 +217,33 @@ class Eternum(commands.Cog):
         try:
             duplicateCharacter = False
             protected = False
-            victim = None
+            victim = "Nobody"
 
             cursor.execute("UPDATE eternum SET last_gf = ? WHERE user_id = ?", [character.name, uid])
 
-            if character.collection == Collections.HAREM:
-                cursor.execute("SELECT %s FROM eternum_harem WHERE user_id=?" % character.filename, (uid,))
-                duplicate = cursor.fetchone()
-                if duplicate[0] == "NONE":
-                    cursor.execute("UPDATE eternum_harem SET %s = ? WHERE user_id=?" % character.filename,
-                                   [character.name, uid])
+            # early exit if not interesting
+            if character.collection == Collections.NONE and character.effects == Effects.NONE:
+                return Results(duplicate=duplicateCharacter, protected=protected, victim=victim)
+
+            # character collection update
+            if character.collection is not Collections.NONE:
+                # get collection table and last_item column names
+                table = character.collection.table()
+                last = character.collection.lastColName()
+
+                # check for duplication. Is duplicate if value @ table == 1 else 0 => 1st result[0] to bool.
+                cursor.execute("SELECT %s FROM %s WHERE user_id=?" % (character.filename, table), [uid])
+                duplicate = bool(cursor.fetchone()[0])
+                if not duplicate:
+                    cursor.execute("UPDATE %s SET %s=1 WHERE user_id=?" % (table, character.filename), [uid])
                 else:
                     duplicateCharacter = True
-                cursor.execute("UPDATE eternum_harem SET last_girl=? WHERE user_id=?", [character.filename, uid])
+                
+                # update last_item_collected value
+                cursor.execute("UPDATE %s SET %s=? WHERE user_id=?" % (table, last), [character.filename, uid])
 
-            elif character.collection == Collections.SIDE_DISHES:
-                cursor.execute("SELECT %s FROM side_girls WHERE user_id=?" % character.filename, [uid])
-                duplicate = cursor.fetchone()
-                if duplicate[0] == "NONE":
-                    cursor.execute("UPDATE side_girls SET %s = ? WHERE user_id=?" % character.filename,
-                                   [character.name, uid])
-                else:
-                    duplicateCharacter = True
-                cursor.execute("UPDATE side_girls SET last_affair=? WHERE user_id=?", [character.filename, uid])
-
-            elif character.collection == Collections.THE_HOMIES:
-                cursor.execute("SELECT %s FROM homies WHERE user_id=?" % character.filename, [uid])
-                duplicate = cursor.fetchone()
-                if duplicate[0] == "NONE":
-                    cursor.execute("UPDATE homies SET %s = ? WHERE user_id=?" % character.filename, [character.name, uid])
-                else:
-                    duplicateCharacter = True
-                cursor.execute("UPDATE homies SET last_homie=? WHERE user_id=?", [character.filename, uid])
-
-            elif character.collection == Collections.CREATURES:
-                cursor.execute("SELECT %s FROM creatures WHERE user_id=?" % character.filename, [uid])
-                duplicate = cursor.fetchone()
-                if duplicate[0] == "NONE":
-                    cursor.execute("UPDATE creatures SET %s = ? WHERE user_id=?" % character.filename,
-                                   [character.name, uid])
-                else:
-                    duplicateCharacter = True
-                cursor.execute("UPDATE creatures SET last_creature=? WHERE user_id=?", [character.filename, uid])
-
-            if character.effects == Effects.HAREM_KILLER:
-
-                cursor.execute("SELECT alex FROM eternum_harem WHERE user_id=?", [uid])
-                alex = cursor.fetchone()
-
-                if alex[0] == 'Alexandra Bardot':
-                    victim = alex[0]
-                else:
-                    cursor.execute("SELECT nova FROM eternum_harem WHERE user_id=?", [uid])
-                    nova = cursor.fetchone()
-                    if nova[0] == 'Nova Johnson':
-                        victim = nova[0]
-                    else:
-                        cursor.execute("SELECT last_girl FROM eternum_harem WHERE user_id=?", [uid])
-                        lastgf = cursor.fetchone()
-                        if lastgf[0] in ['annie', 'dalia', 'luna', 'nancy', 'penny']:
-                            for i in range(len(self.characters)):
-                                if self.characters[i].filename == lastgf[0]:
-                                    victim = self.characters[i].name
-                        else:
-                            victim = "Nobody"
-
-                cursor.execute("SELECT calypso FROM eternum WHERE user_id=?", [uid])
-                protection = cursor.fetchone()
-
-                if protection[0] == 0 and victim != "Nobody":
-                    for i in range(len(self.characters)):
-                        if self.characters[i].name == victim:
-                            column = self.characters[i].filename
-                            cursor.execute("UPDATE eternum_harem SET %s = 'NONE' WHERE user_id=?" % column, [uid])
-
-                    cursor.execute("UPDATE eternum_harem SET last_girl='NONE' WHERE user_id=?", [uid])
-
-                else:
-                    if victim != "Nobody":
-                        cursor.execute("UPDATE eternum SET calypso=0 WHERE user_id=?", [uid])
-                        protected = True
-
-            if character.effects == Effects.SIDE_GIRL_KIDNAPPER:
-                cursor.execute("SELECT last_affair FROM side_girls WHERE user_id=?", [uid])
-                lastgf = cursor.fetchone()
-                if lastgf[0] in ['bluefoxmaiden', 'calypso', 'eva', 'idriel', 'maat', 'redfoxmaiden', 'wenlin']:
-                    for i in range(len(self.characters)):
-                        if self.characters[i].filename == lastgf[0]:
-                            victim = self.characters[i].name
-                else:
-                    victim = "Nobody"
-
-                cursor.execute("SELECT orion FROM eternum WHERE user_id=?", [uid])
-                protection = cursor.fetchone()
-
-                if protection[0] == 0 and victim != "Nobody":
-                    for i in range(len(self.characters)):
-                        if self.characters[i].name == victim:
-                            column = self.characters[i].filename
-                            cursor.execute("UPDATE side_girls SET %s='NONE' WHERE user_id=?" % column, [uid])
-
-                    cursor.execute("UPDATE side_girls SET last_affair='NONE' WHERE user_id=?", [uid])
-
-                else:
-                    if victim != "Nobody":
-                        cursor.execute("UPDATE eternum SET orion=0 WHERE user_id=?", [uid])
-                        protected = True
-
-            if character.effects == Effects.HOMIE_KILLER:
-                cursor.execute("SELECT jerry FROM homies WHERE user_id=?", [uid])
-                jerry = cursor.fetchone()
-
-                if jerry[0] == 'Jerry':
-                    victim = jerry[0]
-                else:
-                    cursor.execute("SELECT last_homie FROM homies WHERE user_id=?", [uid])
-                    lastgf = cursor.fetchone()
-                    if lastgf[0] in ['chang', 'orion', 'chopchop', 'hernandez', 'micaela', 'noah', 'raul']:
-                        for i in range(len(self.characters)):
-                            if self.characters[i].filename == lastgf[0]:
-                                victim = self.characters[i].name
-                    else:
-                        victim = "Nobody"
-
-                cursor.execute("SELECT dalia FROM eternum WHERE user_id=?", [uid])
-                protection = cursor.fetchone()
-
-                if protection[0] == 0 and victim != "Nobody":
-                    for i in range(len(self.characters)):
-                        if self.characters[i].name == victim:
-                            column = self.characters[i].filename
-                            cursor.execute("UPDATE homies SET %s='NONE' WHERE user_id=?" % column, [uid])
-
-                        cursor.execute("UPDATE homies SET last_homie='NONE' WHERE user_id=?", [uid])
-
-                else:
-                    if victim != "Nobody":
-                        cursor.execute("UPDATE eternum SET dalia=0 WHERE user_id=?", [uid])
-                        protected = True
-
-            if character.effects == Effects.CREATURE_STOMPER:
-                cursor.execute("SELECT kermit FROM creatures WHERE user_id=?", [uid])
-                kermit = cursor.fetchone()
-
-                if kermit[0] == 'Kermit':
-                    victim = kermit[0]
-                else:
-                    cursor.execute("SELECT last_creature FROM creatures WHERE user_id=?", [uid])
-                    lastgf = cursor.fetchone()
-                    if lastgf[0] in ['carolyn', 'igor', 'mauricec', 'mauriceg', 'mauricet', 'pancho']:
-                        for i in range(len(self.characters)):
-                            if self.characters[i].filename == lastgf[0]:
-                                victim = self.characters[i].name
-                    else:
-                        victim = "Nobody"
-
-                cursor.execute("SELECT pyramid_head FROM eternum WHERE user_id=?", [uid])
-                protection = cursor.fetchone()
-
-                if protection[0] == 0 and victim != "Nobody":
-                    for i in range(len(self.characters)):
-                        if self.characters[i].name == victim:
-                            column = self.characters[i].filename
-                            cursor.execute("UPDATE creatures SET %s='NONE' WHERE user_id=?" % column, [uid])
-
-                        cursor.execute("UPDATE creatures SET last_creature='NONE' WHERE user_id=?", [uid])
-
-                else:
-                    if victim != "Nobody":
-                        cursor.execute("UPDATE eternum SET pyramid_head=0 WHERE user_id=?", [uid])
-                        protected = True
-
-            if character.effects == Effects.HAREM_SAVIOUR:
-                cursor.execute("SELECT calypso FROM eternum WHERE user_id=?", [uid])
-                duplicate = cursor.fetchone()
-                if duplicate[0] == 0:
-                    cursor.execute("UPDATE eternum SET calypso=1 WHERE user_id =?", [uid])
-
-            if character.effects == Effects.SIDE_GIRL_SAVIOUR:
-                cursor.execute("SELECT orion FROM eternum WHERE user_id=?", [uid])
-                duplicate = cursor.fetchone()
-                if duplicate[0] == 0:
-                    cursor.execute("UPDATE eternum SET orion=1 WHERE user_id =?", [uid])
-
-            if character.effects == Effects.HOMIE_SAVIOUR:
-                cursor.execute("SELECT dalia FROM eternum WHERE user_id=?", [uid])
-                duplicate = cursor.fetchone()
-                if duplicate[0] == 0:
-                    cursor.execute("UPDATE eternum SET dalia=1 WHERE user_id =?", [uid])
-
-            if character.effects == Effects.CREATURE_SAVIOUR:
-                cursor.execute("SELECT pyramid_head FROM eternum WHERE user_id=?", [uid])
-                duplicate = cursor.fetchone()
-                if duplicate[0] == 0:
-                    cursor.execute("UPDATE eternum SET pyramid_head=1 WHERE user_id =?", [uid])
+            # character effect update
+            protected, victim = character.effects.action()(cursor, uid, self.characters)
 
             db.commit()
         except Exception as e:
@@ -434,7 +269,7 @@ class Eternum(commands.Cog):
         discordID = str(ctx.author.id)
         
         uid = await self.accountManager.getUserID(discordID=discordID, cursor=cursor)
-        # choose random character
+        # choose pseudo-random character
         gf = random.choice(self.characters)
         # update database accordingly
         results = await self.updateDatabase(uid=uid, character=gf, cursor=cursor, db=db)
@@ -451,6 +286,8 @@ class Eternum(commands.Cog):
 
 
     @commands.command()
+    # command should be unavailable to main bot.
+    @check_deployment("DEBUG")
     @commands.check(check_channel)
     @check_user()
     async def testegf(self, ctx):
@@ -469,7 +306,7 @@ class Eternum(commands.Cog):
                 print(f"Assessing character {char.name} for image {i+1}/{char.picNumber}")
                 uid = await self.accountManager.getUserID(discordID=discordID, cursor=cursor)
                 # choose random character
-                gf = char #random.choice(self.characters)
+                gf = char
                 # update database accordingly
                 results = await self.updateDatabase(uid=uid, character=gf, cursor=cursor, db=db)
                 # create according embed --> self.buildCharacterEmbed
@@ -499,10 +336,10 @@ class Eternum(commands.Cog):
         for c in cols:
             cursor.execute("SELECT %s FROM %s WHERE user_id=?" % (c, table), [uid])
             res = cursor.fetchone()
-            if not res or res[0] == "NONE":
+            if not res or res[0] == 0:
                 missing.append(self.characterList.searchNameWithFilename(c))
             else:
-                members.append(res[0])
+                members.append(self.characterList.searchNameWithFilename(c))
                 count += 1
 
         #   compile entries to list
@@ -544,8 +381,8 @@ class Eternum(commands.Cog):
         for c in cols:
             cursor.execute("SELECT %s FROM %s WHERE user_id=?" % (c, table), [uid])
             res = cursor.fetchone()
-            if res and res[0] != "NONE":
-                members.append(res[0])
+            if res and res[0] != 0:
+                members.append(self.characterList.searchNameWithFilename(c))
                 count += 1
 
         cursor.close()

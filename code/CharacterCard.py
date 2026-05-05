@@ -55,24 +55,24 @@ class Villain(CharacterCard):
         self.footer = footer
 
     def kill_message(self, victim: str, author: str):
-        self.killMessage.format(
+        return self.killMessage.format(
             victim=victim,
             author=author
         )
 
     def protected_message(self, victim: str, author: str):
-        self.protectedMessage.format(
+        return self.protectedMessage.format(
             victim=victim,
             author=author
         )
 
     def empty_message(self, author: str):
-        self.emptyMessage.format(
+        return self.emptyMessage.format(
             author=author
         )
 
     def get_footer(self, author: str):
-        self.footer.format(
+        return self.footer.format(
             author=author
         )
 
