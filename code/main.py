@@ -15,22 +15,10 @@ from Utilities import HelperClass, TimeObject, check_channel
 from BotConfig import BotConfig
 
 #region Bot config
-intents = discord.Intents()
-intents.guilds = False
-intents.members = False
-intents.moderation = False
-intents.expressions = False
-intents.integrations = False
-intents.webhooks = False
-intents.invites = False
-intents.presences = False
+intents = discord.Intents().none()
 intents.messages = True
 intents.reactions = True
-intents.typing = False
-intents.auto_moderation = False
-intents.auto_moderation_configuration = False
-intents.auto_moderation_execution = False
-intents.polls = False
+intents.message_content = True
 
 client = commands.Bot(command_prefix="-", help_command=None, case_insensitive=True, intents=intents)
 client.config = BotConfig(client)
