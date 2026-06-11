@@ -164,10 +164,10 @@ class Eternum(commands.Cog):
                     color = HelperClass.black
                     footer = random.choice(character.quotes)
             # pyramid head (only non-collectible protector so far...)
-            elif character.name == "Pyramid Head":
-                color = HelperClass.blue
             # average joe schmoes
             else:
+                if character.name == "Pyramid Head":
+                    color = HelperClass.blue
                 text = f"{random.choice(character.quotes)}"
                 effect_description = f"{str(collection)} - {str(character.effects)}"
                 footer = f"Better luck next time, {author}!"
@@ -187,7 +187,7 @@ class Eternum(commands.Cog):
                 else f"New {collection.member_desc()}, {str(ctx.author.display_name)}!"
 
         if not effect_description.strip() or not aliases.strip():
-            print(f"Error: Embed fields for {character} (victim: {results.victim}, x2: {results.duplicate}, shield:"
+            print(f"Error: Embed fields for {character.name} (victim: {results.victim}, x2: {results.duplicate}, shield:"
                   f"{results.protected}) are empty.")
 
         image = discord.File(filepath, filename="gf.webp")

@@ -63,8 +63,6 @@ class RoleHierarchy(enum.Enum):
         else:
             print("Invalid comparison object.")
 
-
-
 def check_user(expectFail: bool = False):
     """
     Checks whether a user is registered to the system or not

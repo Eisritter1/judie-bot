@@ -204,7 +204,7 @@ class EgfCharacters:
 
         # 16
         Arannis = CharacterCard(
-            name="Arannis Thornvale",
+            name="General Arannis Thornvale",
             picNumber=1,
             quotes=["It is precisely such mercy that elevates us above your wretched kind.", 
                     "You will not grow stronger by sparring with toys.", 
@@ -212,7 +212,7 @@ class EgfCharacters:
                     "Strike me now before the eyes of the Ancients! Let the gods bear witness to your treason!",
                     "A throne won by blood and treachery is a throne cursed to ruin."],
             filename="arannis",
-            aliases="General Arannis, General of the Royal Guard, The Morning Sword, Hammer of Iron"
+            aliases="General of the Royal Guard, The Morning Sword, Hammer of Iron"
         )
         self.characters.append(Arannis)
 
@@ -359,12 +359,12 @@ class EgfCharacters:
 
         # 29
         Bundledore = CharacterCard(
-            name="Balbus Bundledore",
+            name="Professor Balbus Bundledore",
             picNumber=2,
             quotes=["WELCOME, NEW PUPILS...",
                     "THAT FUCKING BITCH STOLE MY IDEA 40 YEARS AGO AND MADE IT HER OWN!"],
             filename="bundledore",
-            aliases="Professor Bundledore, Headmaster of Warthogs School of Witchcraft and Wizardry."
+            aliases="Headmaster of Warthogs School of Witchcraft and Wizardry."
         )
         self.characters.append(Bundledore)
 
@@ -842,7 +842,7 @@ class EgfCharacters:
                     "Thank you for your cooperation.",
                     "And don't try to stop me. You, women, elders, or even children - I'll kill ANYONE who stays in my way."],
             filename="hasler",
-            aliases="Commander Hasler, leader of the Second Brigade of the Galactic Union"
+            aliases="Leader of the Second Brigade of the Galactic Union"
         )
         self.characters.append(Hasler)
 
@@ -898,12 +898,12 @@ class EgfCharacters:
 
         # 73
         Iliescu = CharacterCard(
-            name="Lazarus Iliescu",
+            name="Lord Lazarus Iliescu",
             picNumber=1,
             quotes=["You may go now, carrying my eternal gratitude.",
                     "Ah, your radiance shines even brighter in the light of day."],
             filename="iliescu",
-            aliases="Lord Iliescu, sovereign of Stravenovia"
+            aliases="Sovereign of Stravenovia"
         )
         self.characters.append(Iliescu)
 
@@ -1103,13 +1103,12 @@ class EgfCharacters:
 
         # 91
         Lysa = CharacterCard(
-            name="Lysandra Iliescu",
+            name="Lady Lysandra Iliescu",
             picNumber=1,
             quotes=["Aaaaahhh... yeeeesss... I could smell them outside the crypt...",
                     "Y-You would make an exceptional vampire, young man.",
                     "Bravo! That was absolutely enchanting!"],
-            filename="lysa",
-            aliases="Lady Iliescu"
+            filename="lysa"
         )
         self.characters.append(Lysa)
 
@@ -1184,12 +1183,11 @@ class EgfCharacters:
 
         # 98
         Mercer = CharacterCard(
-            name="Irina Mercer",
+            name="Dr. Irina Mercer",
             picNumber=1,
             quotes=["Let's see what people call me in 50 years...",
                     "Little sacrifices are sometimes necessary for the sake of progress, don't you think?"],
-            filename="mercer",
-            aliases="Doctor Mercer"
+            filename="mercer"
         )
         self.characters.append(Mercer)
 
@@ -1397,7 +1395,7 @@ class EgfCharacters:
 
         # 114 [HAREM]
         Penny = CharacterCard(
-            name="Penelope Carter",
+            name="Penelope Paige Carter",
             picNumber=15,
             quotes=["All that humidity outside better not turn my hair into a frizzy mess!",
                     "How can stop be the keyword?",
@@ -1413,7 +1411,7 @@ class EgfCharacters:
                     "Did you come up with that comeback on your own? Or did you ask for advice on r/clevercomebacks again?",
                     "I'll make sure all your Christmases feel special from now on..."],
             filename="penny",
-            aliases="Penny, miss_penny, best tits on instagram, Venus, Penelope Paige Carter",
+            aliases="Penny, miss_penny, best tits on instagram, Venus",
             collection=Collections.HAREM
         )
         self.characters.append(Penny)
