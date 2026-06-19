@@ -87,6 +87,7 @@ class Eternum(commands.Cog):
         self.characterList = EgfCharacters()
         self.characters = self.characterList.characters
         self.botSpamChannel = None
+        self.db_path = client.db_path
 
     # Development Start 17/08/2022; Version 1.0.
 
@@ -112,7 +113,7 @@ class Eternum(commands.Cog):
             - character : CharacterCard - the character whose card is to be built,
             - results : Results - a struct used to determine what happened to be displayed,
             - ctx : discord.ext.Context - discord context object for user info,
-            - n : int - the index of chosen picture; chooses a random picture if n = -1 (defaults to -1).
+            - n : int - the index of chosen picture; chooses a random picture if n=-1 (defaults to -1).
         ---------------------------------------------------------------------------------------------------
         """
         if not character:
@@ -141,7 +142,6 @@ class Eternum(commands.Cog):
 
         collection = character.collection
 
-        # This needs to include Pyramid Head :PepeBruh:
         if collection == Collections.NONE:
 
             # villains
@@ -201,7 +201,7 @@ class Eternum(commands.Cog):
         await ctx.send(file=image, embed=embed)
 
 
-    async def updateDatabase(self, uid: int, character: CharacterCard, db, cursor) -> Results:
+    async def updateDatabase(self, uid: int, character: CharacterCard) -> Results:
         """
         Performs all alterations to the database following a character draw.
         --------------------------------------------------------------------------------------------------------------------------------------------
@@ -214,6 +214,9 @@ class Eternum(commands.Cog):
         Returns:
             - Results: A struct containing information whether the character obtained was a duplicate entry, protected from a villain, or what victim it chose as a villain.
         """
+        db = sqlite3.connect(self.db_path)
+        cursor = db.cursor()
+
         try:
             duplicateCharacter = False
             protected = False
@@ -248,77 +251,18 @@ class Eternum(commands.Cog):
             db.commit()
         except Exception as e:
             print(f"[Error Updating database] {e}")
+
+            cursor.close()
+            db.close()
             return None
 
+        cursor.close()
+        db.close()
         return Results(duplicate=duplicateCharacter, protected=protected, victim=victim)
-
-    # COMMANDS
-
-    @commands.command(aliases=['gfe', 'eternum gf', 'gf eternum'])
-    @commands.check(check_channel)
-    @check_user()
-    async def egf(self, ctx):
-        """
-        The main command for the egf.
-        ------------------------------------------------
-        Parameters:
-            - ctx : discord.ext.Context - discord-provided context to the command prompt.
-        """
-        db = sqlite3.connect("main.sqlite")
-        cursor = db.cursor()
-        discordID = str(ctx.author.id)
-        
-        uid = await self.accountManager.getUserID(discordID=discordID, cursor=cursor)
-        # choose pseudo-random character
-        gf = random.choice(self.characters)
-        # update database accordingly
-        results = await self.updateDatabase(uid=uid, character=gf, cursor=cursor, db=db)
-        if not results:
-            await ctx.send(f"Sorry! I encountered an error updating the database for user {ctx.author.mention} with character {gf.name}.\n"\
-                "Please contact @eisritter for further information & support.")
-            return;
-        # create according embed --> self.buildCharacterEmbed
-        await self.buildCharacterEmbed(character=gf, results=results, ctx=ctx)
-
-        db.commit()
-        cursor.close()
-        db.close()
-
-
-    @commands.command()
-    # command should be unavailable to main bot.
-    @check_deployment("DEBUG")
-    @commands.check(check_channel)
-    @check_user()
-    async def testegf(self, ctx):
-        """
-        The main testing command for the egf.
-        ------------------------------------------------
-        Parameters:
-            - ctx : discord.ext.Context - discord-provided context to the command prompt.
-        """
-
-        db = sqlite3.connect("main.sqlite")
-        cursor = db.cursor()
-        discordID = str(ctx.author.id)
-        for char in self.characters:
-            for i in range(char.picNumber):
-                print(f"Assessing character {char.name} for image {i+1}/{char.picNumber}")
-                uid = await self.accountManager.getUserID(discordID=discordID, cursor=cursor)
-                # choose random character
-                gf = char
-                # update database accordingly
-                results = await self.updateDatabase(uid=uid, character=gf, cursor=cursor, db=db)
-                # create according embed --> self.buildCharacterEmbed
-                await self.buildCharacterEmbed(character=gf, results=results, ctx=ctx, n=i+1)
-                sleep(3)
-        db.commit()
-        cursor.close()
-        db.close()
 
 
     async def collectionOverview(self, author, collection: Collections):
-        db = sqlite3.connect("main.sqlite")
+        db = sqlite3.connect(self.db_path)
         cursor = db.cursor()
         discordID = str(author.id)
         user_name = str(author.display_name)
@@ -364,8 +308,12 @@ class Eternum(commands.Cog):
 
         return embed
 
+
+        pass
+
+
     async def getMembers(self, author, collection: Collections) -> tuple:
-        db = sqlite3.connect("main.sqlite")
+        db = sqlite3.connect(self.db_path)
         cursor = db.cursor()
         discordID = str(author.id)
 
@@ -390,7 +338,34 @@ class Eternum(commands.Cog):
 
         return (members, (count, total))
 
-    # There's work to do...
+
+    # DISCORD COMMANDS (no intricate logic here, all wrapping the logic above to discord callable! for testing reasons :D)
+
+    @commands.command(aliases=['gfe', 'eternum gf', 'gf eternum'])
+    @commands.check(check_channel)
+    @check_user()
+    async def egf(self, ctx):
+        """
+        The main command for the egf.
+        ------------------------------------------------
+        Parameters:
+            - ctx : discord.ext.Context - discord-provided context to the command prompt.
+        """
+        discordID = str(ctx.author.id)
+        
+        uid = await self.accountManager.getUserID(discordID=discordID)
+        # choose pseudo-random character
+        gf = random.choice(self.characters)
+        # update database accordingly
+        results = await self.updateDatabase(uid=uid, character=gf)
+        if not results:
+            await ctx.send(f"Sorry! I encountered an error updating the database for user {ctx.author.mention} with character {gf.name}.\n"\
+                "Please contact @eisritter for further information & support.")
+            return;
+        # create according embed --> self.buildCharacterEmbed
+        await self.buildCharacterEmbed(character=gf, results=results, ctx=ctx)
+
+
     @commands.command(aliases=['hareme', 'eternum harem', 'harem eternum'])
     @commands.check(check_channel)
     @check_user()
@@ -451,7 +426,7 @@ class Eternum(commands.Cog):
         Parameters:
             - ctx : discord.ext.Context - discord-provided context to the command prompt.
         """
-        db = sqlite3.connect("main.sqlite")
+        db = sqlite3.connect(self.db_path)
         cursor = db.cursor()
         discordID = str(ctx.author.id)
         user_name = str(ctx.author.display_name)
@@ -504,7 +479,7 @@ class Eternum(commands.Cog):
         Parameters:
             - ctx : discord.ext.Context - discord-provided context to the command prompt.
         """
-        db = sqlite3.connect("main.sqlite")
+        db = sqlite3.connect(self.db_path)
         cursor = db.cursor()
         discordID = str(ctx.author.id)
         user_name = str(ctx.author.display_name)
@@ -602,7 +577,7 @@ class Eternum(commands.Cog):
             - error : str (?) - the error object to tell what the hell just happened.
         """
         # if cooldown not done send last gf from table 'eternum'
-        db = sqlite3.connect("main.sqlite")
+        db = sqlite3.connect(self.db_path)
         cursor = db.cursor()
 
         discordID = str(ctx.author.id)
@@ -629,7 +604,7 @@ class Eternum(commands.Cog):
                 title = "This is awkward..."
                 field_name = "Your last pull is... No one?"
                 field_value = "How could that happen..."
-                footer = "Might as well contact Eisritter#6969, sumn ain't right"
+                footer = "Might as well contact eisritter, sumn ain't right"
 
             else:
                 for i in range(len(self.characters)):

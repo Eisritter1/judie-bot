@@ -159,6 +159,7 @@ class AccountManager(commands.Cog):
         self.client = client
         client.accountManager = self
         AccountManager.static_client = client
+        self.db_path = client.db_path
 
     deletionPromptMsgIDs = {}
     """
@@ -171,7 +172,7 @@ class AccountManager(commands.Cog):
 
     # HELPER FUNCTIONS
 
-    async def getUserID(self, discordID, cursor):
+    async def getUserID(self, discordID):
         """
         Fetches a user's ID in the database paired to their discord ID.
 
@@ -185,8 +186,14 @@ class AccountManager(commands.Cog):
             int: user's ID if any is found
             None if no uID found
         """
+        db = sqlite3.connect(self.db_path)
+        cursor = db.cursor()
+
         cursor.execute("SELECT user_id FROM users WHERE discord_id=?", [discordID])
         uID = cursor.fetchone()
+
+        cursor.close()
+        db.close()
         return uID if uID is None else uID[0]
 
     # COMMANDS & RELATED
@@ -206,7 +213,7 @@ class AccountManager(commands.Cog):
             Nothing, why are you looking? It's a command.
         """
 
-        db = sqlite3.connect("main.sqlite")
+        db = sqlite3.connect(self.db_path)
         cursor = db.cursor()
         discordID = str(ctx.author.id)
 

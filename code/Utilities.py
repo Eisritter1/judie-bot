@@ -408,10 +408,9 @@ class Effects(Enum):
             cursor.execute("UPDATE side_girls SET last_affair='NONE' WHERE user_id=?", [uid])
         
         # remove future protection if Orion intervened
-        else:
-            if victim != "Nobody":
-                cursor.execute("UPDATE eternum SET orion=0 WHERE user_id=?", [uid])
-                protected = True
+        elif victim != "Nobody":
+            cursor.execute("UPDATE eternum SET orion=0 WHERE user_id=?", [uid])
+            protected = True
 
         return (protected, victim)
 

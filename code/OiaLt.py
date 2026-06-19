@@ -194,7 +194,7 @@ class OiaLt(commands.Cog):
         effect_field_name = str(effect)
         effect_field_value = effect.Describe()
 
-        # <editor-fold desc="Non-collectibles">
+        # non-collectibles
         if collection == OgfCollections.NONE:
             text = f"Congrats, {ctx.author.mention}...? Your companion for the day is {character.name}."
             collection_field_value = "A character that doesn't belong into any collection."
@@ -203,7 +203,7 @@ class OiaLt(commands.Cog):
             if character.name == "Spiderman":
                 displayname = ctx.author.display_name
                 footer = f"Hey, is there a {displayname}? I have a pizza for {displayname}!"
-        # </editor-fold>
+       
         # <editor-fold desc="Harem">
         elif collection == OgfCollections.HAREM:
             text = f"Congratulations {ctx.author.mention}! Your gf for the day is {character.name}!"

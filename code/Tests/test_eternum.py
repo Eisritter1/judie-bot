@@ -1,226 +1,36 @@
-# DISCORD LIBRARIES
-import discord
-from discord.ext import commands, tasks
-# EXTERNAL LIBRARIES
-import sqlite3
-import os
-from dotenv import load_dotenv
-from itertools import cycle
-# JUDIE LIBRARIES
-from OiaLt import OiaLt, help_oialt
-from Nsfw import Nsfw
-from Eternum import Eternum, check_deployment, help_eternum
-from AccountManager import AccountManager
-from Utilities import HelperClass, TimeObject, check_channel
-from BotConfig import BotConfig
+import pytest, sqlite3, os, sys
 
-#region Bot config
-intents = discord.Intents().none()
-intents.messages = True
-intents.reactions = True
-intents.message_content = True
-intents.guilds = True
+sys.path.append(
+    os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+)
 
-client = commands.Bot(command_prefix="-", help_command=None, case_insensitive=True, intents=intents)
-client.config = BotConfig(client)
-client.CogsToActivate = []
-client.db_path = "main.sqlite"
-load_dotenv()
-TOKEN = os.getenv("TOKEN")
+from Eternum import Eternum
+from Utilities import Collections, Effects
+from CharacterCard import CharacterCard, Villain
 
-extensions = [AccountManager(client), OiaLt(client), Nsfw(client), Eternum(client)]
-status = cycle(
-    ["-help", "-help misc", "-help oialt", "-help eternum", "-help nsfw", "-ogf", "-oharem", "-stabbyclan", "-theboys",
-     "-potentialLis", "-ocollections", "-oprotectors", "-nsfw", "-egf", "-eharem", "-homies", "-sidegirls",
-     "-creatures", "-eprotectors", "-ecollections"])
-#endregion
+# Pytest fixture setup
+test_id = 0
 
+class FakeClient:
+    db_path = "Tests/test.sqlite"
 
-@client.event
-async def on_ready():
-    """
-    A function called as soon as the bot is loaded up.
+    def __init__(self):
+        self.config={
+            "deployment": "TEST"
+        }
+        self.db_path = FakeClient.db_path
+        self.accountManager = None
+        self.CogsToActivate = []
 
-    Initializes all the cogs and creates/edits the database
-    """
-    for extension in extensions:
-        try:
-            await client.add_cog(extension)
-            print(f"loaded extension {extension}!")
-        except Exception as error:
-            print('{} cannot be loaded. [{}]'.format(extension, error))
-    
-    await client.config.load()
-    HelperClass.init(client)
-    await createAndUpdateDatabase()
-    changeGameActivity.start()
-
-    for cog in client.CogsToActivate:
-        if hasattr(cog, "activate"):
-            cog.activate()
-
-    print("Hello there!")
-
-
-@tasks.loop(seconds=7)
-async def changeGameActivity():
-    """
-    A looping function that changes the activity status of the bot to "playing" a random command.
-    """
-    await client.change_presence(activity=discord.Game(next(status)))
-
-
-@client.command()
-async def gm(ctx):
-    """
-    Sends a beautiful legacy good morning render of Lauren.
-    """
-    image = discord.File(f"./GreetingImages/gm.png", filename="gm.png")
-    await ctx.send(file=image)
-
-
-@client.command()
-async def gn(ctx):
-    """
-    Sends a beautiful legacy good night render of Judie.
-    """
-    image = discord.File(f"./GreetingImages/gn.png", filename="gn.png")
-    await ctx.send(file=image)
-
-
-@client.command()
-@commands.check(check_channel)
-async def gf(ctx):
-    """
-    Obsolete command; All it does now is send an easter egg message :D
-    """
-    await ctx.send("Command was updated! You're probably looking for **-ogf**!\n-help oialt for the specific commands!")
-
-
-@client.command()
-@commands.check(check_channel)
-async def help(ctx, plugin=None):
-    """
-    :TheyAskedForHaremAgain:
-    Supposed to help people around; Is a massive mess of spaghetti code here. But yeah provides an overview of Judie's commands
-
-    Parameters:
-        - plugin: str - defaults to None
-            The name of a specific section the user wants help for (from a variety of keywords)
-    """
-    title = "Judie's commands!"
-    description = "Which category would you like to get the help commands from?\nJudie supports the following modules:"
-
-    field_names = []
-    field_values = []
-
-    # default
-    if plugin is None or plugin.lower() not in [
-            "eternum", "oialt", "once in a lifetime", "nsfw", "general", "miscellaneous", "misc", "gen", "account", "accounts"
-        ]:
-        field_names.append("__OiaLt__")
-        field_values.append("Commands for the classic Gf game! (-help OiaLt)")
-
-        field_names.append("__Eternum__")
-        field_values.append("Commands for the brand new Eternum GF game! (-help Eternum)")
-
-        field_names.append("__Nsfw__")
-        field_values.append("Commands for our lewds plugin! (-help Nsfw)")
-
-        field_names.append("__General Commands__")
-        field_values.append("Account Management & Miscellaneous Commands! (-help General)")
-    #
-
-    # Oialt
-    elif plugin.lower() == "oialt" or plugin.lower() == "once in a lifetime":
-        help_oialt(ctx)
-
-    # NSFW
-    elif plugin.lower() == "nsfw":
-        title = "Judie's lewd stash!"
-        description = "Please use in appropriate channels!"
-
-        field_names.append("-nsfw [name]")
-        field_values.append("Shows a random lewd including the character whose name you added!\n:warning: __Please use"
-                            " this command in a channel marked **nsfw**__\nIf you don't add a name"
-                            " it will choose a random lewd across all OiaLt and Eternum options!\n\n*Supported options:"
-                            " Aiko, Carla, Iris, Jasmine, Judie, Lauren, Rebecca, Alex, Annie, Calypso, Dalia, Eva,"
-                            " FoxMaidens (:warning: putting a space won't recognize it as fox maidens!), Lorelei, Luna, Maat, "
-                            "Nancy, Nova, Penny, Wenlin, OiaLt, Eternum*")
-
-    # Misc
-    elif plugin.lower() in ["general", "miscellaneous", "misc", "gen", "account", "accounts"]:
-        title = "Miscellaneous commands!"
-        description = "Account management and a few other commands :)"
-
-        field_names.append("-gm")
-        field_values.append("Sends a good morning greeting to the fellas on discord!")
-
-        field_names.append("-gn")
-        field_values.append("Sends a good night wish to the fellas on discord!")
-
-        field_names.append("-register")
-        field_values.append("Register to the Judie Bot database! Required to play both gf games.\n"
-                            "We only store your discord ID to track your collections :)")
-
-        field_names.append("-deleteacc")
-        field_values.append(
-            "Delete all your entries to the database. *Please note that this action is __irreversible__.*")
-
-    # eternum
-    elif plugin.lower() == "eternum":
-        help_eternum(ctx)
-
-    field_names.append("__Further info__")
-    field_values.append("For any other kind of information, feel free to contact **eisritter**!")
-
-    footer = "WARNING: All of Judie's features contain spoilers to players who are not up to the current version" \
-             " of Eternum."
-
-    embed = discord.Embed(title=title, description=description, color=HelperClass.orange)
-    embed.set_footer(text=footer)
-
-    for i in range(0, len(field_names)):
-        embed.add_field(name=field_names[i], value=field_values[i], inline=False)
-
-    await ctx.send(embed=embed)
-
-
-# find a way to prevent/reset cooldowns if TimeInSecs == 0
-@client.command()
-@commands.check(check_channel)
-async def timers(ctx):
-    """
-    Provides an overview of the time left until a user can draw a gf in the gf games again.
-    """
-    ogf = client.get_command("ogf")
-    egf = client.get_command("egf")
-
-    ogfTimeInSecs = ogf._buckets.get_bucket(ctx.message).get_retry_after()
-    ogfTime = None if ogfTimeInSecs == None else TimeObject(ogfTimeInSecs)
-    ogfText = f"**-ogf**: you __can__ draw now!" if ogfTimeInSecs == 0 else f"**-ogf**: you can try again in {ogfTime.hours:02}:{ogfTime.minutes:02}:{ogfTime.seconds:02}"
-
-    egfTimeInSecs = egf._buckets.get_bucket(ctx.message).get_retry_after()
-    egfTime = None if egfTimeInSecs == None else TimeObject(egfTimeInSecs)
-    egfText = f"**-egf**: you __can__ draw now!" if egfTimeInSecs == 0 else f"**-egf**: you can try again in {egfTime.hours:02}:{egfTime.minutes:02}:{egfTime.seconds:02}"
-
-    embed = await HelperClass.createEmbed(title=f"Cooldown overview for {ctx.author.display_name}:", text=f"{ogfText}\n{egfText}")
-    await ctx.send(embed=embed)
-
-
-async def createAndUpdateDatabase():
+def createAndUpdateDatabase():
     """
     Defines the structure of the Judie Bot Database and updates the database's contents afterwards.
     """
 
-    db = sqlite3.connect(client.db_path)
+    db = sqlite3.connect(FakeClient.db_path)
     cursor = db.cursor()
 
     print("Checking DB Integrity")
-    
-    # updates are already done in test phase most likely
-    if(check_deployment("DEBUG")):
-        return
 
     #region users
     cursor.execute("""
@@ -763,5 +573,239 @@ async def createAndUpdateDatabase():
     db.close()
 
 
-if __name__ == '__main__':
-    client.run(TOKEN)
+def add_user():
+    """Adds a decoy empty user to the test DB; No need for ID's because the system tracks autoincrements automatically."""
+
+    global test_id
+
+    db = sqlite3.connect(FakeClient.db_path)
+    cursor = db.cursor()
+
+    cursor.execute("INSERT INTO users (discord_id) VALUES (?)", [test_id])
+    tables = [ 
+        "eternum", "eternum_harem", "homies", "side_girls", "creatures"
+    ]
+
+    for table in tables:
+        cursor.execute("INSERT INTO %s (user_id) VALUES (?)" % table, [test_id])
+
+    db.commit()
+    cursor.close()
+    db.close()
+
+    test_id += 1
+
+    return (test_id - 1)
+
+
+@pytest.fixture(scope="session")
+def eternum():
+    client = FakeClient()
+
+    createAndUpdateDatabase()
+
+    yield Eternum(client)
+
+    #os.remove(client.db_path)
+
+class TestEternum():
+    @staticmethod
+    async def get_protector(effect: Effects, eternum) -> Effects:
+        """Returns the character card of the protector that thwarts a given villain."""
+        if effect == Effects.HAREM_KILLER:
+            return Effects.HAREM_SAVIOUR
+
+        if effect == Effects.SIDE_GIRL_KIDNAPPER:
+            return Effects.SIDE_GIRL_SAVIOUR
+
+        if effect == Effects.HOMIE_KILLER:
+            return Effects.HOMIE_SAVIOUR
+
+        if effect == Effects.CREATURE_STOMPER:
+            return Effects.CREATURE_SAVIOUR
+
+    @staticmethod
+    async def get_preferred(effect: Effects, eternum) -> CharacterCard:
+        """Returns the character card of a villain's preferred target."""
+        if effect == Effects.HAREM_KILLER:
+            return await eternum.characterList.getCharacter("Alexandra")
+
+        if effect == Effects.SIDE_GIRL_KIDNAPPER:
+            return None
+
+        if effect == Effects.HOMIE_KILLER:
+            return await eternum.characterList.getCharacter("Jerry")
+
+        if effect == Effects.CREATURE_STOMPER:
+            return await eternum.characterList.getCharacter("Kermit")
+
+    @staticmethod
+    async def get_random_target(effect: Effects, eternum) -> CharacterCard:
+        """Returns the character card of a villain's non-preferential target."""
+        if effect == Effects.HAREM_KILLER:
+            return await eternum.characterList.getCharacter("Dalia")
+
+        if effect == Effects.SIDE_GIRL_KIDNAPPER:
+            return await eternum.characterList.getCharacter("Maat")
+
+        if effect == Effects.HOMIE_KILLER:
+            return await eternum.characterList.getCharacter("Victor")
+
+        if effect == Effects.CREATURE_STOMPER:
+            return await eternum.characterList.getCharacter("Maurice")
+
+    @staticmethod
+    async def assert_collectible(uid: int, chara: str, table: str) -> bool:
+        db = sqlite3.connect(FakeClient.db_path)
+        cursor = db.cursor()
+
+        cursor.execute("SELECT %s FROM %s WHERE user_id=?" % (chara, table), [uid])
+        val = cursor.fetchone()
+
+        cursor.close()
+        db.close()
+
+        return bool(val[0])
+
+
+    @pytest.mark.asyncio
+    async def test_db(self, eternum):
+        # add a new user
+        uid = add_user()
+
+        #------------------------------------------------------+
+        #               [C O L L E C T I B L E S]              |
+        #------------------------------------------------------+
+
+        # foreach collectible try adding it twice (check duplicate value)
+        for i in range(1, 5):
+            collectibles = await eternum.characterList.getCollectiblesOfType(Collections(i))
+
+            for chara in collectibles:
+                # first time obtention; shouldn't be duplicate but should figure in the table
+                results1 = await eternum.updateDatabase(uid=uid, character=chara)
+                assert(not results1.duplicate)
+                assert(TestEternum.assert_collectible(uid, chara.filename, chara.collection.table()))
+
+                # should be duplicate and still figure in the table.
+                results2 = await eternum.updateDatabase(uid=uid, character=chara)
+                assert(results2.duplicate)
+                assert(TestEternum.assert_collectible(uid, chara.filename, chara.collection.table()))
+
+
+        # add in a new dummy user
+        uid = add_user()
+        
+        #----------------------------------------------+
+        #               [V I L L A I N S]              |
+        #----------------------------------------------+
+        
+        for i in range(4, 9):
+            effect = Effects(i)
+            # skip pyramid head because not a villain :)
+            if effect == Effects.CREATURE_SAVIOUR:
+                continue
+
+            temp = await eternum.characterList.getEffectorsOfType(effect)
+            villain = temp[0]
+            assert(isinstance(villain, Villain))
+            
+            temp = await eternum.characterList.getEffectorsOfType(await TestEternum.get_protector(effect, eternum))
+            protector = temp[0]
+            assert(isinstance(protector, CharacterCard))
+
+            pref_target = await TestEternum.get_preferred(effect, eternum)
+            # target may be none (Axel) so no assert here
+
+            other_target = await TestEternum.get_random_target(effect, eternum)
+            assert(isinstance(other_target, CharacterCard))
+
+            
+            print(f"Testing roster:\nvillain: {villain.name}\nprotector: {protector.name}\npreferred target: {'None' if pref_target is None else pref_target.name}\nother target: {other_target.name}")
+
+            #------------------------------------------------------------+
+            #---------------case unprotected without target--------------|
+            #------------------------------------------------------------+
+
+            # add villain; should flag as denied (protected) and victim should be named.
+            results2 = await eternum.updateDatabase(uid=uid, character=villain)
+            assert(not results2.protected and results2.victim == "Nobody")
+
+            #-------------------------------------------+
+            #---------------case protected--------------|
+            #-------------------------------------------+
+
+            # add a potential victim (protection doesn't trigger if no victim)
+            await eternum.updateDatabase(uid=uid, character=other_target)
+            assert(TestEternum.assert_collectible(uid, other_target.filename, other_target.collection.table()))
+
+            # add protector; should flag as protected and figure in the 'eternum' table.
+            results1 = await eternum.updateDatabase(uid=uid, character=protector)
+            print(f"duplicate: {results1.duplicate}; protected: {results1.protected}; victim: {'None' if results1.victim is None else results1.victim}.")
+            assert(results1.protected and results1.victim == "Nobody")
+            assert(TestEternum.assert_collectible(uid, protector.filename, 'eternum'))
+
+            # add villain; should flag as denied (protected) and victim should be named. Collectible should still be in table.
+            results2 = await eternum.updateDatabase(uid=uid, character=villain)
+            print(f"duplicate: {results2.duplicate}; protected: {results2.protected}; victim: {'None' if results2.victim is None else results2.victim}.")
+            assert(results2.protected)
+            assert(results2.victim != "Nobody")
+            assert(TestEternum.assert_collectible(uid, other_target.filename, other_target.collection.table()))
+            
+            #----------------------------------------------------------------------+
+            #---------------case unprotected with preferential target--------------|
+            #----------------------------------------------------------------------+
+
+            # skip case Axel (no preferential target)
+            if pref_target is not None:
+                # add both the preferential and non-preferential, and check that the victim is the preferential one.
+                # non-preferential last to account for scenario of villain checking last obtained collectible.
+                await eternum.updateDatabase(uid=uid, character=pref_target)
+                await eternum.updateDatabase(uid=uid, character=other_target)
+
+                # both characters should be in the database
+                assert(TestEternum.assert_collectible(uid, pref_target.filename, pref_target.collection.table()))
+                assert(TestEternum.assert_collectible(uid, other_target.filename, other_target.collection.table()))
+
+                # should be flagged as successful with victim == pref_target.name; Table should contain other_target but not pref_target.
+                results2 = await eternum.updateDatabase(uid=uid, character=villain)
+                assert(not results2.protected and results2.victim == pref_target.name)
+                assert(not TestEternum.assert_collectible(uid, pref_target.filename, pref_target.collection.table()) and 
+                       TestEternum.assert_collectible(uid, other_target.filename, other_target.collection.table()))
+                
+            #-------------------------------------------------------------------------+
+            #---------------case unprotected without preferential target--------------|
+            #-------------------------------------------------------------------------+
+
+            await eternum.updateDatabase(uid=uid, character=other_target)
+            assert(TestEternum.assert_collectible(uid, other_target.filename, other_target.collection.table()))
+
+            # should be flagged as successful with victim == other_target.name; other_target shouldn't be in the table anymore.
+            results2 = await eternum.updateDatabase(uid=uid, character=villain)
+            assert(not results2.protected and results2.victim == other_target.name)
+            assert(not TestEternum.assert_collectible(uid, other_target.filename, other_target.collection.table()))
+
+
+    def test_collections(self):
+        # run the -ecollections command and check against DB entries
+        assert(True)
+
+    def test_eharem(self):
+        # run the eharem command and compare get- and misslists
+        assert(True)
+
+    def test_sidegirls(self):
+        # run -sidegirls command and compare get- and misslists
+        assert(True)
+
+    def test_ehomies(self):
+        # run -homies command and compare get- and misslists
+        assert(True)
+
+    def test_pets(self):
+        # run -creatures command and compare get- and misslists
+        assert(True)
+
+    def test_protectors(self):
+        # run -eprotectors command and compare get- and misslists
+        assert(True)

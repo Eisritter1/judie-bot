@@ -73,8 +73,14 @@ class Nsfw(commands.Cog):
                 currently supported parameters: [Aiko, Carla, Iris, Jasmine, Judie, Lauren, Rebecca, Alex, Annie, Calypso, Dalia, Eva, 
                 FoxMaidens, Luna, Maat, Nancy, Nova, Penny, Wenlin, OiaLt, Eternum]
         """
+        # remove for deployment
+        print(f"Channel ID is {ctx.channel.id}.")
+        print(f"Success getting channel: {self.client.get_channel(ctx.channel.id) is not None}")
+
         if ctx.channel.is_nsfw():
             result = self.characters.dict.get(parameter.lower() if parameter else None, self.characters.list)
+
+            print(f"[NSFW] Got {result}.")
 
             choice = random.choice(result) if isinstance(result, list) else result
 
