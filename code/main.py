@@ -19,6 +19,7 @@ intents = discord.Intents().none()
 intents.messages = True
 intents.reactions = True
 intents.message_content = True
+intents.guilds = True
 
 client = commands.Bot(command_prefix="-", help_command=None, case_insensitive=True, intents=intents)
 client.config = BotConfig(client)
