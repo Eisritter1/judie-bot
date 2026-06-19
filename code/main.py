@@ -15,7 +15,12 @@ from Utilities import HelperClass, TimeObject, check_channel
 from BotConfig import BotConfig
 
 #region Bot config
-client = commands.Bot(command_prefix="-", help_command=None, case_insensitive=True, intents=discord.Intents.all())
+intents = discord.Intents().none()
+intents.messages = True
+intents.reactions = True
+intents.message_content = True
+
+client = commands.Bot(command_prefix="-", help_command=None, case_insensitive=True, intents=intents)
 client.config = BotConfig(client)
 client.CogsToActivate = []
 load_dotenv()
