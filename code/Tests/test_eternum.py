@@ -598,19 +598,75 @@ def add_user():
     return (test_id - 1)
 
 
+def cleanse_db():
+    """Removes all entries from the test database."""
+
+    db = sqlite3.connect(FakeClient.db_path)
+    cursor = db.cursor()
+
+    cursor.execute("DELETE FROM creatures")
+    cursor.execute("DELETE FROM eternum")
+    cursor.execute("DELETE FROM eternum_harem")
+    cursor.execute("DELETE FROM homies")
+    cursor.execute("DELETE FROM li_potential")
+    cursor.execute("DELETE FROM oialt")
+    cursor.execute("DELETE FROM oialt_harem")
+    cursor.execute("DELETE FROM side_girls")
+    cursor.execute("DELETE FROM stabby_mikes")
+    cursor.execute("DELETE FROM the_boys")
+    cursor.execute("DELETE FROM users")
+
+    db.commit()
+    cursor.close()
+    db.close()
+
+
+async def reset_table(table: str):
+    """Resets all entries in a given table to default values."""
+    db = sqlite3.connect(FakeClient.db_path)
+    cursor = db.cursor()
+
+    # get all columns' names and default values
+    cursor.execute(f"PRAGMA table_info('{table}')")
+    for col in cursor.fetchall():
+        # skip user ID col reset
+        if col[1] == "user_id":
+            continue
+
+        # update each entry of every column to its default value.
+        cursor.execute("UPDATE %s SET %s=?" % (table, col[1]), [col[4]])
+
+    db.commit()
+    cursor.close()
+    db.close()
+
+
+async def deprotect(protector: str, uid: int):
+    """Removes a specific protection for a given user"""
+    db = sqlite3.connect(FakeClient.db_path)
+    cursor = db.cursor()
+    
+    cursor.execute("UPDATE eternum SET %s = 0 WHERE user_id=?" % protector, [uid])
+
+    db.commit()
+    cursor.close()
+    db.close()
+
+
 @pytest.fixture(scope="session")
 def eternum():
     client = FakeClient()
 
     createAndUpdateDatabase()
+    cleanse_db()
 
     yield Eternum(client)
-
-    #os.remove(client.db_path)
+    
+    cleanse_db()
 
 class TestEternum():
     @staticmethod
-    async def get_protector(effect: Effects, eternum) -> Effects:
+    async def get_protector(effect: Effects) -> Effects:
         """Returns the character card of the protector that thwarts a given villain."""
         if effect == Effects.HAREM_KILLER:
             return Effects.HAREM_SAVIOUR
@@ -655,6 +711,21 @@ class TestEternum():
             return await eternum.characterList.getCharacter("Maurice")
 
     @staticmethod
+    async def get_effecting_collection(effect: Effects) -> Collections:
+        """Returns the collection affected when a villain acts."""
+        if effect == Effects.HAREM_KILLER:
+            return Collections.HAREM
+
+        if effect == Effects.SIDE_GIRL_KIDNAPPER:
+            return Collections.SIDE_DISHES
+
+        if effect == Effects.HOMIE_KILLER:
+            return Collections.THE_HOMIES
+
+        if effect == Effects.CREATURE_STOMPER:
+            return Collections.CREATURES
+
+    @staticmethod
     async def assert_collectible(uid: int, chara: str, table: str) -> bool:
         db = sqlite3.connect(FakeClient.db_path)
         cursor = db.cursor()
@@ -669,7 +740,9 @@ class TestEternum():
 
 
     @pytest.mark.asyncio
-    async def test_db(self, eternum):
+    async def test_collectibles(self, eternum):
+        print("---------------------------\n----------TEST_COLLECTIBLES----------\n---------------------------")
+
         # add a new user
         uid = add_user()
 
@@ -678,7 +751,8 @@ class TestEternum():
         #------------------------------------------------------+
 
         # foreach collectible try adding it twice (check duplicate value)
-        for i in range(1, 5):
+        for i in range(1, len(Collections)):
+            print(f"----------\nTesting collection {Collections(i)}")
             collectibles = await eternum.characterList.getCollectiblesOfType(Collections(i))
 
             for chara in collectibles:
@@ -692,25 +766,33 @@ class TestEternum():
                 assert(results2.duplicate)
                 assert(TestEternum.assert_collectible(uid, chara.filename, chara.collection.table()))
 
+            await reset_table(Collections(i).table)
 
-        # add in a new dummy user
+    @pytest.mark.asyncio
+    async def test_villains(self, eternum):
+        print("---------------------------\n----------TEST_VILLAINS----------\n---------------------------")
+
+        # add a new user
         uid = add_user()
         
         #----------------------------------------------+
         #               [V I L L A I N S]              |
         #----------------------------------------------+
         
-        for i in range(4, 9):
-            effect = Effects(i)
-            # skip pyramid head because not a villain :)
-            if effect == Effects.CREATURE_SAVIOUR:
-                continue
+        # start at 1 to skip Effects.NONE
+        for i in range(1, len(Effects)):
 
+            effect = Effects(i)
+            # skip even enum members (saviours) - implicitly tested either way.
+            if i % 2 == 1:
+                continue
+            
+            print(f"----------\nTesting villain {Effects(i)}")
             temp = await eternum.characterList.getEffectorsOfType(effect)
             villain = temp[0]
             assert(isinstance(villain, Villain))
             
-            temp = await eternum.characterList.getEffectorsOfType(await TestEternum.get_protector(effect, eternum))
+            temp = await eternum.characterList.getEffectorsOfType(await TestEternum.get_protector(effect))
             protector = temp[0]
             assert(isinstance(protector, CharacterCard))
 
@@ -720,8 +802,14 @@ class TestEternum():
             other_target = await TestEternum.get_random_target(effect, eternum)
             assert(isinstance(other_target, CharacterCard))
 
+            collection = await TestEternum.get_effecting_collection(effect)
+
+            # reset all affected tables just in case
+            await reset_table('eternum')
+            await reset_table(collection.table())
+
             
-            print(f"Testing roster:\nvillain: {villain.name}\nprotector: {protector.name}\npreferred target: {'None' if pref_target is None else pref_target.name}\nother target: {other_target.name}")
+            print(f"-----\nTesting roster:\nvillain: {villain.name}\nprotector: {protector.name}\npreferred target: {'None' if pref_target is None else pref_target.name}\nother target: {other_target.name}")
 
             #------------------------------------------------------------+
             #---------------case unprotected without target--------------|
@@ -729,7 +817,9 @@ class TestEternum():
 
             # add villain; should flag as denied (protected) and victim should be named.
             results2 = await eternum.updateDatabase(uid=uid, character=villain)
-            assert(not results2.protected and results2.victim == "Nobody")
+            print(f"-----\nduplicate: {results2.duplicate}; protected: {results2.protected}; victim: {'None' if results2.victim is None else results2.victim}.")
+            assert(not results2.protected)
+            assert(results2.victim == "Nobody")
 
             #-------------------------------------------+
             #---------------case protected--------------|
@@ -737,20 +827,20 @@ class TestEternum():
 
             # add a potential victim (protection doesn't trigger if no victim)
             await eternum.updateDatabase(uid=uid, character=other_target)
-            assert(TestEternum.assert_collectible(uid, other_target.filename, other_target.collection.table()))
+            assert(await TestEternum.assert_collectible(uid, other_target.filename, other_target.collection.table()))
 
             # add protector; should flag as protected and figure in the 'eternum' table.
             results1 = await eternum.updateDatabase(uid=uid, character=protector)
-            print(f"duplicate: {results1.duplicate}; protected: {results1.protected}; victim: {'None' if results1.victim is None else results1.victim}.")
-            assert(results1.protected and results1.victim == "Nobody")
-            assert(TestEternum.assert_collectible(uid, protector.filename, 'eternum'))
+            print(f"-----\nduplicate: {results1.duplicate}; protected: {results1.protected}; victim: {'None' if results1.victim is None else results1.victim}.")
+            assert(results1.protected)
+            assert(await TestEternum.assert_collectible(uid, protector.filename, 'eternum'))
 
             # add villain; should flag as denied (protected) and victim should be named. Collectible should still be in table.
             results2 = await eternum.updateDatabase(uid=uid, character=villain)
-            print(f"duplicate: {results2.duplicate}; protected: {results2.protected}; victim: {'None' if results2.victim is None else results2.victim}.")
+            print(f"-----\nduplicate: {results2.duplicate}; protected: {results2.protected}; victim: {'None' if results2.victim is None else results2.victim}.")
             assert(results2.protected)
             assert(results2.victim != "Nobody")
-            assert(TestEternum.assert_collectible(uid, other_target.filename, other_target.collection.table()))
+            assert(await TestEternum.assert_collectible(uid, other_target.filename, other_target.collection.table()))
             
             #----------------------------------------------------------------------+
             #---------------case unprotected with preferential target--------------|
@@ -764,26 +854,39 @@ class TestEternum():
                 await eternum.updateDatabase(uid=uid, character=other_target)
 
                 # both characters should be in the database
-                assert(TestEternum.assert_collectible(uid, pref_target.filename, pref_target.collection.table()))
-                assert(TestEternum.assert_collectible(uid, other_target.filename, other_target.collection.table()))
+                assert(await TestEternum.assert_collectible(uid, pref_target.filename, pref_target.collection.table()))
+                assert(await TestEternum.assert_collectible(uid, other_target.filename, other_target.collection.table()))
 
                 # should be flagged as successful with victim == pref_target.name; Table should contain other_target but not pref_target.
                 results2 = await eternum.updateDatabase(uid=uid, character=villain)
-                assert(not results2.protected and results2.victim == pref_target.name)
-                assert(not TestEternum.assert_collectible(uid, pref_target.filename, pref_target.collection.table()) and 
-                       TestEternum.assert_collectible(uid, other_target.filename, other_target.collection.table()))
+                print(f"-----\nduplicate: {results2.duplicate}; protected: {results2.protected}; victim: {'None' if results2.victim is None else results2.victim}.")
+                assert(not results2.protected)
+                assert(results2.victim == pref_target.name)
+                assert(not await TestEternum.assert_collectible(uid, pref_target.filename, pref_target.collection.table()) and 
+                       await TestEternum.assert_collectible(uid, other_target.filename, other_target.collection.table()))
                 
             #-------------------------------------------------------------------------+
             #---------------case unprotected without preferential target--------------|
             #-------------------------------------------------------------------------+
 
-            await eternum.updateDatabase(uid=uid, character=other_target)
-            assert(TestEternum.assert_collectible(uid, other_target.filename, other_target.collection.table()))
+            # loop through options maybe here instead of just 1 lol to avoid missing out on faulty DB names
+            for chara in collection.members():
+                card = await eternum.characterList.getCharacterWithFilename(chara)
 
-            # should be flagged as successful with victim == other_target.name; other_target shouldn't be in the table anymore.
-            results2 = await eternum.updateDatabase(uid=uid, character=villain)
-            assert(not results2.protected and results2.victim == other_target.name)
-            assert(not TestEternum.assert_collectible(uid, other_target.filename, other_target.collection.table()))
+                await eternum.updateDatabase(uid=uid, character=card)
+                assert(await TestEternum.assert_collectible(uid, card.filename, card.collection.table()))
+                
+                # remove protection in scenario victim is also protector (Calypso).
+                if card.name == protector.name:
+                    print("Calypso case triggered.")
+                    await deprotect(card.filename, uid)
+
+                # should be flagged as successful with victim == other_target.name; other_target shouldn't be in the table anymore.
+                results2 = await eternum.updateDatabase(uid=uid, character=villain)
+                print(f"-----\nduplicate: {results2.duplicate}; protected: {results2.protected}; victim: {'None' if results2.victim is None else results2.victim}.")
+                assert(not results2.protected)
+                assert(results2.victim == card.name)
+                assert(not await TestEternum.assert_collectible(uid, card.filename, card.collection.table()))
 
 
     def test_collections(self):

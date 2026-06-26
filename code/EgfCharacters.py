@@ -1943,7 +1943,7 @@ class EgfCharacters:
                    matches.append(f);
             chara.picNumber = len(matches)
 
-    async def searchNameWithFilename(self, filename: str):
+    async def searchNameWithFilename(self, filename: str) -> str:
         # since sorted alphabetically, maybe bin-search?
         for c in self.characters:
             if c.filename == filename:
@@ -1951,7 +1951,7 @@ class EgfCharacters:
         
         return None
 
-    async def getCharacter(self, name: str):
+    async def getCharacter(self, name: str) -> CharacterCard:
         for chara in self.characters:
             if name.lower() in chara.name.lower():
                 return chara
@@ -1959,7 +1959,15 @@ class EgfCharacters:
         print(f"getCharacter<{name}>: No matches found!")
         return None
 
-    async def getCollectiblesOfType(self, collection: Collections):
+    async def getCharacterWithFilename(self, filename: str) -> CharacterCard:
+        for chara in self.characters:
+            if filename == chara.filename:
+                return chara
+
+        print(f"getCharacter<{filename}>: No matches found!")
+        return None
+
+    async def getCollectiblesOfType(self, collection: Collections) -> list[CharacterCard]:
         results = []
         for chara in self.characters:
             if chara.collection == collection:
@@ -1967,7 +1975,7 @@ class EgfCharacters:
 
         return results
 
-    async def getEffectorsOfType(self, effect: Effects):
+    async def getEffectorsOfType(self, effect: Effects) -> list[CharacterCard]:
         results = []
         for chara in self.characters:
             if chara.effects == effect:
