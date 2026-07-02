@@ -1,5 +1,7 @@
 # DISCORD LIBRARIES
+from code import interact
 import discord
+from discord import app_commands
 from discord.ext import commands, tasks
 # EXTERNAL LIBRARIES
 import sqlite3
@@ -9,16 +11,13 @@ from itertools import cycle
 # JUDIE LIBRARIES
 from OiaLt import OiaLt, help_oialt
 from Nsfw import Nsfw
-from Eternum import Eternum, check_deployment, help_eternum
-from AccountManager import AccountManager
+from Eternum import Eternum, help_eternum
+from AccountManager import AccountManager, check_deployment
 from Utilities import HelperClass, TimeObject, check_channel
 from BotConfig import BotConfig
 
 #region Bot config
-intents = discord.Intents().none()
-intents.messages = True
-intents.reactions = True
-intents.message_content = True
+intents = discord.Intents().default()
 intents.guilds = True
 
 client = commands.Bot(command_prefix="-", help_command=None, case_insensitive=True, intents=intents)
@@ -27,6 +26,7 @@ client.CogsToActivate = []
 client.db_path = "main.sqlite"
 load_dotenv()
 TOKEN = os.getenv("TOKEN")
+GUILD = discord.Object(id=os.getenv("GUILD"))
 
 extensions = [AccountManager(client), OiaLt(client), Nsfw(client), Eternum(client)]
 status = cycle(
@@ -59,6 +59,14 @@ async def on_ready():
         if hasattr(cog, "activate"):
             cog.activate()
 
+    # sync the command tree to the server in question
+    client.tree.clear_commands(guild=None)
+    try: 
+        synced = await client.tree.sync(guild=client.config.guild)
+        print(f"Successfully synchronised {len(synced)} commands to guild with ID {client.config.guild.id}.")
+    except Exception as e:
+        print(f"Error synchronising commands tree: {e}")
+
     print("Hello there!")
 
 
@@ -70,36 +78,27 @@ async def changeGameActivity():
     await client.change_presence(activity=discord.Game(next(status)))
 
 
-@client.command()
-async def gm(ctx):
+@client.tree.command(name="gm", description="Sends a good morning render featuring Lauren.", guild=GUILD)
+async def gm(interaction: discord.Interaction):
     """
     Sends a beautiful legacy good morning render of Lauren.
     """
     image = discord.File(f"./GreetingImages/gm.png", filename="gm.png")
-    await ctx.send(file=image)
+    await interaction.response.send_message(file=image)
 
 
-@client.command()
-async def gn(ctx):
+@client.tree.command(name="gn", description="Sends a good night render featuring Judie.", guild=GUILD)
+async def gn(interaction: discord.Interaction):
     """
     Sends a beautiful legacy good night render of Judie.
     """
     image = discord.File(f"./GreetingImages/gn.png", filename="gn.png")
-    await ctx.send(file=image)
+    await interaction.response.send_message(file=image)
 
 
-@client.command()
+@client.tree.command(name="help", description="Helps understand how to use Judie's commands. example keywords: oialt, eternum, nsfw, general.", guild=GUILD)
 @commands.check(check_channel)
-async def gf(ctx):
-    """
-    Obsolete command; All it does now is send an easter egg message :D
-    """
-    await ctx.send("Command was updated! You're probably looking for **-ogf**!\n-help oialt for the specific commands!")
-
-
-@client.command()
-@commands.check(check_channel)
-async def help(ctx, plugin=None):
+async def help(interaction: discord.Interaction, plugin: str=None):
     """
     :TheyAskedForHaremAgain:
     Supposed to help people around; Is a massive mess of spaghetti code here. But yeah provides an overview of Judie's commands
@@ -133,14 +132,15 @@ async def help(ctx, plugin=None):
 
     # Oialt
     elif plugin.lower() == "oialt" or plugin.lower() == "once in a lifetime":
-        help_oialt(ctx)
+        await help_oialt(interaction)
+        return
 
     # NSFW
     elif plugin.lower() == "nsfw":
         title = "Judie's lewd stash!"
         description = "Please use in appropriate channels!"
 
-        field_names.append("-nsfw [name]")
+        field_names.append("/nsfw [name]")
         field_values.append("Shows a random lewd including the character whose name you added!\n:warning: __Please use"
                             " this command in a channel marked **nsfw**__\nIf you don't add a name"
                             " it will choose a random lewd across all OiaLt and Eternum options!\n\n*Supported options:"
@@ -169,7 +169,8 @@ async def help(ctx, plugin=None):
 
     # eternum
     elif plugin.lower() == "eternum":
-        help_eternum(ctx)
+        await help_eternum(interaction)
+        return
 
     field_names.append("__Further info__")
     field_values.append("For any other kind of information, feel free to contact **eisritter**!")
@@ -183,29 +184,30 @@ async def help(ctx, plugin=None):
     for i in range(0, len(field_names)):
         embed.add_field(name=field_names[i], value=field_values[i], inline=False)
 
-    await ctx.send(embed=embed)
+    await interaction.response.send_message(embed=embed)
 
-
-# find a way to prevent/reset cooldowns if TimeInSecs == 0
-@client.command()
+    
+@client.tree.command(name="timers", description="Returns an overview of the time left until you can use the gf commands again.", guild=GUILD)
 @commands.check(check_channel)
-async def timers(ctx):
+async def timers(interaction: discord.Interaction):
     """
     Provides an overview of the time left until a user can draw a gf in the gf games again.
     """
     ogf = client.get_command("ogf")
     egf = client.get_command("egf")
-
-    ogfTimeInSecs = ogf._buckets.get_bucket(ctx.message).get_retry_after()
+    
+    dummy = discord.Object(id=interaction.id)
+    dummy.author = interaction.user
+    ogfTimeInSecs = ogf._buckets.get_bucket(dummy).get_retry_after()
     ogfTime = None if ogfTimeInSecs == None else TimeObject(ogfTimeInSecs)
     ogfText = f"**-ogf**: you __can__ draw now!" if ogfTimeInSecs == 0 else f"**-ogf**: you can try again in {ogfTime.hours:02}:{ogfTime.minutes:02}:{ogfTime.seconds:02}"
 
-    egfTimeInSecs = egf._buckets.get_bucket(ctx.message).get_retry_after()
+    egfTimeInSecs = egf._buckets.get_bucket(dummy).get_retry_after()
     egfTime = None if egfTimeInSecs == None else TimeObject(egfTimeInSecs)
     egfText = f"**-egf**: you __can__ draw now!" if egfTimeInSecs == 0 else f"**-egf**: you can try again in {egfTime.hours:02}:{egfTime.minutes:02}:{egfTime.seconds:02}"
 
-    embed = await HelperClass.createEmbed(title=f"Cooldown overview for {ctx.author.display_name}:", text=f"{ogfText}\n{egfText}")
-    await ctx.send(embed=embed)
+    embed = await HelperClass.createEmbed(title=f"Cooldown overview for {interaction.user.display_name}:", text=f"{ogfText}\n{egfText}")
+    await interaction.response.send_message(embed=embed)
 
 
 async def createAndUpdateDatabase():

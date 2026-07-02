@@ -781,7 +781,6 @@ class TestEternum():
         
         # start at 1 to skip Effects.NONE
         for i in range(1, len(Effects)):
-
             effect = Effects(i)
             # skip even enum members (saviours) - implicitly tested either way.
             if i % 2 == 1:
@@ -891,6 +890,8 @@ class TestEternum():
 
     def test_collections(self):
         # run the -ecollections command and check against DB entries
+
+
         assert(True)
 
     def test_eharem(self):

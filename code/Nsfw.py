@@ -1,15 +1,21 @@
+# DISCORD.PY
 import discord
-from discord import Embed, File
+from discord import Embed, File, app_commands
 from discord.ext import commands, tasks
 from discord.ext.commands import cooldown, BucketType
+# OTHER LIBRARIES
 import random
 import os
+from dotenv import load_dotenv
+# OWN LIBRARIES
 from Utilities import HelperClass
 from CharacterCard import NsfwCharacterCard
 from NsfwCharacters import NsfwCharacters
 
+load_dotenv()
+GUILD = discord.Object(id=os.getenv("GUILD"))
 
-async def createAndSendEmbed(card: NsfwCharacterCard, number: int, ctx):
+async def createAndSendEmbed(card: NsfwCharacterCard, number: int, interaction: discord.Interaction):
     """
     Creates and sends an embed using information from the provided NsfwCharacterCard.
     ----------------------------------------------------------------------------------
@@ -45,9 +51,9 @@ async def createAndSendEmbed(card: NsfwCharacterCard, number: int, ctx):
     embed.set_image(url=f"attachment://nsfw.{file_extension}")
 
     try:
-        await ctx.send(file=image, embed=embed)
+        await interaction.response.send_message(file=image, embed=embed)
     except Exception as e:
-        print(f"Failed to send image {filename}_{number}: {e}")
+        await interaction.response.send_message(f"Failed to send image {filename}_{number}: {e}", ephemeral=True)
 
 class Nsfw(commands.Cog):
     """
@@ -60,9 +66,9 @@ class Nsfw(commands.Cog):
         self.client = client
         self.characters = NsfwCharacters()
                 
-
-    @commands.command()
-    async def nsfw(self, ctx, parameter=None):
+    @app_commands.guilds(GUILD)
+    @app_commands.command(name="nsfw", description="Get a naughty render of your choice. Defaults to complete random, list of keywords at /help nsfw.", nsfw=True)
+    async def nsfw(self, interaction: discord.Interaction, parameter: str=None):
         """
         Draws a random character from the pool unless one is specified and shows a random lewd scene of theirs from the Caribdis-verse.
         /!\ Only works in channels marked to discord as NSFW.
@@ -74,10 +80,10 @@ class Nsfw(commands.Cog):
                 FoxMaidens, Luna, Maat, Nancy, Nova, Penny, Wenlin, OiaLt, Eternum]
         """
         # remove for deployment
-        print(f"Channel ID is {ctx.channel.id}.")
-        print(f"Success getting channel: {self.client.get_channel(ctx.channel.id) is not None}")
+        print(f"Channel ID is {interaction.channel.id}.")
+        print(f"Success getting channel: {self.client.get_channel(interaction.channel.id) is not None}")
 
-        if ctx.channel.is_nsfw():
+        if interaction.channel.is_nsfw():
             result = self.characters.dict.get(parameter.lower() if parameter else None, self.characters.list)
 
             print(f"[NSFW] Got {result}.")
@@ -86,9 +92,9 @@ class Nsfw(commands.Cog):
 
             number = random.randint(1, choice.picNumber)
 
-            await createAndSendEmbed(choice, number, ctx)
+            await createAndSendEmbed(choice, number, interaction)
         else:
-            await ctx.send("This channel is sfw!")
+            await interaction.response.send_message("This channel is not marked as NSFW!", ephemeral=True)
 
 
 def setup(client):

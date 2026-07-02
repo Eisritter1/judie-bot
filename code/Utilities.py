@@ -16,7 +16,7 @@ async def get_cols(table_name: str, blacklist: list) -> list:
     db.close()
     return cols
 
-async def check_channel(ctx: Context) -> bool:
+async def check_channel(interaction: discord.Interaction) -> bool:
     """
     Checks whether the channel the command was called from was the designated bot & spam channel.
     -----------------------------------------------------------------------------------------------
@@ -28,13 +28,13 @@ async def check_channel(ctx: Context) -> bool:
         bool: success of the comparison; 
             true = the channel is the bot & spam channel.
     """
-    client = ctx.bot
-    result = ctx.channel.id == client.config.botSpamChannel
+    client = interaction.client
+    result = interaction.channel.id == client.config.botSpamChannel
     if not result:
         embed = discord.Embed(title="Wrong channel!",
                               description=f"Please take this to {client.get_channel(client.config.botSpamChannel).mention}",
                               color=HelperClass.orange)
-        await ctx.send(embed=embed)
+        await interaction.response.send_message(embed=embed)
     return result
 
 

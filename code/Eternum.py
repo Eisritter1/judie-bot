@@ -1,67 +1,67 @@
 # DISCORD.PY
-from gc import collect
 import discord
-from discord import Embed, File
+from discord import app_commands
 from discord.ext import commands, tasks
 from discord.ext.commands import CooldownMapping, Cooldown, BucketType
 # OTHER LIBRARIES
 import os
 import random
 import sqlite3
-from time import sleep
+from dotenv import load_dotenv
 # OWN LIBRARIES
 from Utilities import Collections, HelperClass, Results, Effects, check_channel, get_cols
 from CharacterCard import CharacterCard, Villain
-from AccountManager import AccountManager, check_deployment, check_user
+from AccountManager import check_user
 from EgfCharacters import EgfCharacters
 
-async def help_eternum(ctx):
+load_dotenv()
+GUILD = discord.Object(id=os.getenv("GUILD"))
+
+async def help_eternum(interaction: discord.Interaction):
     field_names = []
     field_values = []
 
     title = "Judie's Eternum gf game!"
     description = "Here are the commands to use the eternum gf game:"
 
-    field_names.append("-egf (eternum gf)")
+    field_names.append("/egf")
     field_values.append("pull a random gf from the eternum universe! (20hr cooldown)")
 
-    field_names.append("-eCollections (eternum collections)")
+    field_names.append("/eternum_collections")
     field_values.append("get an overview of all your eternum collections!")
 
-    field_names.append("-eharem (eternum harem)")
+    field_names.append("/eternum_harem")
     field_values.append(
         "check your progress in the harem collection\n--> Contains **Alex, Annie, Calypso, Dalia, Luna, Nancy, Nova & Penny**")
 
-    field_names.append("-homies (the homies)")
+    field_names.append("/eternum_homies")
     field_values.append(
         "check your progress in the homie collection\n--> Contains **Chang, Chop Chop, Mr. Hernandez, Jerry, Micaela, Noah, Orion & Raul**")
 
-    field_names.append("-sidegirls")
+    field_names.append("/eternum_side_girls")
     field_values.append(
         "check your progress in the side girl collection\n--> Contains **Blue Fox Maiden, Eva, Idriel, Lorelei, Maat, Red Fox Maiden & Wenlin**")
 
-    field_names.append("-creatures")
+    field_names.append("/eternum_pets")
     field_values.append(
         "check your progress in the creatures collection\n--> Contains **Carolyn, Igor, Kermit, Maurice, Maurice, Maurice, Pancho**")
 
-    field_names.append("-eprotectors")
+    field_names.append("/eternum_protectors")
     field_values.append("Check your protections against various villains!\n--> Contains **Orion, Calypso, Dalia &"
                         " Pyramid Head**")
 
     field_names.append("__Further info__")
     field_values.append("For any other kind of information, feel free to contact **eisritter**!")
 
-    footer = "WARNING: All of Judie's features contain spoilers to players who are not up to the current version" \
-             " of Eternum."
-
-    embed = discord.Embed(title=title, description=description, color=HelperClass.orange)
-    embed.set_footer(text=footer)
+    embed = discord.Embed(title=title, description=description, color=HelperClass.eternumBlue)
+    embed.set_footer(text="WARNING: All of Judie's features contain spoilers to players who are not up to the current version" \
+             " of Eternum.")
 
     for i in range(0, len(field_names)):
         embed.add_field(name=field_names[i], value=field_values[i], inline=False)
 
-    await ctx.send(embed=embed)
-
+    await interaction.response.send_message(embed=embed)
+    
 
 class Eternum(commands.Cog):
     """
@@ -97,15 +97,15 @@ class Eternum(commands.Cog):
 
         Required for proper functioning; Required to run only after BotConfig.load() was called.
         """
-        command = self.client.get_command("egf")
-        cd = Cooldown(rate=1, per=self.client.config.cooldown)
-        command._buckets = CooldownMapping(cd, type=BucketType.user)
+        #command = self.client.get_command("egf")
+        #cd = Cooldown(rate=1, per=self.client.config.cooldown)
+        #command._buckets = CooldownMapping(cd, type=BucketType.user)
         self.botSpamChannel = self.client.config.botSpamChannel
         print("successfully activated Eternum cog.")
 
     # HELPER FUNCTIONS - checkUser in AccountManager // createEmbed in Utilities/HelperFunctions
 
-    async def buildCharacterEmbed(self, character: CharacterCard, results: Results, ctx, n: int = -1):
+    async def buildCharacterEmbed(self, character: CharacterCard, results: Results, interaction: discord.Interaction, n: int = -1) -> bool:
         """
         Builds and sends the egf embed using info from the provided CharacterCard.
         ---------------------------------------------------------------------------------------------------
@@ -118,10 +118,10 @@ class Eternum(commands.Cog):
         """
         if not character:
             print("Error: Missing character object.")
-            return
+            return False
 
         # variable initialization
-        author=str(ctx.author.display_name)
+        author=str(interaction.user.display_name)
 
         embed = ""
         image = ""
@@ -137,8 +137,8 @@ class Eternum(commands.Cog):
         # error message & early exit if file unrecognized.
         if not os.path.exists(filepath):
             print(f"Error: file {filepath} not found.")
-            await ctx.send(f"Error building embed for character {character.name}: Couldn't find image no. {number}")
-            return
+            await interaction.response.send_message(f"Error building embed for character {character.name}: Couldn't find image no. {number}", ephemeral=True)
+            return False
 
         collection = character.collection
 
@@ -182,13 +182,14 @@ class Eternum(commands.Cog):
             )
 
             color = collection.color()
-            footer = f"So close! Maybe next time, {str(ctx.author.display_name)}..." \
+            footer = f"So close! Maybe next time, {author}..." \
                 if results.duplicate \
-                else f"New {collection.member_desc()}, {str(ctx.author.display_name)}!"
+                else f"New {collection.member_desc()}, {author}!"
 
         if not effect_description.strip() or not aliases.strip():
             print(f"Error: Embed fields for {character.name} (victim: {results.victim}, x2: {results.duplicate}, shield:"
                   f"{results.protected}) are empty.")
+            return False
 
         image = discord.File(filepath, filename="gf.webp")
 
@@ -198,7 +199,8 @@ class Eternum(commands.Cog):
         embed = await HelperClass.createEmbed(title=character.name, text=text, color=color, footer=footer)
         embed.add_field(name=effect_description, value=aliases)
         embed.set_image(url="attachment://gf.webp")
-        await ctx.send(file=image, embed=embed)
+        await interaction.response.send_message(file=image, embed=embed)
+        return True
 
 
     async def updateDatabase(self, uid: int, character: CharacterCard) -> Results:
@@ -262,29 +264,10 @@ class Eternum(commands.Cog):
 
 
     async def collectionOverview(self, author, collection: Collections):
-        db = sqlite3.connect(self.db_path)
-        cursor = db.cursor()
         discordID = str(author.id)
         user_name = str(author.display_name)
 
-        #   search thru 'eternum_harem' table for entries
-        uid = await self.accountManager.getUserID(discordID=discordID, cursor=cursor)
-
-        count = 0
-        members = []
-        missing = []
-        
-        table = collection.table()
-        cols = await get_cols(table_name=table, blacklist=collection.blacklist())
-        total = len(cols)
-        for c in cols:
-            cursor.execute("SELECT %s FROM %s WHERE user_id=?" % (c, table), [uid])
-            res = cursor.fetchone()
-            if not res or res[0] == 0:
-                missing.append(self.characterList.searchNameWithFilename(c))
-            else:
-                members.append(self.characterList.searchNameWithFilename(c))
-                count += 1
+        members, missing, count, total = await self.getCollectionProgress(discordID, collection)
 
         #   compile entries to list
         haremlist = "\n".join(members)
@@ -303,13 +286,36 @@ class Eternum(commands.Cog):
         embed.add_field(name=f"Claimed ({count}/{total}):", value=haremlist)
         embed.add_field(name=f"Missing ({total - count}/{total}):", value=missinglist)
 
-        cursor.close()
-        db.close()
-
         return embed
 
 
-        pass
+    async def getCollectionProgress(self, discordID, collection: Collections) -> tuple[list]:
+        db = sqlite3.connect(self.db_path)
+        cursor = db.cursor()
+
+        #   search thru 'eternum_harem' table for entries
+        uid = await self.accountManager.getUserID(discordID=discordID)
+
+        count = 0
+        members = []
+        missing = []
+        
+        table = collection.table()
+        cols = await get_cols(table_name=table, blacklist=collection.blacklist())
+        total = len(cols)
+        for c in cols:
+            cursor.execute("SELECT %s FROM %s WHERE user_id=?" % (c, table), [uid])
+            res = cursor.fetchone()
+            if not res or res[0] == 0:
+                missing.append(await self.characterList.searchNameWithFilename(c))
+            else:
+                members.append(await self.characterList.searchNameWithFilename(c))
+                count += 1
+
+        cursor.close()
+        db.close()
+        
+        return (members, missing, count, total)
 
 
     async def getMembers(self, author, collection: Collections) -> tuple:
@@ -318,7 +324,7 @@ class Eternum(commands.Cog):
         discordID = str(author.id)
 
         #   search thru 'eternum_harem' table for entries
-        uid = await self.accountManager.getUserID(discordID=discordID, cursor=cursor)
+        uid = await self.accountManager.getUserID(discordID=discordID)
 
         count = 0
         members = []
@@ -330,7 +336,7 @@ class Eternum(commands.Cog):
             cursor.execute("SELECT %s FROM %s WHERE user_id=?" % (c, table), [uid])
             res = cursor.fetchone()
             if res and res[0] != 0:
-                members.append(self.characterList.searchNameWithFilename(c))
+                members.append(await self.characterList.searchNameWithFilename(c))
                 count += 1
 
         cursor.close()
@@ -341,17 +347,18 @@ class Eternum(commands.Cog):
 
     # DISCORD COMMANDS (no intricate logic here, all wrapping the logic above to discord callable! for testing reasons :D)
 
-    @commands.command(aliases=['gfe', 'eternum gf', 'gf eternum'])
-    @commands.check(check_channel)
+    @app_commands.guilds(GUILD)
+    @app_commands.command(name="egf", description="Draw an Eternum character to be your partner for the day.")
+    @app_commands.check(check_channel)
     @check_user()
-    async def egf(self, ctx):
+    async def egf(self, interaction: discord.Interaction):
         """
         The main command for the egf.
         ------------------------------------------------
         Parameters:
             - ctx : discord.ext.Context - discord-provided context to the command prompt.
         """
-        discordID = str(ctx.author.id)
+        discordID = str(interaction.user.id)
         
         uid = await self.accountManager.getUserID(discordID=discordID)
         # choose pseudo-random character
@@ -359,54 +366,65 @@ class Eternum(commands.Cog):
         # update database accordingly
         results = await self.updateDatabase(uid=uid, character=gf)
         if not results:
-            await ctx.send(f"Sorry! I encountered an error updating the database for user {ctx.author.mention} with character {gf.name}.\n"\
-                "Please contact @eisritter for further information & support.")
+            await interaction.response.send_message(f"Sorry! I encountered an error updating the database for user {interaction.user.mention} with character {gf.name}.\n"\
+                "Please contact @eisritter for further information & support.", ephemeral=True)
             return;
         # create according embed --> self.buildCharacterEmbed
-        await self.buildCharacterEmbed(character=gf, results=results, ctx=ctx)
+        await self.buildCharacterEmbed(character=gf, results=results, interaction=interaction)
 
-
-    @commands.command(aliases=['hareme', 'eternum harem', 'harem eternum'])
+        
+    @app_commands.guilds(GUILD)
+    @app_commands.command(name="eternum_harem", description="View a user's progress on the Eternum harem collection (ex eharem). Defaults to your User ID")
     @commands.check(check_channel)
-    @check_user()
-    async def eharem(self, ctx):
+    async def eharem(self, interaction: discord.Interaction, uid: int=-1):
         """
         Provides an overview of a user's progress in collecting the eternum harem.
         ------------------------------------------------
         Parameters:
             - ctx : discord.ext.Context - discord-provided context to the command prompt.
         """
-        await ctx.send(embed=await self.collectionOverview(ctx.author, Collections.HAREM))
+        if uid != -1:
+            await interaction.response.send_message("Checking others' collections is currently unsupported, sorry!", ephemeral=True)
+            return
 
-    @commands.command(aliases=['thehomies', 'the homies', 'da homies', 'ehomies'])
+        await interaction.response.send_message(embed=await self.collectionOverview(interaction.user, Collections.HAREM))
+        
+    @app_commands.guilds(GUILD)
+    @app_commands.command(name="eternum_homies", description="View a user's progress on the Eternum homies collection (ex ehomies). Defaults to your User ID")
     @commands.check(check_channel)
-    @check_user()
-    async def homies(self, ctx):
+    async def homies(self, interaction: discord.Interaction, uid: int=-1):
         """
         Provides an overview of a user's progress in collecting the eternum homies.
         ------------------------------------------------
         Parameters:
             - ctx : discord.ext.Context - discord-provided context to the command prompt.
         """
-        await ctx.send(embed=await self.collectionOverview(ctx.author, Collections.THE_HOMIES))
+        if uid != -1:
+            await interaction.response.send_message("Checking others' collections is currently unsupported, sorry!", ephemeral=True)
+            return
 
-
-    @commands.command(aliases=['sidegirls', 'sidechicks', 'esidegirls', 'epotentiallis'])
+        await interaction.response.send_message(embed=await self.collectionOverview(interaction.user, Collections.THE_HOMIES))
+        
+    @app_commands.guilds(GUILD)
+    @app_commands.command(name="eternum_side_girls", description="View a user's progress on the Eternum side girls collection (ex sidegirls). Defaults to your User ID")
     @commands.check(check_channel)
-    @check_user()
-    async def sidedishes(self, ctx):
+    async def sidegirls(self, interaction: discord.Interaction, uid: int=-1):
         """
         Provides an overview of a user's progress in collecting the eternum side girls.
         ------------------------------------------------
         Parameters:
             - ctx : discord.ext.Context - discord-provided context to the command prompt.
         """
-        await ctx.send(embed=await self.collectionOverview(ctx.author, Collections.SIDE_DISHES))
+        if uid != -1:
+            await interaction.response.send_message("Checking others' collections is currently unsupported, sorry!", ephemeral=True)
+            return
 
-    @commands.command(aliases=['pets'])
+        await interaction.response.send_message(embed=await self.collectionOverview(interaction.user, Collections.SIDE_DISHES))
+
+    @app_commands.guilds(GUILD)
+    @app_commands.command(name="eternum_pets", description="View a user's progress on the Eternum pets collection (ex creatures). Defaults to your User ID")
     @commands.check(check_channel)
-    @check_user()
-    async def creatures(self, ctx):
+    async def creatures(self, interaction: discord.Interaction, uid: int=-1):
         """
         Provides an overview of a user's progress in collecting the eternum pets.
         DevNote 15/07/2025: might migrate to pets(ctx) instead - keep creatures as an alias or do a shell command like -gf.
@@ -414,26 +432,34 @@ class Eternum(commands.Cog):
         Parameters:
             - ctx : discord.ext.Context - discord-provided context to the command prompt.
         """
-        await ctx.send(embed=await self.collectionOverview(ctx.author, Collections.CREATURES))
+        if uid != -1:
+            await interaction.response.send_message("Checking others' collections is currently unsupported, sorry!", ephemeral=True)
+            return
+        
+        await interaction.response.send_message(embed=await self.collectionOverview(interaction.user, Collections.CREATURES))
 
-    @commands.command()
+    @app_commands.guilds(GUILD)
+    @app_commands.command(name="eternum_protectors", description="View a user's Eternum protection racket (ex eprotectors). Defaults to your User ID")
     @commands.check(check_channel)
-    @check_user()
-    async def eprotectors(self, ctx):
+    async def eprotectors(self, interaction: discord.Interaction, uid: int=-1):
         """
         Provides an overview of a user's progress in collecting the eternum protectors.
         ------------------------------------------------
         Parameters:
             - ctx : discord.ext.Context - discord-provided context to the command prompt.
         """
+        if uid != -1:
+            await interaction.response.send_message("Checking others' collections is currently unsupported, sorry!", ephemeral=True)
+            return
+
         db = sqlite3.connect(self.db_path)
         cursor = db.cursor()
-        discordID = str(ctx.author.id)
-        user_name = str(ctx.author.display_name)
+        discordID = str(interaction.user.id)
+        user_name = str(interaction.user.display_name)
 
             
         #   search thru 'eternum_harem' table for entries
-        uid = await self.accountManager.getUserID(discordID=discordID, cursor=cursor)
+        uid = await self.accountManager.getUserID(discordID=discordID)
         members = []
         cursor.execute("SELECT orion, calypso, dalia, pyramid_head FROM eternum WHERE user_id = ?", [uid])
         yesno = cursor.fetchone()
@@ -463,33 +489,37 @@ class Eternum(commands.Cog):
         embed_title = f"Eternum Protectors of **{user_name}**:"
         #   build embed (color pink) with categories 'got x/y' + names & 'missing z/y' + names --> + emotes?
         embed = discord.Embed(title=embed_title, description=protectorlist, color=HelperClass.blue)
-        await ctx.send(embed=embed)
+        await interaction.response.send_message(embed=embed)
 
         cursor.close()
         db.close()
 
 
-    @commands.command(aliases=['eternum collections', 'collectionsE', 'collections eternum'])
+    @app_commands.guilds(GUILD)
+    @app_commands.command(name="eternum_collections", description="View a user's Eternum collections portfolio (ex ecollections). Defaults to your User ID.")
     @commands.check(check_channel)
-    @check_user()
-    async def eCollections(self, ctx):
+    async def eCollections(self, interaction: discord.Interaction, uid: int=-1):
         """
         Provides an overview of a user's progress in all eternum collections.
         ------------------------------------------------
         Parameters:
             - ctx : discord.ext.Context - discord-provided context to the command prompt.
         """
+        if uid != -1:
+            await interaction.response.send_message("Checking others' collections is currently unsupported, sorry!", ephemeral=True)
+            return
+
         db = sqlite3.connect(self.db_path)
         cursor = db.cursor()
-        discordID = str(ctx.author.id)
-        user_name = str(ctx.author.display_name)
+        discordID = str(interaction.user.id)
+        user_name = str(interaction.user.display_name)
 
         embed_title = f"Eternum Collections of **{user_name}**:"
         embed = discord.Embed(title=embed_title, color=HelperClass.eternumBlue)
 
 
         # HAREM
-        h_list, h_vals = await self.getMembers(ctx.author, Collections.HAREM)
+        h_list, h_vals = await self.getMembers(interaction.user, Collections.HAREM)
 
         haremlist = "\n".join(h_list)
 
@@ -499,7 +529,7 @@ class Eternum(commands.Cog):
 
 
         # HOMIES
-        ho_list, ho_vals = await self.getMembers(ctx.author, Collections.THE_HOMIES)
+        ho_list, ho_vals = await self.getMembers(interaction.user, Collections.THE_HOMIES)
 
         homielist = "\n".join(ho_list)
 
@@ -510,7 +540,7 @@ class Eternum(commands.Cog):
 
 
         # SIDE GIRLS
-        s_list, s_vals = await self.getMembers(ctx.author, Collections.SIDE_DISHES)
+        s_list, s_vals = await self.getMembers(interaction.user, Collections.SIDE_DISHES)
         
         sideslist = "\n".join(s_list)
 
@@ -519,7 +549,7 @@ class Eternum(commands.Cog):
         embed.add_field(name=f"Side Girls: ({s_vals[0]}/{s_vals[1]}):", value=sideslist)
 
         # CREATURES
-        c_list, c_vals = await self.getMembers(ctx.author, Collections.CREATURES)
+        c_list, c_vals = await self.getMembers(interaction.user, Collections.CREATURES)
         
         petlist = "\n".join(c_list)
 
@@ -530,7 +560,7 @@ class Eternum(commands.Cog):
         # Protectors
 
         members = []
-        uid = await self.accountManager.getUserID(discordID=discordID, cursor=cursor)
+        uid = await self.accountManager.getUserID(discordID=discordID)
         cursor.execute("SELECT orion, calypso, dalia, pyramid_head FROM eternum WHERE user_id = ?", [uid])
         yesno = cursor.fetchone()
         sides = "Side Girls:  :x:"
@@ -558,7 +588,7 @@ class Eternum(commands.Cog):
 
         embed.add_field(name="Protections:", value=protectorlist)
 
-        await ctx.send(embed=embed)
+        await interaction.response.send_message(embed=embed)
 
         cursor.close()
         db.close()
@@ -568,7 +598,7 @@ class Eternum(commands.Cog):
     @egf.error
     @commands.check(check_channel)
     @check_user()
-    async def errorEgf(self, ctx, error):
+    async def errorEgf(self, interaction: discord.Interaction, error: app_commands.AppCommandError):
         """
         Catches various errors in running the -egf command; Mostly cooldown infractions.
         ------------------------------------------------
@@ -580,10 +610,10 @@ class Eternum(commands.Cog):
         db = sqlite3.connect(self.db_path)
         cursor = db.cursor()
 
-        discordID = str(ctx.author.id)
+        discordID = str(interaction.user.id)
         uid = await self.accountManager.getUserID(discordID=discordID, cursor=cursor)
         
-        if isinstance(error, commands.CommandOnCooldown):
+        if isinstance(error, app_commands.CommandOnCooldown):
 
             time = error.retry_after
             hours = int(time // 3600)
@@ -629,7 +659,10 @@ class Eternum(commands.Cog):
             else:
                 image = discord.File("./EternumGfGameImages/None.webp", filename="gf.webp")
             embed.set_image(url="attachment://gf.webp")
-            await ctx.send(file=image, embed=embed)
+            await interaction.response.send_message(file=image, embed=embed, ephemeral=True)
+
+        else:
+            await interaction.response.send_message(f"Unexpected error drawing egf: {error}", ephemeral=True)
 
         cursor.close()
         db.close()

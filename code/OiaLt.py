@@ -1,11 +1,11 @@
 # DISCORD.PY
 import discord
-from discord import Embed, File
-from discord.ext import commands, tasks
+from discord import app_commands
+from discord.ext import commands
 from discord.ext.commands import CooldownMapping, Cooldown, BucketType
 # OTHER LIBRARIES
-import random
-import sqlite3
+import os, random, sqlite3
+from dotenv import load_dotenv
 # OWN LIBRARIES
 from Utilities import HelperClass, OgfCollections, OgfEffects, OgfResults, TimeObject, check_channel
 from AccountManager import AccountManager, check_user
@@ -13,41 +13,44 @@ from CharacterCard import OgfCharacterCard
 from OgfCharacters import OgfCharacters
 
 
+load_dotenv()
+GUILD = discord.Object(id=os.getenv("GUILD"))
+
 # Help function
-async def help_oialt(ctx):
+async def help_oialt(interaction: discord.Interaction):
     field_names = []
     field_values = []
 
     title = "Judie's OiaLt gf game!"
     description = "Here are the commands to use the oialt gf system!"
 
-    field_names.append("-ogf (oialt gf)")
+    field_names.append("/ogf")
     field_values.append("pull a random gf from the OiaLt world! (20h cooldown!)")
 
-    field_names.append("-ocollections (oialt collections)")
+    field_names.append("/oialt_collections)")
     field_values.append("Get an overview of all your oialt collections!")
 
-    field_names.append("-oharem (oialt harem)")
+    field_names.append("/oialt_harem)")
     field_values.append(
         "check your progress in the LI collection!\n--> Contains **Judie, Lauren, Messy Hair Lauren, " \
         "Carla, Iris, Aiko, Jasmine & Rebecca**.")
 
-    field_names.append("-stabbyclan")
+    field_names.append("/oialt_stabby_clan")
     field_values.append(
         "check your progress in the stabby mike collection!\n--> Contains **Stabby Police, Hitman Mike, " \
         "Anastasia, Yakuza Mike, Priest Mike & Mike the Exterminator**.")
 
-    field_names.append("-theboys")
+    field_names.append("/oialt_homies")
     field_values.append(
         "check your progress in the boys collection!\n--> Contains **MC, Tom, Fit Jack, Oliver, Asmodeus & " \
         "Hiromi**.")
 
-    field_names.append("-potentialLIs")
+    field_names.append("/oialt_side_girls")
     field_values.append(
         "check your progress in the potential LI collection!\n--> Contains **Ava, Lilith, Fit Jack's "
         "Groupie, Train Conductor, Shop Girl & Stone Elephant**.")
 
-    field_names.append("-oprotectors (oialt protectors)")
+    field_names.append("/oialt_protectors")
     field_values.append("Check your protections against the different villains!\n--> Contains **Funtime, MC, Aiko "
                         "and 93**.")
 
@@ -63,7 +66,7 @@ async def help_oialt(ctx):
     for i in range(0, len(field_names)):
         embed.add_field(name=field_names[i], value=field_values[i], inline=False)
 
-    await ctx.send(embed=embed)
+    await interaction.response.send_message(embed=embed)
 
 class OiaLt(commands.Cog):
     """
@@ -88,15 +91,15 @@ class OiaLt(commands.Cog):
 
         Required for proper functioning; Required to run only after BotConfig.load() was called.
         """
-        command = self.client.get_command("ogf")
-        cd = Cooldown(rate=1, per=self.client.config.cooldown)
-        command._buckets = CooldownMapping(cd, type=BucketType.user)
+        #command = self.client.get_command("ogf")
+        #cd = Cooldown(rate=1, per=self.client.config.cooldown)
+        #command._buckets = CooldownMapping(cd, type=BucketType.user)
         self.botSpamChannel = self.client.config.botSpamChannel
         print("successfully activated OiaLt cog.")
 
     # HELPER FUNCTIONS - checkUser in AccountManager // createEmbed in Utilities/HelperClass
 
-    async def displayLastGF(self, ctx, time):
+    async def displayLastGF(self, interaction: discord.Interaction, time):
         """
         Shows the last character obtained by a character as cooldown reminder.
         -------------------------------------------------------------------------
@@ -108,7 +111,7 @@ class OiaLt(commands.Cog):
         description = f"You still have {timer.hours}h {timer.minutes} mins and {timer.seconds}s until your next draw!"
         db = sqlite3.connect("main.sqlite")
         cursor = db.cursor()
-        discordID = str(ctx.author.id)
+        discordID = str(interaction.user.id)
 
         uid = await self.accountManager.getUserID(discordID=discordID, cursor=cursor)
 
@@ -138,15 +141,16 @@ class OiaLt(commands.Cog):
 
         image = discord.File(f"./gfGameImages/{name}.webp", filename="gf.webp")
         embed.set_image(url="attachment://gf.webp")
-        await ctx.send(file=image, embed=embed)
+        await interaction.response.send_message(file=image, embed=embed)
 
         cursor.close()
         db.close()
 
-    @commands.command(aliases=["oialt gf", "gfo", "gf oialt"])
+    @app_commands.guilds(GUILD)
+    @app_commands.command(name="ogf", description="Draw a OiaLt character to be your partner for the day.")
     @commands.check(check_channel)
     @check_user()
-    async def ogf(self, ctx):
+    async def ogf(self, interaction: discord.Interaction):
         """
         Draws a random character from the OiaLt game - cooldown 20h for public deployment.
         -------------------------------------------------------------------------
@@ -155,21 +159,21 @@ class OiaLt(commands.Cog):
         """
         db = sqlite3.connect("main.sqlite")
         cursor = db.cursor()
-        discordID = str(ctx.author.id)
+        discordID = str(interaction.user.id)
 
         # Get UID
-        uid = await self.accountManager.getUserID(discordID, cursor)
+        uid = await self.accountManager.getUserID(discordID)
         # Choose a random character
         gf = random.choice(self.characters)
         # Update the DB
         results = await self.updateDatabase(uid, gf)
         # Build and send Embed
-        await self.createAndSendEmbed(ctx, character=gf, results=results)
+        await self.createAndSendEmbed(interaction, character=gf, results=results)
             
         cursor.close()
         db.close()
 
-    async def createAndSendEmbed(self, ctx, character: OgfCharacterCard, results: OgfResults):
+    async def createAndSendEmbed(self, interaction: discord.Interaction, character: OgfCharacterCard, results: OgfResults):
         """
         Creates and sends an embed using the provided character information.
         -------------------------------------------------------------------------
@@ -196,46 +200,46 @@ class OiaLt(commands.Cog):
 
         # non-collectibles
         if collection == OgfCollections.NONE:
-            text = f"Congrats, {ctx.author.mention}...? Your companion for the day is {character.name}."
+            text = f"Congrats, {interaction.user.mention}...? Your companion for the day is {character.name}."
             collection_field_value = "A character that doesn't belong into any collection."
 
             # Special case - Spiderman (includes author username in footer)
             if character.name == "Spiderman":
-                displayname = ctx.author.display_name
+                displayname = interaction.user.display_name
                 footer = f"Hey, is there a {displayname}? I have a pizza for {displayname}!"
        
-        # <editor-fold desc="Harem">
+        #region Harem
         elif collection == OgfCollections.HAREM:
-            text = f"Congratulations {ctx.author.mention}! Your gf for the day is {character.name}!"
+            text = f"Congratulations {interaction.user.mention}! Your gf for the day is {character.name}!"
             collection_field_value = f"A wild {character.name} has spawned in your harem!" if not results.duplicate \
                 else f"Tough luck! {character.name} is already in your harem!"
-        # </editor-fold>
-        # <editor-fold desc="Stabby Clan">
+        #endregion
+        #region Stabby Clan
         elif collection == OgfCollections.STABBIES:
-            text = f"Congratulations {ctx.author.mention}! Your protector for the day is {character.name}!"
+            text = f"Congratulations {interaction.user.mention}! Your protector for the day is {character.name}!"
             collection_field_value = f"A new recruit for the stabby clan!" if not results.duplicate \
                 else f"Tough luck! {character.name} is already part of your bodyguard staff!"
-        # </editor-fold>
-        # <editor-fold desc="The Boys">
+        #endregion
+        #region The Boys
         elif collection == OgfCollections.BOYS:
-            text = f"Congratulations {ctx.author.mention}! Your homie for the day is {character.name}!"
+            text = f"Congratulations {interaction.user.mention}! Your homie for the day is {character.name}!"
             collection_field_value = f"Let's fucking goo! {character.name} joined the squad!" if not results.duplicate \
                 else f"Tough luck! {character.name} is already chilling with you!"
-        # </editor-fold>
-        # <editor-fold desc="Potential LI's">
+        #endregion
+        #region Potential LI's
         elif collection == OgfCollections.POTENTIALS:
-            text = f"Congrats {ctx.author.mention}! Your gf for the day is {character.name}!"
+            text = f"Congrats {interaction.user.mention}! Your gf for the day is {character.name}!"
             collection_field_value = f"{character.name} has joined the gang! Might consider asking her out? :wink:" if not results.duplicate \
                 else f"Tough luck! {character.name} has already expressed her interest in you!"
 
-            if ctx.author.display_name == "frostkanra":
+            if interaction.user.name == "frostkanra":
                 text = "Well, well, well... if this were real life, a creator-createe relationship wouldn't be so " \
                        "acceptable now, would it...?"
-        # </editor-fold>
+        #endregion
 
-        # <editor-fold desc="Orochi">
+        #region Orochi
         if effect == OgfEffects.HAREM_BUYER:
-            text = f"Yikes! Your company for the day is {character.name}. Good luck {ctx.author.mention} (You'll need it!)"
+            text = f"Yikes! Your company for the day is {character.name}. Good luck {interaction.user.mention} (You'll need it!)"
             if results.protected:
                 collection_field_name = f"Bid for {results.victim} refused."
                 collection_field_value = f"GODDAMN IT, WHY AREN'T YOU LAUGHING OROCHI??!"
@@ -243,10 +247,10 @@ class OiaLt(commands.Cog):
                 collection_field_name = "**OH NO**"
                 collection_field_value = f"Orochi offered a deal for {results.victim} you couldn't refuse..." if \
                     results.victim != "Nobody" else f"Must have been the wind..."
-        # </editor-fold>
-        # <editor-fold desc="Astaroth">
+        #endregion
+        #region Astaroth
         if effect == OgfEffects.STABBY_KILLER:
-            text = f"Yikes! Your company for the day is {character.name}. Good luck {ctx.author.mention} (You'll need it!)"
+            text = f"Yikes! Your company for the day is {character.name}. Good luck {interaction.user.mention} (You'll need it!)"
             if results.protected:
                 collection_field_name = f"That was close..."
                 collection_field_value = f"The MC managed to body Astaroth before he could kill {results.victim}!"
@@ -254,10 +258,10 @@ class OiaLt(commands.Cog):
                 collection_field_name = "**OH SHIT**"
                 collection_field_value = f"Astaroth shot {results.victim} dead. R.I.P." if \
                     results.victim != "Nobody" else f"Must have been the wind..."
-        # </editor-fold>
-        # <editor-fold desc="Azazel">
+        #endregion
+        #region Azazel
         if effect == OgfEffects.BOYS_KILLER:
-            text = f"Yikes! Your company for the day is {character.name}. Good luck {ctx.author.mention} (You'll need it!)"
+            text = f"Yikes! Your company for the day is {character.name}. Good luck {interaction.user.mention} (You'll need it!)"
             if results.protected:
                 collection_field_name = f"That was close..."
                 collection_field_value = f"Watch {results.victim}'s back, buddy."
@@ -265,10 +269,10 @@ class OiaLt(commands.Cog):
                 collection_field_name = "**OH SHIT**"
                 collection_field_value = f"Azazel put {results.victim} to sleep forever! R.I.P." if \
                     results.victim != "Nobody" else f"Must have been the wind..."
-        # </editor-fold>
-        # <editor-fold desc="Monster Lilith">
+        #endregion
+        #region Monster Lilith
         if effect == OgfEffects.POTENTIAL_MUTATOR:
-            text = f"Yikes! Your company for the day is {character.name}. Good luck {ctx.author.mention} (You'll need it!)"
+            text = f"Yikes! Your company for the day is {character.name}. Good luck {interaction.user.mention} (You'll need it!)"
             if results.protected:
                 collection_field_name = f"That was close..."
                 collection_field_value = f"93 managed to turn the monster's gaze away from {results.victim}!"
@@ -276,10 +280,10 @@ class OiaLt(commands.Cog):
                 collection_field_name = "**OH SHIT**"
                 collection_field_value = f"{results.victim} just turned into a living set of spare ribs in front of you!" if \
                     results.victim != "Nobody" else f"Must have been the wind..."
-        # </editor-fold>
+        #endregion
 
 
-        # <editor-fold desc="Embed compilation and sending">
+        #region Embed compilation and sending
         embed = await HelperClass.createEmbed(title=character.name, text=text, footer=footer)
 
         embed.add_field(name=collection_field_name, value=collection_field_value, inline=True)
@@ -287,8 +291,8 @@ class OiaLt(commands.Cog):
 
         image = discord.File(f"./gfGameImages/{character.filename}.webp", filename="gf.webp")
         embed.set_image(url="attachment://gf.webp")
-        await ctx.send(file=image, embed=embed)
-        # </editor-fold>
+        await interaction.response.send_message(file=image, embed=embed)
+        #endregion
 
     async def updateDatabase(self, uid: int, character: OgfCharacterCard) -> OgfResults:
         """
@@ -549,21 +553,25 @@ class OiaLt(commands.Cog):
         return OgfResults(duplicate=duplicate, victim=target, protected=protected)
 
 
-    @commands.command()
+    @app_commands.guilds(GUILD)
+    @app_commands.command(name="oialt_harem", description="View a user's progress on the OiaLt harem collection (ex oharem). Defaults to your User ID")
     @commands.check(check_channel)
-    @check_user()
-    async def oharem(self, ctx):
+    async def oharem(self, interaction: discord.Interaction, uid: int=-1):
         """
         Provides an overview of a user's progress in collecting the OiaLt harem.
         ------------------------------------------------
         Parameters:
             - ctx : discord.ext.Context - discord-provided context to the command prompt.
         """
+        if uid != -1:
+            await interaction.response.send_message("Checking others' collections is currently unsupported, sorry!", ephemeral=True)
+            return
+
         db = sqlite3.connect("main.sqlite")
         cursor = db.cursor()
-        discordID = str(ctx.author.id)
-        uid = await self.accountManager.getUserID(discordID=discordID, cursor=cursor)
-        user_name = str(ctx.author.display_name)
+        discordID = str(interaction.user.id)
+        uid = await self.accountManager.getUserID(discordID=discordID)
+        user_name = str(interaction.user.display_name)
         count = 0
 
         members = []
@@ -594,26 +602,30 @@ class OiaLt(commands.Cog):
         embed = discord.Embed(title=embed_title, color=HelperClass.orange)
         embed.add_field(name=f"Claimed ({count}/8):", value=haremlist)
         embed.add_field(name=f"Missing ({8 - count}/8):", value=missinglist)
-        await ctx.send(embed=embed)
+        await interaction.response.send_message(embed=embed)
 
         cursor.close()
         db.close()
 
-    @commands.command()
+    @app_commands.guilds(GUILD)
+    @app_commands.command(name="oialt_stabby_clan", description="View a user's progress on the OiaLt stabby clan collection (ex stabbyclan). Defaults to your User ID")
     @commands.check(check_channel)
-    @check_user()
-    async def stabbyclan(self, ctx):
+    async def stabbyclan(self, interaction: discord.Interaction, uid: int=-1):
         """
         Provides an overview of a user's progress in collecting the clan of Stabby Mike personas.
         ------------------------------------------------
         Parameters:
             - ctx : discord.ext.Context - discord-provided context to the command prompt.
         """
+        if uid != -1:
+            await interaction.response.send_message("Checking others' collections is currently unsupported, sorry!", ephemeral=True)
+            return
+
         db = sqlite3.connect("main.sqlite")
         cursor = db.cursor()
-        discordID = str(ctx.author.id)
-        uid = await self.accountManager.getUserID(discordID=discordID, cursor=cursor)
-        user_name = str(ctx.author.display_name)
+        discordID = str(interaction.user.id)
+        uid = await self.accountManager.getUserID(discordID=discordID)
+        user_name = str(interaction.user.display_name)
         count = 0
 
         members = []
@@ -632,28 +644,32 @@ class OiaLt(commands.Cog):
             mikes = "You haven't collected anyone for your clan yet..."
 
         embed_title = f"Stabby Clan of {user_name}:"
-        embed = discord.Embed(title=embed_title, description=mikes, color=0xFFA800)
+        embed = discord.Embed(title=embed_title, description=mikes, color=HelperClass.orange)
         embed.set_footer(text=f"Progress: {count} / 6")
-        await ctx.send(embed=embed)
+        await interaction.response.send_message(embed=embed)
 
         cursor.close()
         db.close()
 
-    @commands.command()
+    @app_commands.guilds(GUILD)
+    @app_commands.command(name="oialt_homies", description="View a user's progress on the OiaLt homies collection (ex theboys). Defaults to your User ID")
     @commands.check(check_channel)
-    @check_user()
-    async def theboys(self, ctx):
+    async def theboys(self, interaction: discord.Interaction, uid: int=-1):
         """
         Provides an overview of a user's progress in collecting the OiaLt homies.
         ------------------------------------------------
         Parameters:
             - ctx : discord.ext.Context - discord-provided context to the command prompt.
         """
+        if uid != -1:
+            await interaction.response.send_message("Checking others' collections is currently unsupported, sorry!", ephemeral=True)
+            return
+
         db = sqlite3.connect("main.sqlite")
         cursor = db.cursor()
-        discordID = str(ctx.author.id)
-        uid = await self.accountManager.getUserID(discordID=discordID, cursor=cursor)
-        user_name = str(ctx.author.display_name)
+        discordID = str(interaction.user.id)
+        uid = await self.accountManager.getUserID(discordID=discordID)
+        user_name = str(interaction.user.display_name)
         count = 0
 
         members = []
@@ -671,28 +687,32 @@ class OiaLt(commands.Cog):
             bois = "You haven't collected anyone for your boys yet..."
 
         embed_title = f"The OiaLt Boys of {user_name}:"
-        embed = discord.Embed(title=embed_title, description=bois, color=0xFFA800)
+        embed = discord.Embed(title=embed_title, description=bois, color=HelperClass.orange)
         embed.set_footer(text=f"Progress: {count} / 6")
-        await ctx.send(embed=embed)
+        await interaction.response.send_message(embed=embed)
 
         cursor.close()
         db.close()
 
-    @commands.command()
+    @app_commands.guilds(GUILD)
+    @app_commands.command(name="oialt_side_girls", description="View a user's progress on the OiaLt side girls collection (ex potentiallis) Defaults to your User ID")
     @commands.check(check_channel)
-    @check_user()
-    async def potentialLis(self, ctx):
+    async def potentialLis(self, interaction: discord.Interaction, uid: int=-1):
         """
         Provides an overview of a user's progress in collecting the OiaLt side girls.
         ------------------------------------------------
         Parameters:
             - ctx : discord.ext.Context - discord-provided context to the command prompt.
         """
+        if uid != -1:
+            await interaction.response.send_message("Checking others' collections is currently unsupported, sorry!", ephemeral=True)
+            return
+
         db = sqlite3.connect("main.sqlite")
         cursor = db.cursor()
-        discordID = str(ctx.author.id)
-        uid = await self.accountManager.getUserID(discordID=discordID, cursor=cursor)
-        user_name = str(ctx.author.display_name)
+        discordID = str(interaction.user.id)
+        uid = await self.accountManager.getUserID(discordID=discordID)
+        user_name = str(interaction.user.display_name)
         count = 0
 
         members = []
@@ -711,30 +731,35 @@ class OiaLt(commands.Cog):
             potentials = "You haven't collected anyone for your potential LI's yet..."
 
         embed_title = f"Potential OiaLt LI's of {user_name}:"
-        embed = discord.Embed(title=embed_title, description=potentials, color=0xFFA800)
+        embed = discord.Embed(title=embed_title, description=potentials, color=HelperClass.orange)
         embed.set_footer(text=f"Progress: {count} / 6")
-        await ctx.send(embed=embed)
+        await interaction.response.send_message(embed=embed)
 
         cursor.close()
         db.close()
 
-    @commands.command(aliases=["protectorso", "oprotections", "oprotection", "protectionso", "protectiono"])
+    @app_commands.guilds(GUILD)
+    @app_commands.command(name="oialt_protectors", description="View a user's OiaLt protection racket (ex oprotectors). Defaults to your User ID")
     @commands.check(check_channel)
     @check_user()
-    async def oprotectors(self, ctx):
+    async def oprotectors(self, interaction: discord.Interaction, uid: int=-1):
         """
         Provides an overview of a user's progress in collecting the OiaLt protectors.
         ------------------------------------------------
         Parameters:
             - ctx : discord.ext.Context - discord-provided context to the command prompt.
         """
+        if uid != -1:
+            await interaction.response.send_message("Checking others' collections is currently unsupported, sorry!", ephemeral=True)
+            return
+
         db = sqlite3.connect("main.sqlite")
         cursor = db.cursor()
-        discordID = str(ctx.author.id)
-        user_name = str(ctx.author.display_name)
+        discordID = str(interaction.user.id)
+        user_name = str(interaction.user.display_name)
 
         #   search thru 'eternum_harem' table for entries
-        uid = await self.accountManager.getUserID(discordID=discordID, cursor=cursor)
+        uid = await self.accountManager.getUserID(discordID=discordID)
         members = []
         cursor.execute("SELECT funtime, mc, aiko, nine_three FROM oialt WHERE user_id = ?", [uid])
         yesno = cursor.fetchone()
@@ -764,25 +789,29 @@ class OiaLt(commands.Cog):
         embed_title = f"OiaLt Protectors of **{user_name}**:"
         #   build embed (color pink) with categories 'got x/y' + names & 'missing z/y' + names --> + emotes?
         embed = discord.Embed(title=embed_title, description=protectorlist, color=HelperClass.orange)
-        await ctx.send(embed=embed)
+        await interaction.response.send_message(embed=embed)
 
         cursor.close()
         db.close()
 
-    @commands.command(aliases=['oialt collections', 'collectionso', 'collections oialt'])
+    @app_commands.guilds(GUILD)
+    @app_commands.command(name="oialt_collections", description="View a user's OiaLt collections portfolio (ex ocollections). Defaults to your User ID.")
     @commands.check(check_channel)
-    @check_user()
-    async def oCollections(self, ctx):
+    async def oCollections(self, interaction):
         """
         Provides an overview of a user's progress in all OiaLt collections.
         ------------------------------------------------
         Parameters:
             - ctx : discord.ext.Context - discord-provided context to the command prompt.
         """
+        if uid != -1:
+            await interaction.response.send_message("Checking others' collections is currently unsupported, sorry!", ephemeral=True)
+            return
+
         db = sqlite3.connect("main.sqlite")
         cursor = db.cursor()
-        discordID = str(ctx.author.id)
-        user_name = str(ctx.author.display_name)
+        discordID = str(interaction.user.id)
+        user_name = str(interaction.user.display_name)
         haremcount = 0
         homiecount = 0
         mikecount = 0
@@ -899,7 +928,7 @@ class OiaLt(commands.Cog):
 
         embed.add_field(name="Protections:", value=protectorlist)
 
-        await ctx.send(embed=embed)
+        await interaction.response.send_message(embed=embed)
 
         cursor.close()
         db.close()
@@ -907,7 +936,7 @@ class OiaLt(commands.Cog):
     @ogf.error
     @commands.check(check_channel)
     @check_user()
-    async def errorGF(self, ctx, error):
+    async def errorGF(self, interaction: discord.Interaction, error: app_commands.AppCommandError):
         """
         Handles errors coming up from faulty use of the -egf command.
         ------------------------------------------------
@@ -916,7 +945,9 @@ class OiaLt(commands.Cog):
             - error : str (?) - details of the error.
         """
         if isinstance(error, commands.CommandOnCooldown):
-            await self.displayLastGF(ctx, error.retry_after)
+            await self.displayLastGF(interaction, error.retry_after)
+        else:
+            await interaction.response.send_message(f"Unexpected error drawing ogf: {error}", ephemeral=True)
 
 
 # Does this code ever get reached??

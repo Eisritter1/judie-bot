@@ -1,3 +1,5 @@
+import discord
+
 """
 Library of codes and values that change from main deployment to test bot - channel and emote IDs, cooldown times etc.
 """
@@ -17,7 +19,8 @@ CONFIG = {
         "moderator" : 817075353444679771,
         "admin": 707620148466417664,
         "cooldown" : 72000,
-        "botSpamChannel" : 779873459756335104
+        "botSpamChannel" : 779873459756335104,
+        "guildID": 707602074556301402
     },
     # Test Bot
     877834464472993842: {
@@ -34,7 +37,8 @@ CONFIG = {
         "moderator" : -1,
         "admin": 929417259275935784,
         "cooldown": 5,
-        "botSpamChannel": 929419591573188608
+        "botSpamChannel": 929419591573188608,
+        "guildID": 929416596336812093
     }
 }
 
@@ -62,3 +66,4 @@ class BotConfig:
         self.mod_role = self._config.get("moderator")
         self.maintainer_role = self._config.get("maintainer")
         self.admin_role = self._config.get("admin")
+        self.guild = discord.Object(self._config.get("guildID"))
