@@ -1,13 +1,14 @@
 # DISCORD LIBRARIES
 import discord
-from discord import Embed, File
-from discord.ext import commands, tasks
-from discord.ext.commands import cooldown, BucketType
+from discord import app_commands
+from discord.ext import commands
 # EXTERNAL LIBRARIES
-import random, enum
+import enum, os
 import sqlite3
+from dotenv import load_dotenv
 # JUDIE LIBRARIES
 from Utilities import HelperClass, check_channel
+from AccountManagementViews import DeleteAccView
 
 
 class RoleHierarchy(enum.Enum):
@@ -151,6 +152,9 @@ def check_permission(expected_role: RoleHierarchy) -> bool:
     return commands.check(predicate)
         
 
+load_dotenv()
+GUILD = discord.Object(id=os.getenv("GUILD"))
+
 class AccountManager(commands.Cog):
     static_client = None
     """A stop-gap for the permissions system. Please use the [AccountManager-instance].client variable for all intents and purposes."""
@@ -198,10 +202,11 @@ class AccountManager(commands.Cog):
 
     # COMMANDS & RELATED
 
-    @commands.command()
-    @commands.check(check_channel)
+    @app_commands.guilds(GUILD)
+    @app_commands.command(name="register", description="Sign up for Judie's systems! Only necessary for using egf and ogf.")
+    @app_commands.check(check_channel)
     @check_user(expectFail=True)
-    async def register(self, ctx):
+    async def register(self, interaction: discord.Interaction):
         """
         Registers a user to the database.
 
@@ -215,10 +220,10 @@ class AccountManager(commands.Cog):
 
         db = sqlite3.connect(self.db_path)
         cursor = db.cursor()
-        discordID = str(ctx.author.id)
+        discordID = str(interaction.user.id)
 
         cursor.execute("INSERT INTO users (discord_id) VALUES (?)", [discordID])
-        uID = await self.getUserID(discordID, cursor)
+        uID = await self.getUserID(discordID)
         tables = [ 
             "oialt", "oialt_harem", "stabby_mikes", "the_boys", "li_potential", 
             "eternum", "eternum_harem", "homies", "side_girls", "creatures"
@@ -231,18 +236,19 @@ class AccountManager(commands.Cog):
 
         embed = await HelperClass.createEmbed(
             title="Great Success!", 
-            text=f"user {ctx.author.mention} was successfully registered to the database!", 
+            text=f"user {interaction.user.mention} was successfully registered to the database!", 
             footer="Welcome aboard!"
             )
-        await ctx.send(embed=embed)
+        await interaction.response.send_message(embed=embed)
 
         cursor.close()
         db.close()
 
-    @commands.command()
-    @commands.check(check_channel)
+    @app_commands.guilds(GUILD)
+    @app_commands.command(name="delete_account", description="Request the deletion of your account and its associated data. Irreversible action once completed.")
+    @app_commands.check(check_channel)
     @check_user()
-    async def deleteacc(self, ctx):
+    async def deleteacc(self, interaction: discord.Interaction):
         """
         Requests deletion of an account.
 
@@ -256,30 +262,32 @@ class AccountManager(commands.Cog):
 
         db = sqlite3.connect("main.sqlite")
         cursor = db.cursor()
-        discordID = str(ctx.author.id)
+        discordID = str(interaction.user.id)
 
-        uid = await self.getUserID(discordID=discordID, cursor=cursor)
+        uid = await self.getUserID(discordID=discordID)
 
         if uid is not None:
-            msg = await ctx.message.reply("Are you sure you want to delete **all** your data?"
-                                          "\nThis action is irreversible! (React to the checkmark to confirm. Ignore to cancel)")
-            self.deleteRequestMessages.update({ctx.author: ctx.message})
-            self.deletionPromptMsgIDs.update({msg.id: ctx.author})
-            await msg.add_reaction('✅')
-
-            # Add scheduling of timeout event here
+            view = DeleteAccView(interaction.user, self)
+            embed = discord.Embed(
+                title=f"Request to delete {interaction.user.display_name}'s account.", 
+                description="__**This action is irreversible!**__ (Press 'CONFIRM' to proceed, or 'CANCEL' to cancel." \
+                    "\nThis message will time out after 3 minutes.)",
+                color=HelperClass.eternumBlue
+            )
+            await interaction.response.send_message(embed=embed, view=view)
+            view.message = await interaction.original_response()
 
         cursor.close()
         db.close()
 
-    async def removeUserFromDB(self, ctx, discord_id):
+    async def removeUserFromDB(self, message: discord.Message, discord_id: int) -> bool:
         db = sqlite3.connect("main.sqlite")
         cursor = db.cursor()
 
-        uid = await self.getUserID(discord_id, cursor)
+        uid = await self.getUserID(discord_id)
         if uid is None:
-            await ctx.send(f"User {discord_id} is not registered!")
-            return
+            await message.reply(f"User {discord_id} is not registered!")
+            return False
 
         # check if user in DB
         cursor.execute("SELECT * FROM users WHERE user_id = ?", [uid])
@@ -294,53 +302,9 @@ class AccountManager(commands.Cog):
                 cursor.execute("DELETE FROM %s WHERE user_id = ?" % table, [uid])
             db.commit()
 
-        await ctx.send(f"Successfully removed user {discord_id} from Judie's database!")
-
         cursor.close()
         db.close()
-
-    @commands.Cog.listener()
-    async def on_raw_reaction_add(self, payload):
-        """
-        A function called when any reaction is added to any message within the bot's scope.
-        ---
-        Used to confirm the deletion of user accounts. 
-        Worthwile warning, ANY reaction would trigger this, the only counter is to ignore the request if the user changed their mind.
-        """
-        # If no message marked for deletion, ignore
-        if len(self.deleteRequestMessages) == 0:
-            return
-
-        if payload.message_id in self.deletionPromptMsgIDs.keys():
-            db = sqlite3.connect("main.sqlite")
-            cursor = db.cursor()
-            author = self.deletionPromptMsgIDs.get(payload.message_id)
-
-            if author.id == payload.user_id:
-                discordID = str(author.id)
-
-                uid = await self.getUserID(discordID=discordID, cursor=cursor)
-                user_name = str(author.display_name)
-                request_message = self.deleteRequestMessages.get(author);
-                channel = self.client.get_channel(request_message.channel.id)
-
-
-                tables = ['users', 'oialt', 'oialt_harem', 'stabby_mikes', 'the_boys', 'li_potential', 
-                          'eternum', 'eternum_harem', 'homies', 'side_girls', 'creatures']
-                for table in tables:
-                    cursor.execute("DELETE FROM %s WHERE user_id = ?" % table, [uid])
-
-                await channel.send(f"User {user_name} has been successfully removed from the database."
-                                   f" Have a great time! :wave:")
-                await request_message.add_reaction('✅')
-
-                db.commit()
-
-                self.deleteRequestMessages.pop(author)
-                self.deletionPromptMsgIDs.pop(payload.message_id)
-
-            cursor.close()
-            db.close()
+        return True
 
     @commands.command()
     @commands.check(check_channel)

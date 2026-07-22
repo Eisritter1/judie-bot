@@ -27,10 +27,10 @@ async def help_oialt(interaction: discord.Interaction):
     field_names.append("/ogf")
     field_values.append("pull a random gf from the OiaLt world! (20h cooldown!)")
 
-    field_names.append("/oialt_collections)")
+    field_names.append("/oialt_collections")
     field_values.append("Get an overview of all your oialt collections!")
 
-    field_names.append("/oialt_harem)")
+    field_names.append("/oialt_harem")
     field_values.append(
         "check your progress in the LI collection!\n--> Contains **Judie, Lauren, Messy Hair Lauren, " \
         "Carla, Iris, Aiko, Jasmine & Rebecca**.")

@@ -61,6 +61,7 @@ async def on_ready():
 
     # sync the command tree to the server in question
     client.tree.clear_commands(guild=None)
+    await client.tree.sync()
     try: 
         synced = await client.tree.sync(guild=client.config.guild)
         print(f"Successfully synchronised {len(synced)} commands to guild with ID {client.config.guild.id}.")
