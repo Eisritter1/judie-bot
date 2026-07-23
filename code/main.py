@@ -12,7 +12,7 @@ from itertools import cycle
 from OiaLt import OiaLt, help_oialt
 from Nsfw import Nsfw
 from Eternum import Eternum, help_eternum
-from AccountManager import AccountManager, check_deployment
+from AccountManager import AccountManager
 from Utilities import HelperClass, TimeObject, check_channel
 from BotConfig import BotConfig
 
@@ -220,10 +220,6 @@ async def createAndUpdateDatabase():
     cursor = db.cursor()
 
     print("Checking DB Integrity")
-    
-    # updates are already done in test phase most likely
-    if(check_deployment("DEBUG")):
-        return
 
     #region users
     cursor.execute("""

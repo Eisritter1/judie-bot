@@ -69,7 +69,7 @@ def check_user(expectFail: bool = False):
     Checks whether a user is registered to the system or not
 
     Parameters:
-        - ctx: discord.ext.commands.Context
+        - interaction: discord.Interaction
             the context provided with the message to check
         - expectFail: bool - False by default
             a bool representing whether the command was called with
@@ -79,10 +79,10 @@ def check_user(expectFail: bool = False):
         bool: success of the check operation; 
             True = success (user is registered)
     """
-    async def predicate(ctx):
+    async def predicate(interaction: discord.Interaction):
         db = sqlite3.connect("main.sqlite")
         cursor = db.cursor()
-        cursor.execute("SELECT user_id FROM users WHERE discord_id = ?", [ctx.author.id])
+        cursor.execute("SELECT user_id FROM users WHERE discord_id = ?", [interaction.user.id])
         userIDCheck = cursor.fetchone()
         cursor.close()
         db.close()
@@ -96,43 +96,31 @@ def check_user(expectFail: bool = False):
         # Optional: Send feedback before raising error
         if not is_registered and not expectFail:
             embed = await HelperClass.createEmbed(
-                title=f"Error #404 - User {str(ctx.author.display_name)} not registered!",
+                title=f"Error #404 - User {str(interaction.user.display_name)} not registered!",
                 text="Please register before playing! (-register)",
                 footer="Contact eisritter if you encounter any issues!"
             )
         else:
             embed = await HelperClass.createEmbed(
-                title=f"Error - User {str(ctx.author.display_name)} is already registered!",
+                title=f"Error - User {str(interaction.user.display_name)} is already registered!",
                 text="If this is not the case, please contact **eisritter**!",
                 footer="Enjoy your time!"
             )
-        await ctx.send(embed=embed)
+        await interaction.response.send_message(embed=embed)
         print(f"[REGISTRATION ERROR] User registration state does not match expectation.")
-    return commands.check(predicate)
-
-
-def check_deployment(_type: str):
-    """
-        Supported types by default: 'DEBUG', 'BUILD'. 
-        Any unsupported value will automatically lead to failure.
-    """
-    async def predicate(ctx):
-        client = ctx.bot
-        return client.config.deployment == _type
-    return commands.check(predicate)
+    return app_commands.check(predicate)
 
 
 def check_permission(expected_role: RoleHierarchy) -> bool:
     """
     """
-    async def predicate(ctx):
+    async def predicate(interaction: discord.Interaction):
         expected_priority = expected_role
         try:
-            author = ctx.author
-            print(f"Evaluating access of user {ctx.author.display_name}.")
+            author = interaction.user
         except:
-            print(f"[Error] Invalid type of author presented to permission checker. Expecting 'discord.member.Member', got {type(ctx.author)}")
-            await ctx.send(f"Error checking permissions for user")
+            print(f"[Error] Invalid type of author presented to permission checker. Expecting 'discord.member.Member', got {type(author)}")
+            await interaction.response.send_message(f"Error checking permissions for user", ephemeral=True)
             return False
 
         highest_role = None
@@ -147,9 +135,9 @@ def check_permission(expected_role: RoleHierarchy) -> bool:
                 return True
 
         # if no role passes the access priority check, return failure.
-        await ctx.send(f"Insufficient permissions (Internal role: {highest_role}) to use this command (expecting {expected_role} or higher).")
+        await interaction.response.send_message(f"Insufficient permissions (Internal role: {highest_role}) to use this command (expecting {expected_role} or higher).", ephemeral=True)
         return False
-    return commands.check(predicate)
+    return app_commands.check(predicate)
         
 
 load_dotenv()
@@ -280,13 +268,12 @@ class AccountManager(commands.Cog):
         cursor.close()
         db.close()
 
-    async def removeUserFromDB(self, message: discord.Message, discord_id: int) -> bool:
+    async def removeUserFromDB(self, discord_id: int) -> bool:
         db = sqlite3.connect("main.sqlite")
         cursor = db.cursor()
 
         uid = await self.getUserID(discord_id)
         if uid is None:
-            await message.reply(f"User {discord_id} is not registered!")
             return False
 
         # check if user in DB
@@ -302,29 +289,25 @@ class AccountManager(commands.Cog):
                 cursor.execute("DELETE FROM %s WHERE user_id = ?" % table, [uid])
             db.commit()
 
+        print(f"[DELETION_NOTICE] User {discord_id} removed from DB!")
+
         cursor.close()
         db.close()
         return True
 
-    @commands.command()
-    @commands.check(check_channel)
-    @commands.check(check_permission)
+    @app_commands.guilds(GUILD)
+    @app_commands.command(name="port_progress", description="Transfer a user's progress to another user's database, preserving existing progress.")
+    @app_commands.check(check_channel)
+    @app_commands.check(check_permission)
     @check_permission(RoleHierarchy.MODERATOR)
-    async def portProgress(self, ctx, oldUserID, newUserID):
+    async def port_progress(self, interaction: discord.Interaction, old_user_id: int, new_user_id: int):
         pass
 
-    @commands.command()
-    async def update(self, ctx):
-        """
-        Relic from times where the dev didn't know anything about SQL;
-        Does nothing but send an easter egg message now :D
-        """
-        await ctx.send("This command is now obsolete :)")
-
-    @commands.command()
-    @commands.check(check_permission)
+    @app_commands.guilds(GUILD)
+    @app_commands.command(name="force_delete", description="Forcibly removes a registered user from the database. Command available to moderators only.")
+    @app_commands.check(check_permission)
     @check_permission(RoleHierarchy.MODERATOR)          # Command available to master botter and higher in the hierarchy.
-    async def forceDelete(self, ctx, discord_id):
+    async def force_delete(self, interaction: discord.Interaction, discord_id: int):
         """
         [MOD ONLY] Deletes the data of a given user
 
@@ -339,9 +322,12 @@ class AccountManager(commands.Cog):
         # invalid ctx would just result in a regular error.
         try:
             int(discord_id)
-            await self.removeUserFromDB(ctx, discord_id)
+            success = await self.removeUserFromDB(interaction, discord_id)
+            title = "Success!" if success else "Error!"
+            description = f"Deleted account of user {discord_id}." if success else f"User {discord_id} is not registered to Judie's DB!"
+            await interaction.response.send_message(embed=discord.Embed(title=title, description=description, color=HelperClass.eternumBlue))
         except:
-            await ctx.send("Unsafe input, please only supply discord ID's as integers to this command!")
+            await interaction.response.send_message("Unsafe input, please only supply discord ID's as integers to this command!")
 
 
 def setup(client):

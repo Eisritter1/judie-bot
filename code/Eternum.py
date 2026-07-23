@@ -611,9 +611,9 @@ class Eternum(commands.Cog):
         cursor = db.cursor()
 
         discordID = str(interaction.user.id)
-        uid = await self.accountManager.getUserID(discordID=discordID, cursor=cursor)
         
         if isinstance(error, app_commands.CommandOnCooldown):
+            uid = await self.accountManager.getUserID(discordID=discordID)
 
             time = error.retry_after
             hours = int(time // 3600)
@@ -661,7 +661,7 @@ class Eternum(commands.Cog):
             embed.set_image(url="attachment://gf.webp")
             await interaction.response.send_message(file=image, embed=embed, ephemeral=True)
 
-        else:
+        elif not interaction.response.is_done():
             await interaction.response.send_message(f"Unexpected error drawing egf: {error}", ephemeral=True)
 
         cursor.close()

@@ -32,7 +32,12 @@ class DeleteAccView(discord.ui.View):
 
     @discord.ui.button(label="CONFIRM", style=discord.ButtonStyle.red)
     async def delete_account(self, interaction: discord.Interaction, button: discord.ui.Button):
-        success = await self.accountManager.removeUserFromDB(self.message, self.user.id)
+        success = await self.accountManager.removeUserFromDB(self.user.id)
+
+        if not success:
+            embed = discord.Embed(title=f"Error deleting {self.user.display_name}'s account!'", description="User is not registered to Judie's Database!", color=HelperClass.eternumBlue)
+            self.message.reply(embed=embed)
+
         await self.terminate(interaction=interaction, success=success)
 
     @discord.ui.button(label="CANCEL", style=discord.ButtonStyle.primary)
