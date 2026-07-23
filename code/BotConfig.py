@@ -63,7 +63,7 @@ class BotConfig:
         self.cooldown = self._config.get("cooldown")
         self.botSpamChannel = self._config.get("botSpamChannel")
         self.emotes = self._config.get("emojiIDs")
-        self.mod_role = self._config.get("moderator")
         self.maintainer_role = self._config.get("maintainer")
+        self.mod_role = self._config.get("moderator")
         self.admin_role = self._config.get("admin")
         self.guild = discord.Object(self._config.get("guildID"))

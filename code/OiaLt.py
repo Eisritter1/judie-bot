@@ -797,7 +797,7 @@ class OiaLt(commands.Cog):
     @app_commands.guilds(GUILD)
     @app_commands.command(name="oialt_collections", description="View a user's OiaLt collections portfolio (ex ocollections). Defaults to your User ID.")
     @commands.check(check_channel)
-    async def oCollections(self, interaction):
+    async def oCollections(self, interaction, uid: int=-1):
         """
         Provides an overview of a user's progress in all OiaLt collections.
         ------------------------------------------------

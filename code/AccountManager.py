@@ -23,13 +23,13 @@ class RoleHierarchy(enum.Enum):
             print("Invalid client")
             return RoleHierarchy.MEMBER
 
-        if int(role_id) == int(client.config.cari_role):
+        if int(role_id) == int(client.config.admin_role):
             return RoleHierarchy.DEV
         
         if int(role_id) == int(client.config.mod_role):
             return RoleHierarchy.MODERATOR
 
-        if int(role_id) == int(client.config.botter_role):
+        if int(role_id) == int(client.config.maintainer_role):
             return RoleHierarchy.MASTER_BOTTER
         
         return RoleHierarchy.MEMBER
@@ -80,34 +80,7 @@ def check_user(expectFail: bool = False):
             True = success (user is registered)
     """
     async def predicate(interaction: discord.Interaction):
-        db = sqlite3.connect("main.sqlite")
-        cursor = db.cursor()
-        cursor.execute("SELECT user_id FROM users WHERE discord_id = ?", [interaction.user.id])
-        userIDCheck = cursor.fetchone()
-        cursor.close()
-        db.close()
-
-        is_registered = userIDCheck is not None
-
-        # XOR operation. if expect failure you want not_registered, otherwise you don't want not_registered.
-        if is_registered ^ expectFail:
-            return True  # allow command to run
-
-        # Optional: Send feedback before raising error
-        if not is_registered and not expectFail:
-            embed = await HelperClass.createEmbed(
-                title=f"Error #404 - User {str(interaction.user.display_name)} not registered!",
-                text="Please register before playing! (-register)",
-                footer="Contact eisritter if you encounter any issues!"
-            )
-        else:
-            embed = await HelperClass.createEmbed(
-                title=f"Error - User {str(interaction.user.display_name)} is already registered!",
-                text="If this is not the case, please contact **eisritter**!",
-                footer="Enjoy your time!"
-            )
-        await interaction.response.send_message(embed=embed)
-        print(f"[REGISTRATION ERROR] User registration state does not match expectation.")
+        return await AccountManager.verifyUser(interaction.user.id, interaction, expectFail)
     return app_commands.check(predicate)
 
 
@@ -153,13 +126,12 @@ class AccountManager(commands.Cog):
         AccountManager.static_client = client
         self.db_path = client.db_path
 
-    deletionPromptMsgIDs = {}
+    tables = [ 
+        "oialt", "oialt_harem", "stabby_mikes", "the_boys", "li_potential", 
+        "eternum", "eternum_harem", "homies", "side_girls", "creatures"
+    ]
     """
-    A dictionary linking users to the bot's prompt to confirm data deletion.
-    """
-    deleteRequestMessages = {}
-    """
-    A dictionary linking users to their message requesting data deletion.
+    A list of all table names in judie's database (except users).
     """
 
     # HELPER FUNCTIONS
@@ -188,6 +160,117 @@ class AccountManager(commands.Cog):
         db.close()
         return uID if uID is None else uID[0]
 
+    async def removeUserFromDB(self, discord_id: int) -> bool:
+        db = sqlite3.connect("main.sqlite")
+        cursor = db.cursor()
+
+        uid = await self.getUserID(discord_id)
+        if uid is None:
+            return False
+
+        # check if user in DB
+        cursor.execute("SELECT * FROM users WHERE user_id = ?", [uid])
+        if cursor.fetchone():
+            # if so delete all related entries
+            for table in AccountManager.tables:
+                cursor.execute("DELETE FROM %s WHERE user_id = ?" % table, [uid])
+            
+            cursor.execute("DELETE FROM users WHERE discord_id=?", [discord_id])    
+            db.commit()
+
+        print(f"[DELETION_NOTICE] User {discord_id} removed from DB!")
+
+        cursor.close()
+        db.close()
+        return True
+
+    async def transferProgress(self, source_uid, target_uid) -> bool:
+        db = sqlite3.connect("main.sqlite")
+        cursor = db.cursor()
+
+        try:
+            for table in AccountManager.tables:
+                print(f"Inspecting table {table}.")
+
+                cursor.execute("PRAGMA table_info(%s)" % table)
+                results = cursor.fetchall()
+                columns = [row[1] for row in results]
+                print(columns)
+
+                # get entries for both users
+                cursor.execute("SELECT * FROM %s WHERE user_id=?" % table, [source_uid])
+                source = cursor.fetchone()
+                print(f"Source: {source}")
+
+                cursor.execute("SELECT * FROM %s WHERE user_id=?" % table, [target_uid])
+                target = cursor.fetchone()
+                print(f"Target: {target}")
+
+                # for table structured [uid, [values], last_collectible], ignore the first and last.
+                values = [target[0]]
+                for i in range(1, len(source)-1):
+                    val = bool(source[i]) or bool(target[i])        # fair merge: A OR B -> any of A or B True => A|B = True
+                    values.append(val)
+                    print(f"{table}, {columns[i]}, {val}, {target_uid}")
+                    cursor.execute("UPDATE %s SET %s=? WHERE user_id=?" % (table, columns[i]), [int(val), target_uid])
+
+                print(f"Output: {values}")
+
+
+                print("--------------------")
+
+        except Exception as e:
+            print(f"[Error migrating table {table} from {source_uid} to {target_uid}]: {e}")
+            return False
+        
+        db.commit()
+
+        cursor.close()
+        db.close()
+        return True
+
+    async def receiveDiscordIDFromInput(interaction: discord.Interaction, id: str) -> int:
+        output = -1
+        try:
+            output = int(id)
+        except Exception as e:
+            output = -1
+            await interaction.response.send_message(f"[Error] Invalid input. Please input a number corresponding to a discord ID.", ephemeral=True)
+
+        return output
+
+    async def verifyUser(discord_id: int, interaction: discord.Interaction, expectFail: bool) -> bool:
+        db = sqlite3.connect("main.sqlite")
+        cursor = db.cursor()
+        cursor.execute("SELECT user_id FROM users WHERE discord_id = ?", [discord_id])
+        userIDCheck = cursor.fetchone()
+        cursor.close()
+        db.close()
+
+        is_registered = userIDCheck is not None
+
+        # XOR operation. if expect failure you want not_registered, otherwise you don't want not_registered.
+        if is_registered ^ expectFail:
+            return True  # allow command to run
+
+        # Optional: Send feedback before raising error
+        if not is_registered and not expectFail:
+            embed = await HelperClass.createEmbed(
+                title=f"Error #404 - User {str(interaction.user.display_name) if discord_id == interaction.user.id else discord_id} not registered!",
+                text="Please register before playing! (-register)",
+                footer="Contact eisritter if you encounter any issues!"
+            )
+        else:
+            embed = await HelperClass.createEmbed(
+                title=f"Error - User {str(interaction.user.display_name) if discord_id == interaction.user.id else discord_id} is already registered!",
+                text="If this is not the case, please contact **eisritter**!",
+                footer="Enjoy your time!"
+            )
+        await interaction.response.send_message(embed=embed)
+        print(f"[REGISTRATION ERROR] User registration state does not match expectation.")
+        return False
+            
+
     # COMMANDS & RELATED
 
     @app_commands.guilds(GUILD)
@@ -211,13 +294,12 @@ class AccountManager(commands.Cog):
         discordID = str(interaction.user.id)
 
         cursor.execute("INSERT INTO users (discord_id) VALUES (?)", [discordID])
-        uID = await self.getUserID(discordID)
-        tables = [ 
-            "oialt", "oialt_harem", "stabby_mikes", "the_boys", "li_potential", 
-            "eternum", "eternum_harem", "homies", "side_girls", "creatures"
-        ]
+        db.commit()
 
-        for table in tables:
+        uID = await self.getUserID(discordID)
+
+        for table in AccountManager.tables:
+            print(f"Inserting into table {table} value {uID}.")
             cursor.execute("INSERT INTO %s (user_id) VALUES (?)" % table, [uID])
 
         db.commit()
@@ -268,40 +350,46 @@ class AccountManager(commands.Cog):
         cursor.close()
         db.close()
 
-    async def removeUserFromDB(self, discord_id: int) -> bool:
-        db = sqlite3.connect("main.sqlite")
-        cursor = db.cursor()
-
-        uid = await self.getUserID(discord_id)
-        if uid is None:
-            return False
-
-        # check if user in DB
-        cursor.execute("SELECT * FROM users WHERE user_id = ?", [uid])
-        if cursor.fetchone():
-            # if so delete all related entries
-            tables = [ 
-                "oialt", "oialt_harem", "stabby_mikes", "the_boys", "li_potential", 
-                "eternum", "eternum_harem", "homies", "side_girls", "creatures", "users"
-            ]
-
-            for table in tables:
-                cursor.execute("DELETE FROM %s WHERE user_id = ?" % table, [uid])
-            db.commit()
-
-        print(f"[DELETION_NOTICE] User {discord_id} removed from DB!")
-
-        cursor.close()
-        db.close()
-        return True
-
     @app_commands.guilds(GUILD)
     @app_commands.command(name="port_progress", description="Transfer a user's progress to another user's database, preserving existing progress.")
     @app_commands.check(check_channel)
     @app_commands.check(check_permission)
     @check_permission(RoleHierarchy.MODERATOR)
-    async def port_progress(self, interaction: discord.Interaction, old_user_id: int, new_user_id: int):
-        pass
+    async def port_progress(self, interaction: discord.Interaction, source_user_id: str, target_user_id: str):
+        source_user_duid = await AccountManager.receiveDiscordIDFromInput(interaction, source_user_id)
+        # return if value invalid (error msg in function already.)
+        if source_user_duid == -1:
+            return
+
+        target_user_duid = await AccountManager.receiveDiscordIDFromInput(interaction, target_user_id)
+        # return if value invalid (error msg in function already.)
+        if target_user_duid == -1:
+            return
+        
+        # make sure both users are registered & get their uids.
+        # exit early if either user isn't registered.
+        if source_user_duid == target_user_duid:
+            await interaction.response.send_message(f"[Error] Attempting to migrate progress to and from the same user.", ephemeral=True)
+            return
+
+        source_uid = await self.getUserID(source_user_duid)
+        if source_uid is None:
+            await interaction.response.send_message(f"[Error] Source user {source_user_id} is not registered to Judie's DB.", ephemeral=True)
+            return
+
+        target_uid = await self.getUserID(target_user_duid)
+        if target_uid is None:
+            await interaction.response.send_message(f"[Error] Target user {target_user_id} is not registered to Judie's DB.", ephemeral=True)
+            return
+        
+        # feed the uids to transferProgress.
+        success = await self.transferProgress(source_uid, target_uid)
+
+        title = "Success!" if success else "Error!"
+        desc = f"Successfully transferred progress from user {source_user_id} to {target_user_id}." if success \
+            else f"An unexpected error occurred transferring progress from user {source_user_id} to {target_user_id}."
+        await interaction.response.send_message(embed=discord.Embed(title=title, description=desc, color=HelperClass.eternumBlue))
+
 
     @app_commands.guilds(GUILD)
     @app_commands.command(name="force_delete", description="Forcibly removes a registered user from the database. Command available to moderators only.")

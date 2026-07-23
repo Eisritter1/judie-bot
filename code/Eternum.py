@@ -8,10 +8,11 @@ import os
 import random
 import sqlite3
 from dotenv import load_dotenv
+from types import SimpleNamespace
 # OWN LIBRARIES
 from Utilities import Collections, HelperClass, Results, Effects, check_channel, get_cols
 from CharacterCard import CharacterCard, Villain
-from AccountManager import check_user
+from AccountManager import AccountManager, check_user
 from EgfCharacters import EgfCharacters
 
 load_dotenv()
@@ -344,6 +345,24 @@ class Eternum(commands.Cog):
 
         return (members, (count, total))
 
+    async def resolveUser(self, uid: str, interaction: discord.Interaction):
+
+        user = SimpleNamespace(id=-1, display_name="Dummy#0001")
+        if uid != "None":
+            uid = await AccountManager.receiveDiscordIDFromInput(interaction, uid)
+            if uid == -1:
+                return
+
+            if uid == interaction.user.id:
+                user = interaction.user
+            else:
+                user.id = uid
+                user.display_name = f"User {uid}"
+        else:
+            user = interaction.user
+
+        return user
+
 
     # DISCORD COMMANDS (no intricate logic here, all wrapping the logic above to discord callable! for testing reasons :D)
 
@@ -376,55 +395,64 @@ class Eternum(commands.Cog):
     @app_commands.guilds(GUILD)
     @app_commands.command(name="eternum_harem", description="View a user's progress on the Eternum harem collection (ex eharem). Defaults to your User ID")
     @commands.check(check_channel)
-    async def eharem(self, interaction: discord.Interaction, uid: int=-1):
+    async def eharem(self, interaction: discord.Interaction, uid: str="None"):
         """
         Provides an overview of a user's progress in collecting the eternum harem.
         ------------------------------------------------
         Parameters:
             - ctx : discord.ext.Context - discord-provided context to the command prompt.
         """
-        if uid != -1:
-            await interaction.response.send_message("Checking others' collections is currently unsupported, sorry!", ephemeral=True)
+        user = await self.resolveUser(uid, interaction)
+
+        # check whether the user is registered.
+        if not await AccountManager.verifyUser(discord_id=user.id, interaction=interaction, expectFail=False):
             return
 
-        await interaction.response.send_message(embed=await self.collectionOverview(interaction.user, Collections.HAREM))
+        # if user is registered, proceed.
+        await interaction.response.send_message(embed=await self.collectionOverview(user, Collections.HAREM))
         
     @app_commands.guilds(GUILD)
     @app_commands.command(name="eternum_homies", description="View a user's progress on the Eternum homies collection (ex ehomies). Defaults to your User ID")
     @commands.check(check_channel)
-    async def homies(self, interaction: discord.Interaction, uid: int=-1):
+    async def homies(self, interaction: discord.Interaction, uid: str="None"):
         """
         Provides an overview of a user's progress in collecting the eternum homies.
         ------------------------------------------------
         Parameters:
             - ctx : discord.ext.Context - discord-provided context to the command prompt.
         """
-        if uid != -1:
-            await interaction.response.send_message("Checking others' collections is currently unsupported, sorry!", ephemeral=True)
+        user = await self.resolveUser(uid, interaction)
+
+        # check whether the user is registered.
+        if not await AccountManager.verifyUser(discord_id=user.id, interaction=interaction, expectFail=False):
             return
 
+        # if user is registered, proceed.
         await interaction.response.send_message(embed=await self.collectionOverview(interaction.user, Collections.THE_HOMIES))
         
     @app_commands.guilds(GUILD)
     @app_commands.command(name="eternum_side_girls", description="View a user's progress on the Eternum side girls collection (ex sidegirls). Defaults to your User ID")
     @commands.check(check_channel)
-    async def sidegirls(self, interaction: discord.Interaction, uid: int=-1):
+    async def sidegirls(self, interaction: discord.Interaction, uid: str="None"):
         """
         Provides an overview of a user's progress in collecting the eternum side girls.
         ------------------------------------------------
         Parameters:
             - ctx : discord.ext.Context - discord-provided context to the command prompt.
         """
-        if uid != -1:
-            await interaction.response.send_message("Checking others' collections is currently unsupported, sorry!", ephemeral=True)
+        user = await self.resolveUser(uid, interaction)
+
+        # check whether the user is registered.
+        if not await AccountManager.verifyUser(discord_id=user.id, interaction=interaction, expectFail=False):
             return
 
+        # if user is registered, proceed.
         await interaction.response.send_message(embed=await self.collectionOverview(interaction.user, Collections.SIDE_DISHES))
 
     @app_commands.guilds(GUILD)
     @app_commands.command(name="eternum_pets", description="View a user's progress on the Eternum pets collection (ex creatures). Defaults to your User ID")
     @commands.check(check_channel)
-    async def creatures(self, interaction: discord.Interaction, uid: int=-1):
+    async def creatures(self, interaction: discord.Interaction, uid: str="None"):
         """
         Provides an overview of a user's progress in collecting the eternum pets.
         DevNote 15/07/2025: might migrate to pets(ctx) instead - keep creatures as an alias or do a shell command like -gf.
@@ -432,30 +460,36 @@ class Eternum(commands.Cog):
         Parameters:
             - ctx : discord.ext.Context - discord-provided context to the command prompt.
         """
-        if uid != -1:
-            await interaction.response.send_message("Checking others' collections is currently unsupported, sorry!", ephemeral=True)
+        user = await self.resolveUser(uid, interaction)
+
+        # check whether the user is registered.
+        if not await AccountManager.verifyUser(discord_id=user.id, interaction=interaction, expectFail=False):
             return
-        
+
+        # if user is registered, proceed.
         await interaction.response.send_message(embed=await self.collectionOverview(interaction.user, Collections.CREATURES))
 
     @app_commands.guilds(GUILD)
     @app_commands.command(name="eternum_protectors", description="View a user's Eternum protection racket (ex eprotectors). Defaults to your User ID")
     @commands.check(check_channel)
-    async def eprotectors(self, interaction: discord.Interaction, uid: int=-1):
+    async def eprotectors(self, interaction: discord.Interaction, uid: str="None"):
         """
         Provides an overview of a user's progress in collecting the eternum protectors.
         ------------------------------------------------
         Parameters:
             - ctx : discord.ext.Context - discord-provided context to the command prompt.
         """
-        if uid != -1:
-            await interaction.response.send_message("Checking others' collections is currently unsupported, sorry!", ephemeral=True)
+        user = await self.resolveUser(uid, interaction)
+
+        # check whether the user is registered.
+        if not await AccountManager.verifyUser(discord_id=user.id, interaction=interaction, expectFail=False):
             return
 
+        # if user is registered, proceed.
         db = sqlite3.connect(self.db_path)
         cursor = db.cursor()
-        discordID = str(interaction.user.id)
-        user_name = str(interaction.user.display_name)
+        discordID = str(user.id)
+        user_name = str(user.display_name)
 
             
         #   search thru 'eternum_harem' table for entries
@@ -498,28 +532,31 @@ class Eternum(commands.Cog):
     @app_commands.guilds(GUILD)
     @app_commands.command(name="eternum_collections", description="View a user's Eternum collections portfolio (ex ecollections). Defaults to your User ID.")
     @commands.check(check_channel)
-    async def eCollections(self, interaction: discord.Interaction, uid: int=-1):
+    async def eCollections(self, interaction: discord.Interaction, uid: str="None"):
         """
         Provides an overview of a user's progress in all eternum collections.
         ------------------------------------------------
         Parameters:
             - ctx : discord.ext.Context - discord-provided context to the command prompt.
         """
-        if uid != -1:
-            await interaction.response.send_message("Checking others' collections is currently unsupported, sorry!", ephemeral=True)
+        user = await self.resolveUser(uid, interaction)
+
+        # check whether the user is registered.
+        if not await AccountManager.verifyUser(discord_id=user.id, interaction=interaction, expectFail=False):
             return
 
+        # if user is registered, proceed.
         db = sqlite3.connect(self.db_path)
         cursor = db.cursor()
-        discordID = str(interaction.user.id)
-        user_name = str(interaction.user.display_name)
+        discordID = str(user.id)
+        user_name = str(user.display_name)
 
         embed_title = f"Eternum Collections of **{user_name}**:"
         embed = discord.Embed(title=embed_title, color=HelperClass.eternumBlue)
 
 
         # HAREM
-        h_list, h_vals = await self.getMembers(interaction.user, Collections.HAREM)
+        h_list, h_vals = await self.getMembers(user, Collections.HAREM)
 
         haremlist = "\n".join(h_list)
 
@@ -529,7 +566,7 @@ class Eternum(commands.Cog):
 
 
         # HOMIES
-        ho_list, ho_vals = await self.getMembers(interaction.user, Collections.THE_HOMIES)
+        ho_list, ho_vals = await self.getMembers(user, Collections.THE_HOMIES)
 
         homielist = "\n".join(ho_list)
 
@@ -540,7 +577,7 @@ class Eternum(commands.Cog):
 
 
         # SIDE GIRLS
-        s_list, s_vals = await self.getMembers(interaction.user, Collections.SIDE_DISHES)
+        s_list, s_vals = await self.getMembers(user, Collections.SIDE_DISHES)
         
         sideslist = "\n".join(s_list)
 
@@ -549,7 +586,7 @@ class Eternum(commands.Cog):
         embed.add_field(name=f"Side Girls: ({s_vals[0]}/{s_vals[1]}):", value=sideslist)
 
         # CREATURES
-        c_list, c_vals = await self.getMembers(interaction.user, Collections.CREATURES)
+        c_list, c_vals = await self.getMembers(user, Collections.CREATURES)
         
         petlist = "\n".join(c_list)
 

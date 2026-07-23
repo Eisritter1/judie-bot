@@ -327,13 +327,13 @@ async def createAndUpdateDatabase():
                 user_id INTEGER,
                 alex TEXT DEFAULT NONE,
                 annie TEXT DEFAULT NONE,
+                calypso TEXT DEFAULT NONE,
                 dalia TEXT DEFAULT NONE,
                 luna TEXT DEFAULT NONE,
                 nancy TEXT DEFAULT NONE,
                 nova TEXT DEFAULT NONE,
                 penny TEXT DEFAULT NONE,
-                last_girl TEXT,
-                calypso TEXT DEFAULT NONE
+                last_girl TEXT
                 )
                 """)
     #endregion
@@ -579,30 +579,30 @@ async def createAndUpdateDatabase():
                 user_id INTEGER,
                 alex INTEGER DEFAULT 0,
                 annie INTEGER DEFAULT 0,
+                calypso INTEGER DEFAULT 0,
                 dalia INTEGER DEFAULT 0,
                 luna INTEGER DEFAULT 0,
                 nancy INTEGER DEFAULT 0,
                 nova INTEGER DEFAULT 0,
                 penny INTEGER DEFAULT 0,
-                last_girl TEXT,
-                calypso INTEGER DEFAULT 0
+                last_girl TEXT
             )
         """)
 
         # insert values derived from 'old' table
         cursor.execute("""
-            INSERT INTO eharem_temp (user_id, alex, annie, dalia, luna, nancy, nova, penny, last_girl, calypso)
+            INSERT INTO eharem_temp (user_id, alex, annie, calypso, dalia, luna, nancy, nova, penny, last_girl)
             SELECT
                 user_id,
                 CASE WHEN COALESCE(alex, 'NONE') = 'NONE' THEN 0 ELSE 1 END,
                 CASE WHEN COALESCE(annie, 'NONE') = 'NONE' THEN 0 ELSE 1 END,
+                CASE WHEN COALESCE(calypso, 'NONE') = 'NONE' THEN 0 ELSE 1 END,
                 CASE WHEN COALESCE(dalia, 'NONE') = 'NONE' THEN 0 ELSE 1 END,
                 CASE WHEN COALESCE(luna, 'NONE') = 'NONE' THEN 0 ELSE 1 END,
                 CASE WHEN COALESCE(nancy, 'NONE') = 'NONE' THEN 0 ELSE 1 END,
                 CASE WHEN COALESCE(nova, 'NONE') = 'NONE' THEN 0 ELSE 1 END,
                 CASE WHEN COALESCE(penny, 'NONE') = 'NONE' THEN 0 ELSE 1 END,
-                last_girl,
-                CASE WHEN COALESCE(calypso, 'NONE') = 'NONE' THEN 0 ELSE 1 END
+                last_girl
             FROM eternum_harem
         """)
 
