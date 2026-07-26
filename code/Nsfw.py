@@ -97,5 +97,5 @@ class Nsfw(commands.Cog):
             await interaction.response.send_message("This channel is not marked as NSFW!", ephemeral=True)
 
 
-def setup(client):
-    client.add_cog(Nsfw(client))
+    async def setup(client):
+        await client.add_cog(Nsfw(client))

@@ -14,6 +14,7 @@ from Utilities import Collections, HelperClass, Results, Effects, check_channel,
 from CharacterCard import CharacterCard, Villain
 from AccountManager import AccountManager, check_user
 from EgfCharacters import EgfCharacters
+from Timekeeper import check_cooldown, CommandOnCooldownError
 
 load_dotenv()
 GUILD = discord.Object(id=os.getenv("GUILD"))
@@ -84,7 +85,6 @@ class Eternum(commands.Cog):
     def __init__(self, client):
         self.client = client
         self.accountManager = self.client.accountManager
-        client.CogsToActivate.append(self)
         self.characterList = EgfCharacters()
         self.characters = self.characterList.characters
         self.botSpamChannel = None
@@ -101,8 +101,7 @@ class Eternum(commands.Cog):
         #command = self.client.get_command("egf")
         #cd = Cooldown(rate=1, per=self.client.config.cooldown)
         #command._buckets = CooldownMapping(cd, type=BucketType.user)
-        self.botSpamChannel = self.client.config.botSpamChannel
-        print("successfully activated Eternum cog.")
+        
 
     # HELPER FUNCTIONS - checkUser in AccountManager // createEmbed in Utilities/HelperFunctions
 
@@ -229,6 +228,7 @@ class Eternum(commands.Cog):
 
             # early exit if not interesting
             if character.collection == Collections.NONE and character.effects == Effects.NONE:
+                db.commit()
                 return Results(duplicate=duplicateCharacter, protected=protected, victim=victim)
 
             # character collection update
@@ -345,6 +345,7 @@ class Eternum(commands.Cog):
 
         return (members, (count, total))
 
+
     async def resolveUser(self, uid: str, interaction: discord.Interaction):
 
         user = SimpleNamespace(id=-1, display_name="Dummy#0001")
@@ -369,6 +370,7 @@ class Eternum(commands.Cog):
     @app_commands.guilds(GUILD)
     @app_commands.command(name="egf", description="Draw an Eternum character to be your partner for the day.")
     @app_commands.check(check_channel)
+    @check_cooldown()
     @check_user()
     async def egf(self, interaction: discord.Interaction):
         """
@@ -649,15 +651,12 @@ class Eternum(commands.Cog):
 
         discordID = str(interaction.user.id)
         
-        if isinstance(error, app_commands.CommandOnCooldown):
+        if isinstance(error, CommandOnCooldownError):
             uid = await self.accountManager.getUserID(discordID=discordID)
 
             time = error.retry_after
-            hours = int(time // 3600)
-            minutes = int((time % 3600) // 60)
-            seconds = int((time % 3600) % 60)
 
-            description = f"You still have {hours}h {minutes} mins and {seconds}s until your next draw!"
+            description = f"You still have {time.get_time()} until your next draw!"
 
             cursor.execute("SELECT last_gf FROM eternum WHERE user_id=?", [uid])
             lastGf = cursor.fetchone()
@@ -667,7 +666,7 @@ class Eternum(commands.Cog):
             field2_name = ""
             field2_value = ""
             number = 0
-            if lastGf is None:
+            if lastGf is None or lastGf[0] is None:
                 title = "This is awkward..."
                 field_name = "Your last pull is... No one?"
                 field_value = "How could that happen..."
@@ -690,7 +689,7 @@ class Eternum(commands.Cog):
 
             embed.add_field(name=field_name, value=field_value, inline=True)
             embed.add_field(name=field2_name, value=field2_value, inline=False)
-            if lastGf is not None:
+            if lastGf is not None or lastGf[0] is not None:
                 number = random.randint(1, gf.picNumber)
                 image = discord.File(f"./EternumGfGameImages/{gf.filename}_{number}.webp", filename="gf.webp")
             else:
@@ -705,5 +704,8 @@ class Eternum(commands.Cog):
         db.close()
 
 
-def setup(client):
-    client.add_cog(Eternum(client))
+    async def setup(client):
+        cog = Eternum(client)
+        await client.add_cog(cog)
+        cog.botSpamChannel = cog.client.config.botSpamChannel
+        print("successfully activated Eternum cog.")

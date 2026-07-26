@@ -779,19 +779,3 @@ class OgfResults:
         self.duplicate = duplicate
         self.protected = protected
         self.victim = victim
-
-
-# time = time in seconds until timer ends -> will be used for cooldowns!
-class TimeObject:
-    """
-    Struct for more intuitive use of time. Takes a certain interval in seconds as input.
-    -----------------------------------------------------
-    Parameters:
-        - hours : int
-        - minutes : int
-        - seconds : int
-    """
-    def __init__(self, time):
-        self.hours = int(time // 3600)
-        self.minutes = int((time % 3600) // 60)
-        self.seconds = int((time % 3600) % 60)

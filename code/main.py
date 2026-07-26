@@ -13,8 +13,9 @@ from OiaLt import OiaLt, help_oialt
 from Nsfw import Nsfw
 from Eternum import Eternum, help_eternum
 from AccountManager import AccountManager
-from Utilities import HelperClass, TimeObject, check_channel
+from Utilities import HelperClass, check_channel
 from BotConfig import BotConfig
+from Timekeeper import Timekeeper
 
 #region Bot config
 intents = discord.Intents().default()
@@ -22,13 +23,11 @@ intents.guilds = True
 
 client = commands.Bot(command_prefix="-", help_command=None, case_insensitive=True, intents=intents)
 client.config = BotConfig(client)
-client.CogsToActivate = []
 client.db_path = "main.sqlite"
 load_dotenv()
 TOKEN = os.getenv("TOKEN")
 GUILD = discord.Object(id=os.getenv("GUILD"))
 
-extensions = [AccountManager(client), OiaLt(client), Nsfw(client), Eternum(client)]
 status = cycle(
     ["-help", "-help misc", "-help oialt", "-help eternum", "-help nsfw", "-ogf", "-oharem", "-stabbyclan", "-theboys",
      "-potentialLis", "-ocollections", "-oprotectors", "-nsfw", "-egf", "-eharem", "-homies", "-sidegirls",
@@ -43,21 +42,16 @@ async def on_ready():
 
     Initializes all the cogs and creates/edits the database
     """
-    for extension in extensions:
-        try:
-            await client.add_cog(extension)
-            print(f"loaded extension {extension}!")
-        except Exception as error:
-            print('{} cannot be loaded. [{}]'.format(extension, error))
-    
     await client.config.load()
     HelperClass.init(client)
+    await Timekeeper.init(client)
     await createAndUpdateDatabase()
     changeGameActivity.start()
 
-    for cog in client.CogsToActivate:
-        if hasattr(cog, "activate"):
-            cog.activate()
+    await AccountManager.setup(client)
+    await OiaLt.setup(client)
+    await Nsfw.setup(client)
+    await Eternum.setup(client)
 
     # sync the command tree to the server in question
     client.tree.clear_commands(guild=None)
@@ -194,18 +188,19 @@ async def timers(interaction: discord.Interaction):
     """
     Provides an overview of the time left until a user can draw a gf in the gf games again.
     """
-    ogf = client.get_command("ogf")
-    egf = client.get_command("egf")
+    ogf = client.tree.get_command(command="ogf", guild=GUILD)
+    egf = client.tree.get_command(command="egf", guild=GUILD)
     
     dummy = discord.Object(id=interaction.id)
     dummy.author = interaction.user
-    ogfTimeInSecs = ogf._buckets.get_bucket(dummy).get_retry_after()
-    ogfTime = None if ogfTimeInSecs == None else TimeObject(ogfTimeInSecs)
-    ogfText = f"**-ogf**: you __can__ draw now!" if ogfTimeInSecs == 0 else f"**-ogf**: you can try again in {ogfTime.hours:02}:{ogfTime.minutes:02}:{ogfTime.seconds:02}"
 
-    egfTimeInSecs = egf._buckets.get_bucket(dummy).get_retry_after()
-    egfTime = None if egfTimeInSecs == None else TimeObject(egfTimeInSecs)
-    egfText = f"**-egf**: you __can__ draw now!" if egfTimeInSecs == 0 else f"**-egf**: you can try again in {egfTime.hours:02}:{egfTime.minutes:02}:{egfTime.seconds:02}"
+    ogfTime = Timekeeper.read_timer(ogf, interaction.user)
+    ogfText = f"**-ogf**: you __can__ draw now!" if ogfTime.is_empty() \
+        else f"**-ogf**: you can try again in {ogfTime.get_time()}"
+
+    egfTime = Timekeeper.read_timer(egf, interaction.user)
+    egfText = f"**-egf**: you __can__ draw now!" if egfTime.is_empty()\
+       else f"**-egf**: you can try again in {egfTime.get_time()}"
 
     embed = await HelperClass.createEmbed(title=f"Cooldown overview for {interaction.user.display_name}:", text=f"{ogfText}\n{egfText}")
     await interaction.response.send_message(embed=embed)

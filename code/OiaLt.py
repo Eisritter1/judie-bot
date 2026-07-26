@@ -7,10 +7,11 @@ from discord.ext.commands import CooldownMapping, Cooldown, BucketType
 import os, random, sqlite3
 from dotenv import load_dotenv
 # OWN LIBRARIES
-from Utilities import HelperClass, OgfCollections, OgfEffects, OgfResults, TimeObject, check_channel
+from Utilities import HelperClass, OgfCollections, OgfEffects, OgfResults, check_channel
 from AccountManager import AccountManager, check_user
 from CharacterCard import OgfCharacterCard
 from OgfCharacters import OgfCharacters
+from Timekeeper import check_cooldown, TimeObject, CommandOnCooldownError
 
 
 load_dotenv()
@@ -78,28 +79,15 @@ class OiaLt(commands.Cog):
     """
     def __init__(self, client):
         self.client = client
-        client.CogsToActivate.append(self)
         self.characterList = OgfCharacters()
         self.characters = self.characterList.characters
         self.accountManager = AccountManager(self.client)
         self.botSpamChannel = None
-
-
-    def activate(self):
-        """
-        Initializes client data for the gf game - setting channel IDs, cooldown time etc. 
-
-        Required for proper functioning; Required to run only after BotConfig.load() was called.
-        """
-        #command = self.client.get_command("ogf")
-        #cd = Cooldown(rate=1, per=self.client.config.cooldown)
-        #command._buckets = CooldownMapping(cd, type=BucketType.user)
-        self.botSpamChannel = self.client.config.botSpamChannel
-        print("successfully activated OiaLt cog.")
+        
 
     # HELPER FUNCTIONS - checkUser in AccountManager // createEmbed in Utilities/HelperClass
 
-    async def displayLastGF(self, interaction: discord.Interaction, time):
+    async def displayLastGF(self, interaction: discord.Interaction, time: TimeObject):
         """
         Shows the last character obtained by a character as cooldown reminder.
         -------------------------------------------------------------------------
@@ -107,8 +95,7 @@ class OiaLt(commands.Cog):
             - ctx : discord.ext.Context - discord-provided context to the command prompt.
             - time : int - time in seconds left until the cooldown runs out.
         """
-        timer = TimeObject(time)
-        description = f"You still have {timer.hours}h {timer.minutes} mins and {timer.seconds}s until your next draw!"
+        description = f"You still have {time.get_time()} until your next draw!"
         db = sqlite3.connect("main.sqlite")
         cursor = db.cursor()
         discordID = str(interaction.user.id)
@@ -149,6 +136,7 @@ class OiaLt(commands.Cog):
     @app_commands.guilds(GUILD)
     @app_commands.command(name="ogf", description="Draw a OiaLt character to be your partner for the day.")
     @commands.check(check_channel)
+    @check_cooldown()
     @check_user()
     async def ogf(self, interaction: discord.Interaction):
         """
@@ -944,12 +932,14 @@ class OiaLt(commands.Cog):
             - ctx : discord.ext.Context - discord-provided context to the command prompt.
             - error : str (?) - details of the error.
         """
-        if isinstance(error, commands.CommandOnCooldown):
+        if isinstance(error, CommandOnCooldownError):
             await self.displayLastGF(interaction, error.retry_after)
         else:
             await interaction.response.send_message(f"Unexpected error drawing ogf: {error}", ephemeral=True)
 
 
-# Does this code ever get reached??
-def setup(client):
-    client.add_cog(OiaLt(client))
+    async def setup(client):
+        cog = OiaLt(client)
+        await client.add_cog(cog)
+        cog.botSpamChannel = cog.client.config.botSpamChannel
+        print("successfully activated OiaLt cog.")

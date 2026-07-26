@@ -418,5 +418,5 @@ class AccountManager(commands.Cog):
             await interaction.response.send_message("Unsafe input, please only supply discord ID's as integers to this command!")
 
 
-def setup(client):
-    client.add_cog(AccountManager(client))
+    async def setup(client):
+        await client.add_cog(AccountManager(client))
