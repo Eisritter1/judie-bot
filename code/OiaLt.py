@@ -2,15 +2,15 @@
 import discord
 from discord import app_commands
 from discord.ext import commands
-from discord.ext.commands import CooldownMapping, Cooldown, BucketType
 # OTHER LIBRARIES
 import os, random, sqlite3
 from dotenv import load_dotenv
+from types import SimpleNamespace
 # OWN LIBRARIES
-from Utilities import HelperClass, OgfCollections, OgfEffects, OgfResults, check_channel
-from AccountManager import AccountManager, check_user
-from CharacterCard import OgfCharacterCard
 from OgfCharacters import OgfCharacters
+from OgfUtils import Collections, Effects, Results, CharacterCard
+from Utilities import HelperClass, check_channel, get_cols
+from AccountManager import AccountManager, check_user
 from Timekeeper import check_cooldown, TimeObject, CommandOnCooldownError
 
 
@@ -83,6 +83,7 @@ class OiaLt(commands.Cog):
         self.characters = self.characterList.characters
         self.accountManager = AccountManager(self.client)
         self.botSpamChannel = None
+        self.db_path = client.db_path
         
 
     # HELPER FUNCTIONS - checkUser in AccountManager // createEmbed in Utilities/HelperClass
@@ -100,17 +101,17 @@ class OiaLt(commands.Cog):
         cursor = db.cursor()
         discordID = str(interaction.user.id)
 
-        uid = await self.accountManager.getUserID(discordID=discordID, cursor=cursor)
+        uid = await self.accountManager.getUserID(discordID=discordID)
 
         # Get last obtained character
         cursor.execute("SELECT last_gf FROM oialt WHERE user_id=?", [uid])
         lastGf = cursor.fetchone()
-        if lastGf is not None:
-            name = self.characterList.GetFilename(lastGf[0])
+        if lastGf is not None and lastGf[0] is not None:
+            name = (await self.characterList.getCharacter(lastGf[0])).filename
         else:
             name = "None"
 
-        if lastGf is not None:
+        if name != "None":
             title = "Slow down dude!"
             field_name = lastGf[0]
             field_value = f"The last pull you made was {field_name}"
@@ -128,10 +129,494 @@ class OiaLt(commands.Cog):
 
         image = discord.File(f"./gfGameImages/{name}.webp", filename="gf.webp")
         embed.set_image(url="attachment://gf.webp")
-        await interaction.response.send_message(file=image, embed=embed)
+        await interaction.response.send_message(file=image, embed=embed, ephemeral=True)
 
         cursor.close()
         db.close()
+
+
+    async def createAndSendEmbed(self, interaction: discord.Interaction, character: CharacterCard, results: Results):
+        """
+        Creates and sends an embed using the provided character information.
+        -------------------------------------------------------------------------
+        Parameters:
+            - ctx : discord.ext.Context - discord-provided context to the command prompt.
+            - character : OgfCharacterCard - the card of the character to display.
+            - results : OgfResults - A struct containing context of the consequences of the character draw.
+        """
+        if not character:
+            print("Error: Missing character object.")
+
+        collection = character.collection
+        effect = character.effect
+
+        embed = ""
+        image = ""
+        text = ""
+        footer = character.footer
+        duplicateText = "" if collection == Collections.NONE and effect == Effects.NONE else f"(New) {HelperClass.daliaParty}" if not results.duplicate else f"(duplicate) {HelperClass.annieCry}"
+        collection_field_name = f"{str(collection)} {duplicateText}"
+        collection_field_value = ""
+        effect_field_name = str(effect)
+        effect_field_value = effect.Describe()
+
+        # non-collectibles
+        if collection == Collections.NONE:
+            text = f"Congrats, {interaction.user.mention}...? Your companion for the day is {character.name}."
+            collection_field_value = "A character that doesn't belong into any collection."
+
+            # Special case - Spiderman (includes author username in footer)
+            if character.name == "Spiderman":
+                displayname = interaction.user.display_name
+                footer = f"Hey, is there a {displayname}? I have a pizza for {displayname}!"
+       
+        #region Harem
+        elif collection == Collections.HAREM:
+            text = f"Congratulations {interaction.user.mention}! Your gf for the day is {character.name}!"
+            collection_field_value = f"A wild {character.name} has spawned in your harem!" if not results.duplicate \
+                else f"Tough luck! {character.name} is already in your harem!"
+        #endregion
+        #region Stabby Clan
+        elif collection == Collections.STABBIES:
+            text = f"Congratulations {interaction.user.mention}! Your protector for the day is {character.name}!"
+            collection_field_value = f"A new recruit for the stabby clan!" if not results.duplicate \
+                else f"Tough luck! {character.name} is already part of your bodyguard staff!"
+        #endregion
+        #region The Boys
+        elif collection == Collections.BOYS:
+            text = f"Congratulations {interaction.user.mention}! Your homie for the day is {character.name}!"
+            collection_field_value = f"Let's fucking goo! {character.name} joined the squad!" if not results.duplicate \
+                else f"Tough luck! {character.name} is already chilling with you!"
+        #endregion
+        #region Potential LI's
+        elif collection == Collections.POTENTIALS:
+            text = f"Congrats {interaction.user.mention}! Your gf for the day is {character.name}!"
+            collection_field_value = f"{character.name} has joined the gang! Might consider asking her out? :wink:" if not results.duplicate \
+                else f"Tough luck! {character.name} has already expressed her interest in you!"
+
+            if interaction.user.name == "frostkanra":
+                text = "Well, well, well... if this were real life, a creator-createe relationship wouldn't be so " \
+                       "acceptable now, would it...?"
+        #endregion
+
+        #region Orochi
+        if effect == Effects.HAREM_BUYER:
+            text = f"Yikes! Your company for the day is {character.name}. Good luck {interaction.user.mention} (You'll need it!)"
+            if results.protected:
+                collection_field_name = f"Bid for {results.victim} refused."
+                collection_field_value = f"GODDAMN IT, WHY AREN'T YOU LAUGHING OROCHI??!"
+            else:
+                collection_field_name = "**OH NO**"
+                collection_field_value = f"Orochi offered a deal for {results.victim} you couldn't refuse..." if \
+                    results.victim != "Nobody" else f"Must have been the wind..."
+        #endregion
+        #region Astaroth
+        if effect == Effects.STABBY_KILLER:
+            text = f"Yikes! Your company for the day is {character.name}. Good luck {interaction.user.mention} (You'll need it!)"
+            if results.protected:
+                collection_field_name = f"That was close..."
+                collection_field_value = f"The MC managed to body Astaroth before he could kill {results.victim}!"
+            else:
+                collection_field_name = "**OH SHIT**"
+                collection_field_value = f"Astaroth shot {results.victim} dead. R.I.P." if \
+                    results.victim != "Nobody" else f"Must have been the wind..."
+        #endregion
+        #region Azazel
+        if effect == Effects.BOYS_KILLER:
+            text = f"Yikes! Your company for the day is {character.name}. Good luck {interaction.user.mention} (You'll need it!)"
+            if results.protected:
+                collection_field_name = f"That was close..."
+                collection_field_value = f"Watch {results.victim}'s back, buddy."
+            else:
+                collection_field_name = "**OH SHIT**"
+                collection_field_value = f"Azazel put {results.victim} to sleep forever! R.I.P." if \
+                    results.victim != "Nobody" else f"Must have been the wind..."
+        #endregion
+        #region Monster Lilith
+        if effect == Effects.POTENTIAL_MUTATOR:
+            text = f"Yikes! Your company for the day is {character.name}. Good luck {interaction.user.mention} (You'll need it!)"
+            if results.protected:
+                collection_field_name = f"That was close..."
+                collection_field_value = f"93 managed to turn the monster's gaze away from {results.victim}!"
+            else:
+                collection_field_name = "**OH SHIT**"
+                collection_field_value = f"{results.victim} just turned into a living set of spare ribs in front of you!" if \
+                    results.victim != "Nobody" else f"Must have been the wind..."
+        #endregion
+
+
+        #region Embed compilation and sending
+        embed = await HelperClass.createEmbed(title=character.name, text=text, footer=footer)
+
+        embed.add_field(name=collection_field_name, value=collection_field_value, inline=True)
+        embed.add_field(name=effect_field_name, value=effect_field_value, inline=True)
+
+        image = discord.File(f"./gfGameImages/{character.filename}.webp", filename="gf.webp")
+        embed.set_image(url="attachment://gf.webp")
+        await interaction.response.send_message(file=image, embed=embed)
+        #endregion
+
+
+    async def updateDatabase(self, uid: int, character: CharacterCard) -> Results:
+        """
+        Performs the changes to the database following a character's drawing.
+        -------------------------------------------------------------------------
+        Parameters:
+            - uid : int - the user's ID in the database system.
+            - character : OgfCharacterCard - the character drawn.
+        -------------------------------------------------------------------------
+        Returns:
+            - OgfResults: A struct containing context around the draw - duplicate collectible, protected against a villain, and chosen victim.
+        """
+        # <editor-fold desc="Setup">
+        # Setup: DB connections
+        db = sqlite3.connect("main.sqlite")
+        cursor = db.cursor()
+
+        # Setup: Results variables
+        duplicate = False
+        target = None
+        protected = False
+        # </editor-fold>
+
+        # Update last obtained character
+        cursor.execute("UPDATE oialt SET last_gf=? WHERE user_id=?", [character.name, uid])
+
+        # <editor-fold desc="Collections">
+        # Switch Collections:
+        # <editor-fold desc="Harem">
+        if character.collection == Collections.HAREM:
+            # Update collection's last obtained
+            cursor.execute("UPDATE oialt_harem SET last_li=? WHERE user_id=?", [character.filename, uid])
+
+            # Check if already in collection
+            cursor.execute("SELECT %s FROM oialt_harem WHERE user_id=?" % character.filename, [uid])
+            check = cursor.fetchone()
+            # If not, add to collection
+            if check[0] == "NONE":
+                cursor.execute("UPDATE oialt_harem SET %s=? WHERE user_id=?" % character.filename,
+                               [character.name, uid])
+            # Else mark as duplicate
+            else:
+                duplicate = True
+        # </editor-fold>
+        # <editor-fold desc="Stabby Mikes">
+        elif character.collection == Collections.STABBIES:
+            # Update collection's last obtained
+            cursor.execute("UPDATE stabby_mikes SET last_mike=? WHERE user_id=?", [character.filename, uid])
+
+            # Check if already in collection
+            cursor.execute("SELECT %s FROM stabby_mikes WHERE user_id=?" % character.filename, [uid])
+            check = cursor.fetchone()
+            # If not, add to collection
+            if check[0] == "NONE":
+                cursor.execute("UPDATE stabby_mikes SET %s=? WHERE user_id=?" % character.filename,
+                               [character.name, uid])
+            # Else mark as duplicate
+            else:
+                duplicate = True
+        # </editor-fold>
+        # <editor-fold desc="The Boys">
+        elif character.collection == Collections.BOYS:
+            # Update Collection's last obtained
+            cursor.execute("UPDATE the_boys SET last_boi=? WHERE user_id=?", [character.filename, uid])
+
+            # Check if already in collection
+            cursor.execute("SELECT %s FROM the_boys WHERE user_id=?" % character.filename, [uid])
+            check = cursor.fetchone()
+            # If not, add to collection
+            if check[0] == "NONE":
+                cursor.execute("UPDATE the_boys SET %s=? WHERE user_id=?" % character.filename, [character.name, uid])
+            # Else mark as duplicate
+            else:
+                duplicate = True
+        # </editor-fold>
+        # <editor-fold desc="Potential LI's">
+        elif character.collection == Collections.POTENTIALS:
+            # Update Collection's last obtained
+            cursor.execute("UPDATE li_potential SET last_potential_li=? WHERE user_id=?", [character.filename, uid])
+
+            # Check if already in collection
+            cursor.execute("SELECT %s FROM li_potential WHERE user_id=?" % character.filename, [uid])
+            check = cursor.fetchone()
+            # If not, add to collection
+            if check[0] == "NONE":
+                cursor.execute("UPDATE li_potential SET %s=? WHERE user_id=?" % character.filename,
+                               [character.name, uid])
+            # Else mark as duplicate
+            else:
+                duplicate = True
+        # </editor-fold>
+        # </editor-fold>
+
+        # <editor-fold desc="Effects">
+        # <editor-fold desc="Saviours">
+        if character.effect in [Effects.HAREM_SAVER, Effects.STABBY_SAVER, Effects.BOYS_SAVER, Effects.POTENTIAL_SAVER]:
+            # Check if protection is already obtained
+            cursor.execute("SELECT %s FROM oialt WHERE user_id=?" % character.filename, [uid])
+            check = cursor.fetchone()
+            # If not, add to user
+            if check[0] == 0:
+                cursor.execute("UPDATE oialt SET %s=1 WHERE user_id=?" % character.filename, [uid])
+            # else mark as duplicate
+            else:
+                duplicate = True
+        # </editor-fold>
+        # <editor-fold desc="Orochi - Lauren > MH Lauren > Any // Funtime">
+        elif character.effect == Effects.HAREM_BUYER:
+            # <editor-fold desc="Target Hunt">
+            # Hunt for target - Lauren > MH Lauren > last LI -> if none, no victim.
+            cursor.execute("SELECT lauren FROM oialt_harem WHERE user_id=?", [uid])
+            victim = cursor.fetchone()
+            if victim[0] == 'NONE':
+                cursor.execute("SELECT messy_hair_lauren FROM oialt_harem WHERE user_id=?", [uid])
+                victim = cursor.fetchone()
+                if victim[0] == 'NONE':
+                    cursor.execute("SELECT last_li FROM oialt_harem WHERE user_id=?", [uid])
+                    victim = cursor.fetchone()
+
+            # Set target name - Full name, or 'Nobody' if no victim.
+            target = await self.characterList.searchNameWithFilename(victim[0]) if victim[0] not in ['NONE', None] else "Nobody"
+            if target is None:  # None returned when nothing is found in GetName
+                target = victim[0]
+            # </editor-fold>
+            # <editor-fold desc="Target handling">
+            # If target resolved, check for protection [Funtime]
+            if target != "Nobody":
+                cursor.execute("SELECT funtime FROM oialt WHERE user_id=?", [uid])
+                protection = cursor.fetchone()
+                # If protection, discard it and deny the aggressor
+                if protection[0] != 0:
+                    cursor.execute("UPDATE oialt SET funtime=0 WHERE user_id=?", [uid])
+                    protected = True
+                # Else remove target from collection
+                else:
+                    filename = (await self.characterList.getCharacter(target)).filename
+                    try:
+                        cursor.execute("UPDATE oialt_harem SET %s='NONE' WHERE user_id=?" % filename, [uid])
+                    except Exception as e:
+                        print(e)
+                    cursor.execute("UPDATE oialt_harem SET last_li='NONE' WHERE user_id=?", [uid])
+
+            # If no target, fail
+            # </editor-fold>
+        # </editor-fold>
+        # <editor-fold desc="Astaroth - Father Mitchell > Any // MC">
+        elif character.effect == Effects.STABBY_KILLER:
+            # <editor-fold desc="Target Hunt">
+            # Hunt for target - Father Mitchell > Last Mike -> If none, no victim
+            cursor.execute("SELECT priest FROM stabby_mikes WHERE user_id=?", [uid])
+            victim = cursor.fetchone()
+            if victim[0] == 'NONE':
+                cursor.execute("SELECT last_mike FROM stabby_mikes WHERE user_id=?", [uid])
+                victim = cursor.fetchone()
+
+            # Set target name - Full name, or 'Nobody' if no victim.
+            target = await self.characterList.searchNameWithFilename(victim[0]) if victim[0] not in ['NONE', None] else "Nobody"
+            if target is None:      # None returned when nothing is found in GetName
+                target = victim[0]
+
+            # </editor-fold>
+            # <editor-fold desc="Target Handling">
+            # If target resolved check for protection [MC]
+            if target != "Nobody":
+                cursor.execute("SELECT mc FROM oialt WHERE user_id=?", [uid])
+                protection = cursor.fetchone()
+                # If protection - discard and deny aggressor
+                if protection[0] != 0:
+                    cursor.execute("UPDATE oialt SET mc=0 WHERE user_id=?", [uid])
+                    protected = True
+                # Else remove collectible from collection
+                else:
+                    filename = (await self.characterList.getCharacter(target)).filename
+                    try:
+                        cursor.execute("UPDATE stabby_mikes SET %s='NONE' WHERE user_id=?" % filename, [uid])
+                    except Exception as e:
+                        print(e)
+                    cursor.execute("UPDATE stabby_mikes SET last_mike='NONE' WHERE user_id=?", [uid])
+            # If no target, fail
+            # </editor-fold>
+        # </editor-fold>
+        # <editor-fold desc="Azazel - MC > Any // Aiko">
+        elif character.effect == Effects.BOYS_KILLER:
+            # <editor-fold desc="Target Hunt">
+            # Hunt for target - MC > Last Homie -> If none, no victim
+            cursor.execute("SELECT mc FROM the_boys WHERE user_id=?", [uid])
+            victim = cursor.fetchone()
+            if victim[0] == 'NONE':
+                cursor.execute("SELECT last_boi FROM the_boys WHERE user_id=?", [uid])
+                victim = cursor.fetchone()
+
+            # Set target name - Full name, or 'Nobody' if no victim.
+            target = await self.characterList.searchNameWithFilename(victim[0]) if victim[0] not in ['NONE', None] else "Nobody"
+            if target is None:  # None returned when nothing is found in GetName
+                target = victim[0]
+            # </editor-fold>
+            # <editor-fold desc="Target Handling">
+            # If target resolved check for protection [MC]
+            if target != "Nobody":
+                cursor.execute("SELECT aiko FROM oialt WHERE user_id=?", [uid])
+                protection = cursor.fetchone()
+                # If protection - discard and deny aggressor
+                if protection[0] != 0:
+                    cursor.execute("UPDATE oialt SET aiko=0 WHERE user_id=?", [uid])
+                    protected = True
+                # Else remove collectible from collection
+                else:
+                    filename = (await self.characterList.getCharacter(target)).filename
+                    try:
+                        cursor.execute("UPDATE the_boys SET %s='NONE' WHERE user_id=?" % filename, [uid])
+                    except Exception as e:
+                        print(e)
+                    cursor.execute("UPDATE the_boys SET last_boi='NONE' WHERE user_id=?", [uid])
+            # If no target, fail
+            # </editor-fold>
+        # </editor-fold>
+        # <editor-fold desc="Monster Lilith - Lilith > Any // 93">
+        elif character.effect == Effects.POTENTIAL_MUTATOR:
+            # <editor-fold desc="Target Hunt">
+            # Hunt for target - Lilith > Last Potential LI -> If none, no victim
+            cursor.execute("SELECT lilith FROM li_potential WHERE user_id=?", [uid])
+            victim = cursor.fetchone()
+            if victim[0] == 'NONE':
+                cursor.execute("SELECT last_potential_li FROM li_potential WHERE user_id=?", [uid])
+                victim = cursor.fetchone()
+
+            # Set target name - Full name, or 'Nobody' if no victim.
+            target = await self.characterList.searchNameWithFilename(victim[0]) if victim[0] not in ['NONE', None] else "Nobody"
+            if target is None:  # None returned when nothing is found in GetName
+                target = victim[0]
+
+            # </editor-fold>
+            # <editor-fold desc="Target Handling">
+            # If target resolved check for protection [93]
+            if target != "Nobody":
+                cursor.execute("SELECT nine_three FROM oialt WHERE user_id=?", [uid])
+                protection = cursor.fetchone()
+                # If protection - discard and deny aggressor
+                if protection[0] != 0:
+                    cursor.execute("UPDATE oialt SET nine_three=0 WHERE user_id=?", [uid])
+                    protected = True
+                # Else remove collectible from collection
+                else:
+                    filename = (await self.characterList.getCharacter(target)).filename
+                    try:
+                        cursor.execute("UPDATE li_potential SET %s='NONE' WHERE user_id=?" % filename, [uid])
+                    except Exception as e:
+                        print(e)
+                    cursor.execute("UPDATE li_potential SET last_potential_li='NONE' WHERE user_id=?", [uid])
+                # If no target, fail
+                # </editor-fold>
+        # </editor-fold>
+        # </editor-fold>
+
+        db.commit()
+        cursor.close()
+        db.close()
+        return Results(duplicate=duplicate, victim=target, protected=protected)
+
+
+    async def collectionOverview(self, author: discord.User, collection: Collections) -> discord.Embed:
+        discordID = str(author.id)
+        user_name = str(author.display_name)
+
+        members, missing, count, total = await self.getCollectionProgress(discordID, collection)
+
+        #   compile entries to list
+        haremlist = "\n".join(members)
+        missinglist = "\n".join(missing)
+
+        c_title = "OiaLt Harem" if collection == Collections.HAREM else str(collection)
+        embed_title = f"{c_title} of **{user_name}**:"
+
+        if haremlist == "":
+            haremlist = f"You haven't collected anyone for your {str(collection)} yet..."
+
+        if missinglist == "":
+            missinglist = f"You have completed the {str(collection)}! {HelperClass.daliaParty}"
+        #   build embed with categories 'got x/y' + names & 'missing z/y' + names --> + emotes?
+        embed = discord.Embed(title=embed_title, color=collection.color())
+        embed.add_field(name=f"Claimed ({count}/{total}):", value=haremlist)
+        embed.add_field(name=f"Missing ({total - count}/{total}):", value=missinglist)
+
+        return embed
+
+
+    async def getCollectionProgress(self, discordID, collection: Collections) -> tuple[list]:
+        db = sqlite3.connect(self.db_path)
+        cursor = db.cursor()
+
+        #   search thru 'eternum_harem' table for entries
+        uid = await self.accountManager.getUserID(discordID=discordID)
+
+        count = 0
+        members = []
+        missing = []
+        
+        table = collection.table()
+        cols = await get_cols(table_name=table, blacklist=collection.blacklist())
+        total = len(cols)
+        for c in cols:
+            cursor.execute("SELECT %s FROM %s WHERE user_id=?" % (c, table), [uid])
+            res = cursor.fetchone()
+            if not res or res[0] == 0:
+                missing.append(await self.characterList.searchNameWithFilename(c))
+            else:
+                members.append(await self.characterList.searchNameWithFilename(c))
+                count += 1
+
+        cursor.close()
+        db.close()
+        
+        return (members, missing, count, total)
+
+
+    async def resolveUser(self, uid: str, interaction: discord.Interaction):
+
+        user = SimpleNamespace(id=-1, display_name="Dummy#0001")
+        if uid != "None":
+            uid = await AccountManager.receiveDiscordIDFromInput(interaction, uid)
+            if uid == -1:
+                return interaction.user
+
+            if uid == interaction.user.id:
+                user = interaction.user
+            else:
+                user.id = uid
+                user.display_name = f"User {uid}"
+        else:
+            user = interaction.user
+
+        return user
+
+
+    async def getMembers(self, author, collection: Collections) -> tuple:
+        db = sqlite3.connect(self.db_path)
+        cursor = db.cursor()
+        discordID = str(author.id)
+
+        uid = await self.accountManager.getUserID(discordID=discordID)
+
+        count = 0
+        members = []
+        
+        table = collection.table()
+        cols = await get_cols(table_name=table, blacklist=collection.blacklist())
+        total = len(cols)
+        for c in cols:
+            cursor.execute("SELECT %s FROM %s WHERE user_id=?" % (c, table), [uid])
+            res = cursor.fetchone()
+            if res and res[0] != 0:
+                members.append(await self.characterList.searchNameWithFilename(c))
+                count += 1
+
+        cursor.close()
+        db.close()
+
+        return (members, (count, total))
+
+
+    # COMMANDS
 
     @app_commands.guilds(GUILD)
     @app_commands.command(name="ogf", description="Draw a OiaLt character to be your partner for the day.")
@@ -161,621 +646,126 @@ class OiaLt(commands.Cog):
         cursor.close()
         db.close()
 
-    async def createAndSendEmbed(self, interaction: discord.Interaction, character: OgfCharacterCard, results: OgfResults):
-        """
-        Creates and sends an embed using the provided character information.
-        -------------------------------------------------------------------------
-        Parameters:
-            - ctx : discord.ext.Context - discord-provided context to the command prompt.
-            - character : OgfCharacterCard - the card of the character to display.
-            - results : OgfResults - A struct containing context of the consequences of the character draw.
-        """
-        if not character:
-            print("Error: Missing character object.")
-
-        collection = character.collection
-        effect = character.effect
-
-        embed = ""
-        image = ""
-        text = ""
-        footer = character.footer
-        duplicateText = "" if collection == OgfCollections.NONE and effect == OgfEffects.NONE else f"(New) {HelperClass.daliaParty}" if not results.duplicate else f"(duplicate) {HelperClass.annieCry}"
-        collection_field_name = f"{str(collection)} {duplicateText}"
-        collection_field_value = ""
-        effect_field_name = str(effect)
-        effect_field_value = effect.Describe()
-
-        # non-collectibles
-        if collection == OgfCollections.NONE:
-            text = f"Congrats, {interaction.user.mention}...? Your companion for the day is {character.name}."
-            collection_field_value = "A character that doesn't belong into any collection."
-
-            # Special case - Spiderman (includes author username in footer)
-            if character.name == "Spiderman":
-                displayname = interaction.user.display_name
-                footer = f"Hey, is there a {displayname}? I have a pizza for {displayname}!"
-       
-        #region Harem
-        elif collection == OgfCollections.HAREM:
-            text = f"Congratulations {interaction.user.mention}! Your gf for the day is {character.name}!"
-            collection_field_value = f"A wild {character.name} has spawned in your harem!" if not results.duplicate \
-                else f"Tough luck! {character.name} is already in your harem!"
-        #endregion
-        #region Stabby Clan
-        elif collection == OgfCollections.STABBIES:
-            text = f"Congratulations {interaction.user.mention}! Your protector for the day is {character.name}!"
-            collection_field_value = f"A new recruit for the stabby clan!" if not results.duplicate \
-                else f"Tough luck! {character.name} is already part of your bodyguard staff!"
-        #endregion
-        #region The Boys
-        elif collection == OgfCollections.BOYS:
-            text = f"Congratulations {interaction.user.mention}! Your homie for the day is {character.name}!"
-            collection_field_value = f"Let's fucking goo! {character.name} joined the squad!" if not results.duplicate \
-                else f"Tough luck! {character.name} is already chilling with you!"
-        #endregion
-        #region Potential LI's
-        elif collection == OgfCollections.POTENTIALS:
-            text = f"Congrats {interaction.user.mention}! Your gf for the day is {character.name}!"
-            collection_field_value = f"{character.name} has joined the gang! Might consider asking her out? :wink:" if not results.duplicate \
-                else f"Tough luck! {character.name} has already expressed her interest in you!"
-
-            if interaction.user.name == "frostkanra":
-                text = "Well, well, well... if this were real life, a creator-createe relationship wouldn't be so " \
-                       "acceptable now, would it...?"
-        #endregion
-
-        #region Orochi
-        if effect == OgfEffects.HAREM_BUYER:
-            text = f"Yikes! Your company for the day is {character.name}. Good luck {interaction.user.mention} (You'll need it!)"
-            if results.protected:
-                collection_field_name = f"Bid for {results.victim} refused."
-                collection_field_value = f"GODDAMN IT, WHY AREN'T YOU LAUGHING OROCHI??!"
-            else:
-                collection_field_name = "**OH NO**"
-                collection_field_value = f"Orochi offered a deal for {results.victim} you couldn't refuse..." if \
-                    results.victim != "Nobody" else f"Must have been the wind..."
-        #endregion
-        #region Astaroth
-        if effect == OgfEffects.STABBY_KILLER:
-            text = f"Yikes! Your company for the day is {character.name}. Good luck {interaction.user.mention} (You'll need it!)"
-            if results.protected:
-                collection_field_name = f"That was close..."
-                collection_field_value = f"The MC managed to body Astaroth before he could kill {results.victim}!"
-            else:
-                collection_field_name = "**OH SHIT**"
-                collection_field_value = f"Astaroth shot {results.victim} dead. R.I.P." if \
-                    results.victim != "Nobody" else f"Must have been the wind..."
-        #endregion
-        #region Azazel
-        if effect == OgfEffects.BOYS_KILLER:
-            text = f"Yikes! Your company for the day is {character.name}. Good luck {interaction.user.mention} (You'll need it!)"
-            if results.protected:
-                collection_field_name = f"That was close..."
-                collection_field_value = f"Watch {results.victim}'s back, buddy."
-            else:
-                collection_field_name = "**OH SHIT**"
-                collection_field_value = f"Azazel put {results.victim} to sleep forever! R.I.P." if \
-                    results.victim != "Nobody" else f"Must have been the wind..."
-        #endregion
-        #region Monster Lilith
-        if effect == OgfEffects.POTENTIAL_MUTATOR:
-            text = f"Yikes! Your company for the day is {character.name}. Good luck {interaction.user.mention} (You'll need it!)"
-            if results.protected:
-                collection_field_name = f"That was close..."
-                collection_field_value = f"93 managed to turn the monster's gaze away from {results.victim}!"
-            else:
-                collection_field_name = "**OH SHIT**"
-                collection_field_value = f"{results.victim} just turned into a living set of spare ribs in front of you!" if \
-                    results.victim != "Nobody" else f"Must have been the wind..."
-        #endregion
-
-
-        #region Embed compilation and sending
-        embed = await HelperClass.createEmbed(title=character.name, text=text, footer=footer)
-
-        embed.add_field(name=collection_field_name, value=collection_field_value, inline=True)
-        embed.add_field(name=effect_field_name, value=effect_field_value, inline=True)
-
-        image = discord.File(f"./gfGameImages/{character.filename}.webp", filename="gf.webp")
-        embed.set_image(url="attachment://gf.webp")
-        await interaction.response.send_message(file=image, embed=embed)
-        #endregion
-
-    async def updateDatabase(self, uid: int, character: OgfCharacterCard) -> OgfResults:
-        """
-        Performs the changes to the database following a character's drawing.
-        -------------------------------------------------------------------------
-        Parameters:
-            - uid : int - the user's ID in the database system.
-            - character : OgfCharacterCard - the character drawn.
-        -------------------------------------------------------------------------
-        Returns:
-            - OgfResults: A struct containing context around the draw - duplicate collectible, protected against a villain, and chosen victim.
-        """
-        # <editor-fold desc="Setup">
-        # Setup: DB connections
-        db = sqlite3.connect("main.sqlite")
-        cursor = db.cursor()
-
-        # Setup: Results variables
-        duplicate = False
-        target = None
-        protected = False
-        # </editor-fold>
-
-        # Update last obtained character
-        cursor.execute("UPDATE oialt SET last_gf=? WHERE user_id=?", [character.name, uid])
-
-        # <editor-fold desc="Collections">
-        # Switch Collections:
-        # <editor-fold desc="Harem">
-        if character.collection == OgfCollections.HAREM:
-            # Update collection's last obtained
-            cursor.execute("UPDATE oialt_harem SET last_li=? WHERE user_id=?", [character.filename, uid])
-
-            # Check if already in collection
-            cursor.execute("SELECT %s FROM oialt_harem WHERE user_id=?" % character.filename, [uid])
-            check = cursor.fetchone()
-            # If not, add to collection
-            if check[0] == "NONE":
-                cursor.execute("UPDATE oialt_harem SET %s=? WHERE user_id=?" % character.filename,
-                               [character.name, uid])
-            # Else mark as duplicate
-            else:
-                duplicate = True
-        # </editor-fold>
-        # <editor-fold desc="Stabby Mikes">
-        elif character.collection == OgfCollections.STABBIES:
-            # Update collection's last obtained
-            cursor.execute("UPDATE stabby_mikes SET last_mike=? WHERE user_id=?", [character.filename, uid])
-
-            # Check if already in collection
-            cursor.execute("SELECT %s FROM stabby_mikes WHERE user_id=?" % character.filename, [uid])
-            check = cursor.fetchone()
-            # If not, add to collection
-            if check[0] == "NONE":
-                cursor.execute("UPDATE stabby_mikes SET %s=? WHERE user_id=?" % character.filename,
-                               [character.name, uid])
-            # Else mark as duplicate
-            else:
-                duplicate = True
-        # </editor-fold>
-        # <editor-fold desc="The Boys">
-        elif character.collection == OgfCollections.BOYS:
-            # Update Collection's last obtained
-            cursor.execute("UPDATE the_boys SET last_boi=? WHERE user_id=?", [character.filename, uid])
-
-            # Check if already in collection
-            cursor.execute("SELECT %s FROM the_boys WHERE user_id=?" % character.filename, [uid])
-            check = cursor.fetchone()
-            # If not, add to collection
-            if check[0] == "NONE":
-                cursor.execute("UPDATE the_boys SET %s=? WHERE user_id=?" % character.filename, [character.name, uid])
-            # Else mark as duplicate
-            else:
-                duplicate = True
-        # </editor-fold>
-        # <editor-fold desc="Potential LI's">
-        elif character.collection == OgfCollections.POTENTIALS:
-            # Update Collection's last obtained
-            cursor.execute("UPDATE li_potential SET last_potential_li=? WHERE user_id=?", [character.filename, uid])
-
-            # Check if already in collection
-            cursor.execute("SELECT %s FROM li_potential WHERE user_id=?" % character.filename, [uid])
-            check = cursor.fetchone()
-            # If not, add to collection
-            if check[0] == "NONE":
-                cursor.execute("UPDATE li_potential SET %s=? WHERE user_id=?" % character.filename,
-                               [character.name, uid])
-            # Else mark as duplicate
-            else:
-                duplicate = True
-        # </editor-fold>
-        # </editor-fold>
-
-        # <editor-fold desc="Effects">
-        # <editor-fold desc="Saviours">
-        if character.effect in [OgfEffects.HAREM_SAVER, OgfEffects.STABBY_SAVER, OgfEffects.BOYS_SAVER, OgfEffects.POTENTIAL_SAVER]:
-            # Check if protection is already obtained
-            cursor.execute("SELECT %s FROM oialt WHERE user_id=?" % character.filename, [uid])
-            check = cursor.fetchone()
-            # If not, add to user
-            if check[0] == 0:
-                cursor.execute("UPDATE oialt SET %s=1 WHERE user_id=?" % character.filename, [uid])
-            # else mark as duplicate
-            else:
-                duplicate = True
-        # </editor-fold>
-        # <editor-fold desc="Orochi - Lauren > MH Lauren > Any // Funtime">
-        elif character.effect == OgfEffects.HAREM_BUYER:
-            # <editor-fold desc="Target Hunt">
-            # Hunt for target - Lauren > MH Lauren > last LI -> if none, no victim.
-            cursor.execute("SELECT lauren FROM oialt_harem WHERE user_id=?", [uid])
-            victim = cursor.fetchone()
-            if victim[0] == 'NONE':
-                cursor.execute("SELECT messy_hair_lauren FROM oialt_harem WHERE user_id=?", [uid])
-                victim = cursor.fetchone()
-                if victim[0] == 'NONE':
-                    cursor.execute("SELECT last_li FROM oialt_harem WHERE user_id=?", [uid])
-                    victim = cursor.fetchone()
-
-            # Set target name - Full name, or 'Nobody' if no victim.
-            target = self.characterList.GetName(victim[0]) if victim[0] not in ['NONE', None] else "Nobody"
-            if target is None:  # None returned when nothing is found in GetName
-                target = victim[0]
-            # </editor-fold>
-            # <editor-fold desc="Target handling">
-            # If target resolved, check for protection [Funtime]
-            if target != "Nobody":
-                cursor.execute("SELECT funtime FROM oialt WHERE user_id=?", [uid])
-                protection = cursor.fetchone()
-                # If protection, discard it and deny the aggressor
-                if protection[0] != 0:
-                    cursor.execute("UPDATE oialt SET funtime=0 WHERE user_id=?", [uid])
-                    protected = True
-                # Else remove target from collection
-                else:
-                    filename = self.characterList.GetFilename(target)
-                    try:
-                        cursor.execute("UPDATE oialt_harem SET %s='NONE' WHERE user_id=?" % filename, [uid])
-                    except Exception as e:
-                        print(e)
-                    cursor.execute("UPDATE oialt_harem SET last_li='NONE' WHERE user_id=?", [uid])
-
-            # If no target, fail
-            # </editor-fold>
-        # </editor-fold>
-        # <editor-fold desc="Astaroth - Father Mitchell > Any // MC">
-        elif character.effect == OgfEffects.STABBY_KILLER:
-            # <editor-fold desc="Target Hunt">
-            # Hunt for target - Father Mitchell > Last Mike -> If none, no victim
-            cursor.execute("SELECT priest FROM stabby_mikes WHERE user_id=?", [uid])
-            victim = cursor.fetchone()
-            if victim[0] == 'NONE':
-                cursor.execute("SELECT last_mike FROM stabby_mikes WHERE user_id=?", [uid])
-                victim = cursor.fetchone()
-
-            # Set target name - Full name, or 'Nobody' if no victim.
-            target = self.characterList.GetName(victim[0]) if victim[0] not in ['NONE', None] else "Nobody"
-            if target is None:      # None returned when nothing is found in GetName
-                target = victim[0]
-
-            # </editor-fold>
-            # <editor-fold desc="Target Handling">
-            # If target resolved check for protection [MC]
-            if target != "Nobody":
-                cursor.execute("SELECT mc FROM oialt WHERE user_id=?", [uid])
-                protection = cursor.fetchone()
-                # If protection - discard and deny aggressor
-                if protection[0] != 0:
-                    cursor.execute("UPDATE oialt SET mc=0 WHERE user_id=?", [uid])
-                    protected = True
-                # Else remove collectible from collection
-                else:
-                    filename = self.characterList.GetFilename(target)
-                    try:
-                        cursor.execute("UPDATE stabby_mikes SET %s='NONE' WHERE user_id=?" % filename, [uid])
-                    except Exception as e:
-                        print(e)
-                    cursor.execute("UPDATE stabby_mikes SET last_mike='NONE' WHERE user_id=?", [uid])
-            # If no target, fail
-            # </editor-fold>
-        # </editor-fold>
-        # <editor-fold desc="Azazel - MC > Any // Aiko">
-        elif character.effect == OgfEffects.BOYS_KILLER:
-            # <editor-fold desc="Target Hunt">
-            # Hunt for target - MC > Last Homie -> If none, no victim
-            cursor.execute("SELECT mc FROM the_boys WHERE user_id=?", [uid])
-            victim = cursor.fetchone()
-            if victim[0] == 'NONE':
-                cursor.execute("SELECT last_boi FROM the_boys WHERE user_id=?", [uid])
-                victim = cursor.fetchone()
-
-            # Set target name - Full name, or 'Nobody' if no victim.
-            target = self.characterList.GetName(victim[0]) if victim[0] not in ['NONE', None] else "Nobody"
-            if target is None:  # None returned when nothing is found in GetName
-                target = victim[0]
-            # </editor-fold>
-            # <editor-fold desc="Target Handling">
-            # If target resolved check for protection [MC]
-            if target != "Nobody":
-                cursor.execute("SELECT aiko FROM oialt WHERE user_id=?", [uid])
-                protection = cursor.fetchone()
-                # If protection - discard and deny aggressor
-                if protection[0] != 0:
-                    cursor.execute("UPDATE oialt SET aiko=0 WHERE user_id=?", [uid])
-                    protected = True
-                # Else remove collectible from collection
-                else:
-                    filename = self.characterList.GetFilename(target)
-                    try:
-                        cursor.execute("UPDATE the_boys SET %s='NONE' WHERE user_id=?" % filename, [uid])
-                    except Exception as e:
-                        print(e)
-                    cursor.execute("UPDATE the_boys SET last_boi='NONE' WHERE user_id=?", [uid])
-            # If no target, fail
-            # </editor-fold>
-        # </editor-fold>
-        # <editor-fold desc="Monster Lilith - Lilith > Any // 93">
-        elif character.effect == OgfEffects.POTENTIAL_MUTATOR:
-            # <editor-fold desc="Target Hunt">
-            # Hunt for target - Lilith > Last Potential LI -> If none, no victim
-            cursor.execute("SELECT lilith FROM li_potential WHERE user_id=?", [uid])
-            victim = cursor.fetchone()
-            if victim[0] == 'NONE':
-                cursor.execute("SELECT last_potential_li FROM li_potential WHERE user_id=?", [uid])
-                victim = cursor.fetchone()
-
-            # Set target name - Full name, or 'Nobody' if no victim.
-            target = self.characterList.GetName(victim[0]) if victim[0] not in ['NONE', None] else "Nobody"
-            if target is None:  # None returned when nothing is found in GetName
-                target = victim[0]
-
-            # </editor-fold>
-            # <editor-fold desc="Target Handling">
-            # If target resolved check for protection [93]
-            if target != "Nobody":
-                cursor.execute("SELECT nine_three FROM oialt WHERE user_id=?", [uid])
-                protection = cursor.fetchone()
-                # If protection - discard and deny aggressor
-                if protection[0] != 0:
-                    cursor.execute("UPDATE oialt SET nine_three=0 WHERE user_id=?", [uid])
-                    protected = True
-                # Else remove collectible from collection
-                else:
-                    filename = self.characterList.GetFilename(target)
-                    try:
-                        cursor.execute("UPDATE li_potential SET %s='NONE' WHERE user_id=?" % filename, [uid])
-                    except Exception as e:
-                        print(e)
-                    cursor.execute("UPDATE li_potential SET last_potential_li='NONE' WHERE user_id=?", [uid])
-                # If no target, fail
-                # </editor-fold>
-        # </editor-fold>
-        # </editor-fold>
-
-        db.commit()
-        cursor.close()
-        db.close()
-        return OgfResults(duplicate=duplicate, victim=target, protected=protected)
-
-
     @app_commands.guilds(GUILD)
     @app_commands.command(name="oialt_harem", description="View a user's progress on the OiaLt harem collection (ex oharem). Defaults to your User ID")
     @commands.check(check_channel)
-    async def oharem(self, interaction: discord.Interaction, uid: int=-1):
+    async def oharem(self, interaction: discord.Interaction, uid: str="None"):
         """
         Provides an overview of a user's progress in collecting the OiaLt harem.
         ------------------------------------------------
         Parameters:
-            - ctx : discord.ext.Context - discord-provided context to the command prompt.
+            - interaction : discord.Interaction - discord-provided context to the command prompt.
         """
-        if uid != -1:
-            await interaction.response.send_message("Checking others' collections is currently unsupported, sorry!", ephemeral=True)
+        user = await self.resolveUser(uid, interaction)
+
+        # check whether the user is registered.
+        if not await AccountManager.verifyUser(discord_id=user.id, interaction=interaction, expectFail=False):
             return
 
-        db = sqlite3.connect("main.sqlite")
-        cursor = db.cursor()
-        discordID = str(interaction.user.id)
-        uid = await self.accountManager.getUserID(discordID=discordID)
-        user_name = str(interaction.user.display_name)
-        count = 0
-
-        members = []
-        missing = ["Aiko", "Carla", "Iris", "Jasmine", "Judie", "Lauren", "Messy Hair Lauren", "Rebecca"]
-        cursor.execute(
-            "SELECT judie, lauren, messy_hair_lauren, carla, iris, aiko, jasmine, rebecca FROM oialt_harem WHERE user_id=?",
-            [uid])
-        yesno = cursor.fetchone()
-        for i in yesno:
-            if i != 'NONE':
-                count = count + 1
-                members.append(i)
-
-        for i in missing:
-            if i in members:
-                missing.remove(i)
-
-        haremlist = "\n".join(members)
-        missinglist = "\n".join(missing)
-
-        if haremlist == "":
-            haremlist = "You haven't collected anyone for your harem yet..."
-
-        if missinglist == "":
-            missinglist = "You have completed the collection, congrats!"
-
-        embed_title = f"OiaLt Harem of **{user_name}**:"
-        embed = discord.Embed(title=embed_title, color=HelperClass.orange)
-        embed.add_field(name=f"Claimed ({count}/8):", value=haremlist)
-        embed.add_field(name=f"Missing ({8 - count}/8):", value=missinglist)
-        await interaction.response.send_message(embed=embed)
-
-        cursor.close()
-        db.close()
+        # if user is registered, proceed.
+        await interaction.response.send_message(embed=await self.collectionOverview(user, Collections.HAREM))
 
     @app_commands.guilds(GUILD)
     @app_commands.command(name="oialt_stabby_clan", description="View a user's progress on the OiaLt stabby clan collection (ex stabbyclan). Defaults to your User ID")
     @commands.check(check_channel)
-    async def stabbyclan(self, interaction: discord.Interaction, uid: int=-1):
+    async def stabbyclan(self, interaction: discord.Interaction, uid: str="None"):
         """
         Provides an overview of a user's progress in collecting the clan of Stabby Mike personas.
         ------------------------------------------------
         Parameters:
             - ctx : discord.ext.Context - discord-provided context to the command prompt.
         """
-        if uid != -1:
-            await interaction.response.send_message("Checking others' collections is currently unsupported, sorry!", ephemeral=True)
+        user = await self.resolveUser(uid, interaction)
+
+        # check whether the user is registered.
+        if not await AccountManager.verifyUser(discord_id=user.id, interaction=interaction, expectFail=False):
             return
 
-        db = sqlite3.connect("main.sqlite")
-        cursor = db.cursor()
-        discordID = str(interaction.user.id)
-        uid = await self.accountManager.getUserID(discordID=discordID)
-        user_name = str(interaction.user.display_name)
-        count = 0
-
-        members = []
-        cursor.execute(
-            "SELECT police, hitman, yakuza, priest, exterminator, anastasia FROM stabby_mikes WHERE user_id=?",
-            [uid])
-        yesno = cursor.fetchone()
-        for i in yesno:
-            if i != 'NONE':
-                count = count + 1
-                members.append(i)
-
-        mikes = ", ".join(members)
-
-        if mikes == "":
-            mikes = "You haven't collected anyone for your clan yet..."
-
-        embed_title = f"Stabby Clan of {user_name}:"
-        embed = discord.Embed(title=embed_title, description=mikes, color=HelperClass.orange)
-        embed.set_footer(text=f"Progress: {count} / 6")
-        await interaction.response.send_message(embed=embed)
-
-        cursor.close()
-        db.close()
+        # if user is registered, proceed.
+        await interaction.response.send_message(embed=await self.collectionOverview(user, Collections.STABBIES))
 
     @app_commands.guilds(GUILD)
     @app_commands.command(name="oialt_homies", description="View a user's progress on the OiaLt homies collection (ex theboys). Defaults to your User ID")
     @commands.check(check_channel)
-    async def theboys(self, interaction: discord.Interaction, uid: int=-1):
+    async def theboys(self, interaction: discord.Interaction, uid: str="None"):
         """
         Provides an overview of a user's progress in collecting the OiaLt homies.
         ------------------------------------------------
         Parameters:
-            - ctx : discord.ext.Context - discord-provided context to the command prompt.
+            - interaction : discord.Interaction - discord-provided context to the command prompt.
         """
-        if uid != -1:
-            await interaction.response.send_message("Checking others' collections is currently unsupported, sorry!", ephemeral=True)
+        user = await self.resolveUser(uid, interaction)
+
+        # check whether the user is registered.
+        if not await AccountManager.verifyUser(discord_id=user.id, interaction=interaction, expectFail=False):
             return
 
-        db = sqlite3.connect("main.sqlite")
-        cursor = db.cursor()
-        discordID = str(interaction.user.id)
-        uid = await self.accountManager.getUserID(discordID=discordID)
-        user_name = str(interaction.user.display_name)
-        count = 0
-
-        members = []
-        cursor.execute("SELECT mc, tom, oliver, fit_jack, asmodeus, hiromi FROM the_boys WHERE user_id=?",
-                        [uid])
-        yesno = cursor.fetchone()
-        for i in yesno:
-            if i != 'NONE':
-                count = count + 1
-                members.append(i)
-
-        bois = ", ".join(members)
-
-        if bois == "":
-            bois = "You haven't collected anyone for your boys yet..."
-
-        embed_title = f"The OiaLt Boys of {user_name}:"
-        embed = discord.Embed(title=embed_title, description=bois, color=HelperClass.orange)
-        embed.set_footer(text=f"Progress: {count} / 6")
-        await interaction.response.send_message(embed=embed)
-
-        cursor.close()
-        db.close()
+        # if user is registered, proceed.
+        await interaction.response.send_message(embed=await self.collectionOverview(user, Collections.BOYS))
 
     @app_commands.guilds(GUILD)
     @app_commands.command(name="oialt_side_girls", description="View a user's progress on the OiaLt side girls collection (ex potentiallis) Defaults to your User ID")
     @commands.check(check_channel)
-    async def potentialLis(self, interaction: discord.Interaction, uid: int=-1):
+    async def potentialLis(self, interaction: discord.Interaction, uid: str="None"):
         """
         Provides an overview of a user's progress in collecting the OiaLt side girls.
         ------------------------------------------------
         Parameters:
-            - ctx : discord.ext.Context - discord-provided context to the command prompt.
+            - interaction : discord.Interaction - discord-provided context to the command prompt.
         """
-        if uid != -1:
-            await interaction.response.send_message("Checking others' collections is currently unsupported, sorry!", ephemeral=True)
+        user = await self.resolveUser(uid, interaction)
+
+        # check whether the user is registered.
+        if not await AccountManager.verifyUser(discord_id=user.id, interaction=interaction, expectFail=False):
             return
 
-        db = sqlite3.connect("main.sqlite")
-        cursor = db.cursor()
-        discordID = str(interaction.user.id)
-        uid = await self.accountManager.getUserID(discordID=discordID)
-        user_name = str(interaction.user.display_name)
-        count = 0
-
-        members = []
-        cursor.execute(
-            "SELECT ava, lilith, fit_jack_groupie, train_conductor, shop_girl, stone_elephant FROM li_potential WHERE user_id=?",
-            [uid])
-        yesno = cursor.fetchone()
-        for i in yesno:
-            if i != 'NONE':
-                count = count + 1
-                members.append(i)
-
-        potentials = ", ".join(members)
-
-        if potentials == "":
-            potentials = "You haven't collected anyone for your potential LI's yet..."
-
-        embed_title = f"Potential OiaLt LI's of {user_name}:"
-        embed = discord.Embed(title=embed_title, description=potentials, color=HelperClass.orange)
-        embed.set_footer(text=f"Progress: {count} / 6")
-        await interaction.response.send_message(embed=embed)
-
-        cursor.close()
-        db.close()
+        # if user is registered, proceed.
+        await interaction.response.send_message(embed=await self.collectionOverview(user, Collections.POTENTIALS))
 
     @app_commands.guilds(GUILD)
     @app_commands.command(name="oialt_protectors", description="View a user's OiaLt protection racket (ex oprotectors). Defaults to your User ID")
     @commands.check(check_channel)
     @check_user()
-    async def oprotectors(self, interaction: discord.Interaction, uid: int=-1):
+    async def oprotectors(self, interaction: discord.Interaction, uid: str="None"):
         """
         Provides an overview of a user's progress in collecting the OiaLt protectors.
         ------------------------------------------------
         Parameters:
             - ctx : discord.ext.Context - discord-provided context to the command prompt.
         """
-        if uid != -1:
-            await interaction.response.send_message("Checking others' collections is currently unsupported, sorry!", ephemeral=True)
+        user = await self.resolveUser(uid, interaction)
+
+        # check whether the user is registered.
+        if not await AccountManager.verifyUser(discord_id=user.id, interaction=interaction, expectFail=False):
             return
 
-        db = sqlite3.connect("main.sqlite")
+        db = sqlite3.connect(self.db_path)
         cursor = db.cursor()
-        discordID = str(interaction.user.id)
-        user_name = str(interaction.user.display_name)
+        discordID = str(user.id)
+        user_name = str(user.display_name)
 
         #   search thru 'eternum_harem' table for entries
         uid = await self.accountManager.getUserID(discordID=discordID)
         members = []
         cursor.execute("SELECT funtime, mc, aiko, nine_three FROM oialt WHERE user_id = ?", [uid])
         yesno = cursor.fetchone()
-        harem = "**Harem:**\nFuntime: :x:"
-        if yesno[0] == 1:
-            harem = "**Harem:**\nFuntime: ✅"
+        harem = f"**Harem:**\nFuntime: {'✅' if yesno[0] == 1 else ':x:'}"
         members.append(harem)
 
-        mikes = "**Stabby Clan:**\nMC: :x:"
-        if yesno[1] == 1:
-            mikes = "**Stabby Clan:**\nMC: ✅"
+        mikes = f"**Stabby Clan:**\nMC: {'✅' if yesno[1] == 1 else ':x:'}"
         members.append(mikes)
 
-        theboys = "**The Boys:**\nAiko: :x:"
-        if yesno[2] == 1:
-            theboys = "**The Boys:**\nAiko: ✅"
+        theboys = f"**The Boys:**\nAiko: {'✅' if yesno[2] == 1 else ':x:'}"
         members.append(theboys)
 
-        potentialLis = "**Potential LI's:**\n93: :x:"
-        if yesno[3] == 1:
-            potentialLis = "**Potential LI's:**\n93: ✅"
+        potentialLis = f"**Potential LI's:**\n93: {'✅' if yesno[3] == 1 else ':x:'}"
         members.append(potentialLis)
 
         #   compile entries to list
         protectorlist = "\n".join(members)
 
         embed_title = f"OiaLt Protectors of **{user_name}**:"
-        #   build embed (color pink) with categories 'got x/y' + names & 'missing z/y' + names --> + emotes?
+        #   build embed (color blue) with categories 'got x/y' + names & 'missing z/y' + names --> + emotes?
         embed = discord.Embed(title=embed_title, description=protectorlist, color=HelperClass.orange)
         await interaction.response.send_message(embed=embed)
 
@@ -785,130 +775,85 @@ class OiaLt(commands.Cog):
     @app_commands.guilds(GUILD)
     @app_commands.command(name="oialt_collections", description="View a user's OiaLt collections portfolio (ex ocollections). Defaults to your User ID.")
     @commands.check(check_channel)
-    async def oCollections(self, interaction, uid: int=-1):
+    async def oCollections(self, interaction: discord.Interaction, uid: str="None"):
         """
         Provides an overview of a user's progress in all OiaLt collections.
         ------------------------------------------------
         Parameters:
             - ctx : discord.ext.Context - discord-provided context to the command prompt.
         """
-        if uid != -1:
-            await interaction.response.send_message("Checking others' collections is currently unsupported, sorry!", ephemeral=True)
+
+        user = await self.resolveUser(uid, interaction)
+
+        # check whether the user is registered.
+        if not await AccountManager.verifyUser(discord_id=user.id, interaction=interaction, expectFail=False):
             return
+        
+        await interaction.response.defer()
 
-        db = sqlite3.connect("main.sqlite")
+        # if user is registered, proceed.
+        db = sqlite3.connect(self.db_path)
         cursor = db.cursor()
-        discordID = str(interaction.user.id)
-        user_name = str(interaction.user.display_name)
-        haremcount = 0
-        homiecount = 0
-        mikecount = 0
-        potentialscount = 0
+        discordID = str(user.id)
+        user_name = str(user.display_name)
 
-        embed_title = f"OiaLt Collections of **{user_name}**:"
+        embed_title = f"Eternum Collections of **{user_name}**:"
         embed = discord.Embed(title=embed_title, color=HelperClass.orange)
 
-        #   search thru tables for entries
-        uid = await self.accountManager.getUserID(discordID=discordID, cursor=cursor)
-        members = []
-
         # HAREM
-        cursor.execute(
-            "SELECT judie, lauren, messy_hair_lauren, carla, iris, aiko, jasmine, rebecca FROM oialt_harem WHERE user_id=?", [uid])
-        yesno = cursor.fetchone()
-        for i in yesno:
-            if i != 'NONE':
-                haremcount = haremcount + 1
-                members.append(i)
+        h_list, h_vals = await self.getMembers(user, Collections.HAREM)
 
-        #   compile entries to list
-        haremlist = "\n".join(members)
+        haremlist = "\n".join(h_list)
 
         if haremlist == "":
             haremlist = "You haven't collected anyone for your harem yet..."
-        embed.add_field(name=f"Harem: ({haremcount}/8):", value=haremlist)
-
-        members = []
+        embed.add_field(name=f"Harem: ({h_vals[0]}/{h_vals[1]}):", value=haremlist)
 
         # THE BOYS
-        cursor.execute(
-            "SELECT mc, tom, oliver, fit_jack, asmodeus, hiromi FROM the_boys WHERE user_id=?", [uid])
-        yesno = cursor.fetchone()
-        for i in yesno:
-            if i != 'NONE':
-                homiecount = homiecount + 1
-                members.append(i)
+        mikes_list, mikes_vals = await self.getMembers(user, Collections.BOYS)
 
-        #   compile entries to list
-        homielist = "\n".join(members)
+        mikeslist = "\n".join(mikes_list)
 
-        if homielist == "":
-            homielist = "You haven't collected any of the boys yet..."
+        if mikeslist == "":
+            mikeslist = "You haven't collected any of the boys yet..."
 
-        embed.add_field(name=f"The Boys: ({homiecount}/6):", value=homielist)
-
-        members = []
+        embed.add_field(name=f"The Boys: ({mikes_vals[0]}/{mikes_vals[1]}):", value=mikeslist)
 
         # STABBY CLAN
-        cursor.execute(
-            "SELECT police, hitman, yakuza, priest, exterminator, anastasia FROM stabby_mikes WHERE user_id=?",
-            [uid])
-        yesno = cursor.fetchone()
-        for i in yesno:
-            if i != 'NONE':
-                mikecount = mikecount + 1
-                members.append(i)
+        mikes_list, mikes_vals = await self.getMembers(user, Collections.STABBIES)
 
-        # compile entries to list
-        mikelist = "\n".join(members)
+        mikeslist = "\n".join(mikes_list)
 
-        if mikelist == "":
-            mikelist = "You haven't collected any Mike yet..."
-        embed.add_field(name=f"Stabby Clan: ({mikecount}/6):", value=mikelist)
+        if mikeslist == "":
+            mikeslist = "You haven't collected any of the Mikes yet..."
+
+        embed.add_field(name=f"Stabby Mikes: ({mikes_vals[0]}/{mikes_vals[1]}):", value=mikeslist)
 
         # POTENTIAL LI'S
+        s_list, s_vals = await self.getMembers(user, Collections.POTENTIALS)
+        
+        sideslist = "\n".join(s_list)
 
-        members = []
-
-        cursor.execute(
-            "SELECT ava, lilith, fit_jack_groupie, train_conductor, shop_girl, stone_elephant FROM li_potential WHERE user_id=?",
-            [uid])
-        yesno = cursor.fetchone()
-        for i in yesno:
-            if i != 'NONE':
-                potentialscount = potentialscount + 1
-                members.append(i)
-
-        #   compile entries to list
-        potentialslist = "\n".join(members)
-
-        if potentialslist == "":
-            potentialslist = "You haven't collected any of the potential LI's yet..."
-        embed.add_field(name=f"Potential LI's: ({potentialscount}/6):", value=potentialslist)
+        if sideslist == "":
+            sideslist = "You haven't collected any of the potential LI's yet..."
+        embed.add_field(name=f"Potential LI's': ({s_vals[0]}/{s_vals[1]}):", value=sideslist)
 
         # Protectors
 
         members = []
+        uid = await self.accountManager.getUserID(discordID=discordID)
         cursor.execute("SELECT funtime, mc, aiko, nine_three FROM oialt WHERE user_id = ?", [uid])
         yesno = cursor.fetchone()
-        harem = "**Harem:**\nFuntime: :x:"
-        if yesno[0] == 1:
-            harem = "**Harem:**\nFuntime: ✅"
+        harem = f"**Harem:**\nFuntime: {'✅' if yesno[0] == 1 else ':x:'}"
         members.append(harem)
 
-        mikes = "**Stabby Clan:**\nMC: :x:"
-        if yesno[1] == 1:
-            mikes = "**Stabby Clan:**\nMC: ✅"
+        mikes = f"**Stabby Clan:**\nMC: {'✅' if yesno[1] == 1 else ':x:'}"
         members.append(mikes)
-
-        theboys = "**The Boys:**\nAiko: :x:"
-        if yesno[2] == 1:
-            theboys = "**The Boys:**\nAiko: ✅"
+        
+        theboys = f"**The Boys:**\nAiko: {'✅' if yesno[2] == 1 else ':x:'}"
         members.append(theboys)
 
-        potentialLis = "**Potential LI's:**\n93: :x:"
-        if yesno[3] == 1:
-            potentialLis = "**Potential LI's:**\n93: ✅"
+        potentialLis = f"**Potential LI's:**\n93: {'✅' if yesno[3] == 1 else ':x:'}"
         members.append(potentialLis)
 
         #   compile entries to list
@@ -916,7 +861,7 @@ class OiaLt(commands.Cog):
 
         embed.add_field(name="Protections:", value=protectorlist)
 
-        await interaction.response.send_message(embed=embed)
+        await interaction.followup.send(embed=embed)
 
         cursor.close()
         db.close()

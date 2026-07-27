@@ -1,6 +1,7 @@
-from CharacterCard import NsfwCharacterCard
+from NsfwUtils import CharacterCard
 from os import listdir
 from os.path import isfile, join
+
 
 class NsfwCharacters:
     def __init__(self):
@@ -16,7 +17,7 @@ class NsfwCharacters:
         self.countUp()
 
     def setup(self):
-        Aiko = NsfwCharacterCard(name="Aiko",
+        Aiko = CharacterCard(name="Aiko",
                                  picNumber=3,
                                  quotes=["Don't just stand there, you're going to catch a cold!",
                                          "At least we'll have a funny anecdote to tell!"],
@@ -27,7 +28,7 @@ class NsfwCharacters:
         self.oialt.append(Aiko)
         self.dict["aiko"] = Aiko
 
-        Carla = NsfwCharacterCard(name="Carla",
+        Carla = CharacterCard(name="Carla",
                                   picNumber=2,
                                   quotes=["Well, am I going to take a bath alone or..."],
                                   footers=["haha stop it, we're not gonna fuck in the dressing room. We're not animals..."],
@@ -36,7 +37,7 @@ class NsfwCharacters:
         self.oialt.append(Carla)
         self.dict["carla"] = Carla
 
-        Iris = NsfwCharacterCard(name="Iris",
+        Iris = CharacterCard(name="Iris",
                                  picNumber=5,
                                  quotes=["Come on babe! Don't be shy! This is fucking great!",
                                          "Do you know what would be absolutely crazy and impulsive right now?"],
@@ -46,7 +47,7 @@ class NsfwCharacters:
         self.list.append(Iris)
         self.dict["iris"] = Iris
 
-        Jasmine = NsfwCharacterCard(name="Jasmine",
+        Jasmine = CharacterCard(name="Jasmine",
                                     picNumber=4,
                                     quotes=["You fucking prick... I don't know why, but you really turn me on...",
                                             "You're precious and you're smokin' hot, it had to happen sooner or later..."],
@@ -58,7 +59,7 @@ class NsfwCharacters:
         self.dict["jasmine"] = Jasmine
         self.dict["jas"] = Jasmine
 
-        Judie = NsfwCharacterCard(name="Judie",
+        Judie = CharacterCard(name="Judie",
                                   picNumber=6,
                                   quotes=["This was such a good idea, sis!",
                                           "Come on babe! Don't be shy! This is fucking great!",
@@ -70,7 +71,7 @@ class NsfwCharacters:
         self.list.append(Judie)
         self.dict["judie"] = Judie
 
-        Lauren = NsfwCharacterCard(name="Lauren",
+        Lauren = CharacterCard(name="Lauren",
                                    picNumber=7,
                                    quotes=["You're precious and you're smokin' hot, it had to happen sooner or later...",
                                            "At least we'll have a funny anecdote to tell!",
@@ -87,7 +88,7 @@ class NsfwCharacters:
         self.list.append(Lauren)
         self.dict["lauren"] = Lauren
 
-        Rebecca = NsfwCharacterCard(name="Rebecca",
+        Rebecca = CharacterCard(name="Rebecca",
                                     picNumber=1,
                                     quotes=["You fill me up completely"],
                                     footers=["I'm not a respectable teacher now, am I?"],
@@ -97,7 +98,7 @@ class NsfwCharacters:
         self.dict["rebecca"] = Rebecca
         self.dict["reb"] = Rebecca
 
-        Alex = NsfwCharacterCard(name="Alex",
+        Alex = CharacterCard(name="Alex",
                                  picNumber=9,
                                  quotes=["Oh you didn't know? Orion and I are fucking. Like rabbits.",
                                          "Now my skin can finally breathe.",
@@ -114,7 +115,7 @@ class NsfwCharacters:
         self.dict["alex"] = Alex
         self.dict["alexandra"] = Alex
 
-        Annie = NsfwCharacterCard(name="Annie",
+        Annie = CharacterCard(name="Annie",
                                   picNumber=11,
                                   quotes=["\"Like\" it? It was the best experience of my life!"],
                                   footers=["My knight in shining armor..."],
@@ -123,7 +124,7 @@ class NsfwCharacters:
         self.eternum.append(Annie)
         self.dict["annie"] = Annie
 
-        Calypso = NsfwCharacterCard(name="Calypso",
+        Calypso = CharacterCard(name="Calypso",
                                     picNumber=1,
                                     quotes=[
                                         "You look... \"hot as fuck\" as well.",
@@ -136,7 +137,7 @@ class NsfwCharacters:
         self.dict["calypso"] = Calypso
         self.dict["caly"] = Calypso
 
-        Dalia = NsfwCharacterCard(name="Dalia",
+        Dalia = CharacterCard(name="Dalia",
                                   picNumber=9,
                                   quotes=["\*Panting\* T-Too much... d-dick... N-Need... oxygen!",
                                           "I don't know how, but somehow... it's always Orion who ends up winning."],
@@ -148,13 +149,13 @@ class NsfwCharacters:
         self.dict["dalia"] = Dalia
         self.dict["dal"] = Dalia
 
-        EvaTroll = NsfwCharacterCard(name="SnoopWho",
+        EvaTroll = CharacterCard(name="SnoopWho",
                                      picNumber=1,
                                      quotes=["Eva who?"],
                                      footers=["side dish?"],
                                      game="Eternum")
 
-        EvaSerious = NsfwCharacterCard(name="Eva",
+        EvaSerious = CharacterCard(name="Eva",
                                        picNumber=1,
                                        quotes=[
                                            "I do find Mr. Orion very intriguing... and I'd love to learn more about him..."],
@@ -168,7 +169,7 @@ class NsfwCharacters:
         Eva.append(EvaSerious)
         self.dict["eva"] = Eva
 
-        FoxMaidens = NsfwCharacterCard(name="FoxMaidens",
+        FoxMaidens = CharacterCard(name="FoxMaidens",
                                        picNumber=1,
                                        quotes=[""],
                                        footers=[""],
@@ -177,7 +178,7 @@ class NsfwCharacters:
         self.eternum.append(FoxMaidens)
         self.dict["foxmaidens"] = FoxMaidens
 
-        Lorelei = NsfwCharacterCard(
+        Lorelei = CharacterCard(
             name="Lorelei",
             picNumber=0,
             quotes=[
@@ -195,7 +196,7 @@ class NsfwCharacters:
         self.eternum.append(Lorelei)
         self.dict["lorelei"] = Lorelei
 
-        Luna = NsfwCharacterCard(name="Luna",
+        Luna = CharacterCard(name="Luna",
                                  picNumber=5,
                                  quotes=["Thank you for everything you said. It was... sweet.",
                                          "If you really don't mind... I won't say no. You've convinced me!",
@@ -217,7 +218,7 @@ class NsfwCharacters:
         self.dict["luna"] = Luna
         self.dict["luny"] = Luna
 
-        Maat = NsfwCharacterCard(name="Maat",
+        Maat = CharacterCard(name="Maat",
                                  picNumber=2,
                                  quotes=["I want you to destroy me..."],
                                  footers=["This spectacle is pleasing the pharaohs!"],
@@ -226,7 +227,7 @@ class NsfwCharacters:
         self.eternum.append(Maat)
         self.dict["maat"] = Maat
 
-        Nancy = NsfwCharacterCard(name="Nancy",
+        Nancy = CharacterCard(name="Nancy",
                                   picNumber=7,
                                   quotes=["Christ!! I'm looking like some inexperienced teenager here...",
                                           "I want you to fuck me, Orion. Hard. And filthy.",
@@ -244,7 +245,7 @@ class NsfwCharacters:
         self.eternum.append(Nancy)
         self.dict["nancy"] = Nancy
 
-        Nova = NsfwCharacterCard(name="Nova",
+        Nova = CharacterCard(name="Nova",
                                  picNumber=7,
                                  quotes=["Have you ever had sex with a girl? Is she still alive?",
                                          "It's like something is making me just want to... tear off my clothes and go to town on myself...",
@@ -259,7 +260,7 @@ class NsfwCharacters:
         self.eternum.append(Nova)
         self.dict["nova"] = Nova
 
-        Orion = NsfwCharacterCard(name="Orion",
+        Orion = CharacterCard(name="Orion",
                                   picNumber=2,
                                   quotes=[
                                       "I don't want to lose the challenge just because you can't curb your irrepressible desire to kiss me.",
@@ -273,7 +274,7 @@ class NsfwCharacters:
         self.dict["main"] = Orion
         self.dict["mc"] = Orion
 
-        Penny = NsfwCharacterCard(name="Penny",
+        Penny = CharacterCard(name="Penny",
                                   picNumber=5,
                                   quotes=["How should we do it?",
                                           "My fucking god, you're hung like a fucking horse. That cock is a weapon!",
@@ -295,7 +296,7 @@ class NsfwCharacters:
         self.dict["penny"] = Penny
         self.dict["penelope"] = Penny
 
-        Wenlin = NsfwCharacterCard(name="Wenlin",
+        Wenlin = CharacterCard(name="Wenlin",
                                    picNumber=1,
                                    quotes=[""],
                                    footers=[""],

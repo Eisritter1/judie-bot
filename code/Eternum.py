@@ -1,8 +1,7 @@
 # DISCORD.PY
 import discord
 from discord import app_commands
-from discord.ext import commands, tasks
-from discord.ext.commands import CooldownMapping, Cooldown, BucketType
+from discord.ext import commands
 # OTHER LIBRARIES
 import os
 import random
@@ -10,10 +9,10 @@ import sqlite3
 from dotenv import load_dotenv
 from types import SimpleNamespace
 # OWN LIBRARIES
-from Utilities import Collections, HelperClass, Results, Effects, check_channel, get_cols
-from CharacterCard import CharacterCard, Villain
-from AccountManager import AccountManager, check_user
 from EgfCharacters import EgfCharacters
+from EgfUtils import Collections, Results, Effects, CharacterCard, Villain
+from Utilities import HelperClass, check_channel, get_cols
+from AccountManager import AccountManager, check_user
 from Timekeeper import check_cooldown, CommandOnCooldownError
 
 load_dotenv()
@@ -63,7 +62,7 @@ async def help_eternum(interaction: discord.Interaction):
         embed.add_field(name=field_names[i], value=field_values[i], inline=False)
 
     await interaction.response.send_message(embed=embed)
-    
+
 
 class Eternum(commands.Cog):
     """
@@ -91,17 +90,6 @@ class Eternum(commands.Cog):
         self.db_path = client.db_path
 
     # Development Start 17/08/2022; Version 1.0.
-
-    def activate(self):
-        """
-        Initializes client data for the gf game - setting channel IDs, cooldown time etc. 
-
-        Required for proper functioning; Required to run only after BotConfig.load() was called.
-        """
-        #command = self.client.get_command("egf")
-        #cd = Cooldown(rate=1, per=self.client.config.cooldown)
-        #command._buckets = CooldownMapping(cd, type=BucketType.user)
-        
 
     # HELPER FUNCTIONS - checkUser in AccountManager // createEmbed in Utilities/HelperFunctions
 
@@ -264,7 +252,7 @@ class Eternum(commands.Cog):
         return Results(duplicate=duplicateCharacter, protected=protected, victim=victim)
 
 
-    async def collectionOverview(self, author, collection: Collections):
+    async def collectionOverview(self, author: discord.User, collection: Collections):
         discordID = str(author.id)
         user_name = str(author.display_name)
 
@@ -324,7 +312,6 @@ class Eternum(commands.Cog):
         cursor = db.cursor()
         discordID = str(author.id)
 
-        #   search thru 'eternum_harem' table for entries
         uid = await self.accountManager.getUserID(discordID=discordID)
 
         count = 0
@@ -352,7 +339,7 @@ class Eternum(commands.Cog):
         if uid != "None":
             uid = await AccountManager.receiveDiscordIDFromInput(interaction, uid)
             if uid == -1:
-                return
+                return interaction.user
 
             if uid == interaction.user.id:
                 user = interaction.user
@@ -499,31 +486,23 @@ class Eternum(commands.Cog):
         members = []
         cursor.execute("SELECT orion, calypso, dalia, pyramid_head FROM eternum WHERE user_id = ?", [uid])
         yesno = cursor.fetchone()
-        sides = "**Side Girls:**\nOrion: :x:"
-        if yesno[0] == 1:
-            sides = "**Side Girls:**\nOrion: ✅"
+        sides = f"**Side Girls:**\nOrion: {'✅' if yesno[0] == 1 else ':x:'}"
         members.append(sides)
 
-        harem = "**Harem:**\nCalypso: :x:"
-        if yesno[1] == 1:
-            harem = "**Harem:**\nCalypso: ✅"
+        harem = f"**Harem:**\nCalypso: {'✅' if yesno[1] == 1 else ':x:'}"
         members.append(harem)
-
-        homies = "**Homies:**\nDalia: :x:"
-        if yesno[2] == 1:
-            homies = "**Homies:**\nDalia: ✅"
+        
+        homies = f"**Homies:**\nDalia: {'✅' if yesno[2] == 1 else ':x:'}"
         members.append(homies)
 
-        creatures = "**Creatures:**\nPyramid Head: :x:"
-        if yesno[3] == 1:
-            creatures = "**Creatures:**\nPyramid Head: ✅"
+        creatures = f"**Creatures:**\nPyramid Head: {'✅' if yesno[3] == 1 else ':x:'}"
         members.append(creatures)
 
         #   compile entries to list
         protectorlist = "\n".join(members)
 
         embed_title = f"Eternum Protectors of **{user_name}**:"
-        #   build embed (color pink) with categories 'got x/y' + names & 'missing z/y' + names --> + emotes?
+        #   build embed (color blue) with categories 'got x/y' + names & 'missing z/y' + names --> + emotes?
         embed = discord.Embed(title=embed_title, description=protectorlist, color=HelperClass.blue)
         await interaction.response.send_message(embed=embed)
 

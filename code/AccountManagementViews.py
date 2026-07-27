@@ -29,6 +29,7 @@ class DeleteAccView(discord.ui.View):
             )
         else:
             await self.message.edit(embed=await self.get_timeout_embed(), view=self)
+        self.stop()
 
     @discord.ui.button(label="CONFIRM", style=discord.ButtonStyle.red)
     async def delete_account(self, interaction: discord.Interaction, button: discord.ui.Button):

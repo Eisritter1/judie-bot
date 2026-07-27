@@ -1,7 +1,8 @@
-from CharacterCard import CharacterCard, Villain
-from Utilities import Collections, Effects
+# EXTERNAL LIBRARIES
 from os import listdir
 from os.path import isfile, join
+# INTERNAL IMPORTS
+from EgfUtils import Collections, Effects, CharacterCard, Villain
 
 
 class EgfCharacters:
@@ -13,10 +14,10 @@ class EgfCharacters:
     """
     def __init__(self):
         self.characters = []
-        self.setup()
+        self.Setup()
         # set picNumbers dynamically? -> scan thru images folder and count number of files that start with 'filename_' => end of setup()
 
-    def setup(self):
+    def Setup(self):
         # CHARACTER CARDS
         # 0
         Abbott = CharacterCard(

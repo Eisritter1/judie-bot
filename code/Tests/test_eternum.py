@@ -6,7 +6,7 @@ sys.path.append(
 
 from Eternum import Eternum
 from Utilities import Collections, Effects
-from CharacterCard import CharacterCard, Villain
+from EgfUtils import CharacterCard, Villain
 
 # Pytest fixture setup
 test_id = 0

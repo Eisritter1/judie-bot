@@ -1,21 +1,19 @@
 # DISCORD.PY
 import discord
-from discord import Embed, File, app_commands
-from discord.ext import commands, tasks
-from discord.ext.commands import cooldown, BucketType
+from discord import app_commands
+from discord.ext import commands
 # OTHER LIBRARIES
-import random
-import os
+import random, os
 from dotenv import load_dotenv
 # OWN LIBRARIES
 from Utilities import HelperClass
-from CharacterCard import NsfwCharacterCard
+from NsfwUtils import CharacterCard
 from NsfwCharacters import NsfwCharacters
 
 load_dotenv()
 GUILD = discord.Object(id=os.getenv("GUILD"))
 
-async def createAndSendEmbed(card: NsfwCharacterCard, number: int, interaction: discord.Interaction):
+async def createAndSendEmbed(card: CharacterCard, number: int, interaction: discord.Interaction):
     """
     Creates and sends an embed using information from the provided NsfwCharacterCard.
     ----------------------------------------------------------------------------------
@@ -51,9 +49,9 @@ async def createAndSendEmbed(card: NsfwCharacterCard, number: int, interaction: 
     embed.set_image(url=f"attachment://nsfw.{file_extension}")
 
     try:
-        await interaction.response.send_message(file=image, embed=embed)
+        await interaction.followup.send(file=image, embed=embed)
     except Exception as e:
-        await interaction.response.send_message(f"Failed to send image {filename}_{number}: {e}", ephemeral=True)
+        await interaction.followup.send(f"Failed to send image {filename}_{number}: {e}.")
 
 class Nsfw(commands.Cog):
     """
@@ -84,9 +82,8 @@ class Nsfw(commands.Cog):
         print(f"Success getting channel: {self.client.get_channel(interaction.channel.id) is not None}")
 
         if interaction.channel.is_nsfw():
+            await interaction.response.defer()
             result = self.characters.dict.get(parameter.lower() if parameter else None, self.characters.list)
-
-            print(f"[NSFW] Got {result}.")
 
             choice = random.choice(result) if isinstance(result, list) else result
 
