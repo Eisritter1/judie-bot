@@ -5,7 +5,6 @@ from discord.ext import commands
 # OTHER LIBRARIES
 import os, random, sqlite3
 from dotenv import load_dotenv
-from types import SimpleNamespace
 # OWN LIBRARIES
 from OgfCharacters import OgfCharacters
 from OgfUtils import Collections, Effects, Results, CharacterCard

@@ -1,6 +1,9 @@
+# DISCORD.PY LIBRARY
+import discord
+# EXTERNAL LIBRARIES
 import sqlite3
 import traceback
-import discord
+# OWN IMPORTS
 from Utilities import HelperClass
 
 class DeleteAccView(discord.ui.View):

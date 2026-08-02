@@ -4,7 +4,6 @@ from discord import app_commands
 from discord.ext import commands
 # EXTERNAL LIBRARIES
 from dotenv import load_dotenv
-from pathlib import Path
 from datetime import datetime
 import os, pickle, pytz
 

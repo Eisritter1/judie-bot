@@ -7,7 +7,6 @@ import os
 import random
 import sqlite3
 from dotenv import load_dotenv
-from types import SimpleNamespace
 # OWN LIBRARIES
 from EgfCharacters import EgfCharacters
 from EgfUtils import Collections, Results, Effects, CharacterCard, Villain
