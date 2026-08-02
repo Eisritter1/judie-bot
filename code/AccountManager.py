@@ -8,6 +8,7 @@ import enum, os
 import sqlite3
 from dotenv import load_dotenv
 # JUDIE LIBRARIES
+from Timekeeper import Timekeeper
 from Utilities import HelperClass, check_channel
 from AccountManagementViews import DeleteAccView, GiveCharacterView
 
@@ -408,6 +409,36 @@ class AccountManager(commands.Cog):
             )
             await interaction.response.send_message(embed=embed, view=view)
             view.message = await interaction.original_response()
+
+
+    @app_commands.guilds(GUILD)
+    @app_commands.command(name="reset_user_cooldowns", description="Resets all cooldowns associated with a given user.")
+    @app_commands.check(check_channel)
+    @app_commands.check(check_permission)
+    @check_permission(RoleHierarchy.MASTER_BOTTER)
+    async def reset_user_timers(self, interaction: discord.Interaction, discord_id: str):
+        uid = await AccountManager.receiveDiscordIDFromInput(interaction, discord_id)
+        user = interaction.client.fetch_user(uid)
+
+        if user is None:
+            return
+
+        await Timekeeper.reset_timer("egf", user)
+        await Timekeeper.reset_timer("ogf", user)
+
+        await interaction.response.send_message(f"Successfully reset {user.display_name}'s timers.")
+
+    @app_commands.guilds(GUILD)
+    @app_commands.command(name="reset_all_cooldowns", description="Resets all cooldowns.")
+    @app_commands.check(check_channel)
+    @app_commands.check(check_permission)
+    @check_permission(RoleHierarchy.MASTER_BOTTER)
+    async def reset_all_timers(self, interaction: discord.Interaction):
+        await Timekeeper.reset_all_timers("egf")
+        await Timekeeper.reset_all_timers("ogf")
+
+        await interaction.response.send_message(f"Successfully reset all timers.")
+
 
     async def setup(client):
         await client.add_cog(AccountManager(client))

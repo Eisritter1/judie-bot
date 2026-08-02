@@ -72,12 +72,14 @@ class Timekeeper(commands.Cog):
             cmd_dict = {user.id: TimerRecord(0)}
 
         # exit early if still bound by timer.
-        cooldown: TimerRecord = cmd_dict[user.id]
-        if cooldown.active():
-            raise CommandOnCooldownError(user.display_name, cmd_id, cooldown.get_retry_after())
+        if user.id in cmd_dict.keys():
+            cooldown: TimerRecord = cmd_dict[user.id]
+            if cooldown.active():
+                raise CommandOnCooldownError(user.display_name, cmd_id, cooldown.get_retry_after())
 
         # replace the timer record & save to disk before exiting successfully
         cmd_dict[user.id] = TimerRecord(Timekeeper.cooldown)
+
         await Timekeeper.save_dict(cmd_id, cmd_dict)
         return True
 
@@ -91,7 +93,7 @@ class Timekeeper(commands.Cog):
             return TimeObject(0)
 
         # is not in cooldown if user not known to records
-        if user.id not in cmd_dict:
+        if user.id not in cmd_dict.keys():
             return TimeObject(0)
 
         entry: TimerRecord = cmd_dict[user.id]
@@ -108,7 +110,7 @@ class Timekeeper(commands.Cog):
             return
 
         # is not in cooldown if user not known to records
-        if user.id not in cmd_dict:
+        if user.id not in cmd_dict.keys():
             return
 
         entry: TimerRecord = cmd_dict[user.id]

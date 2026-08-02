@@ -252,7 +252,7 @@ class OiaLt(commands.Cog):
 
         image = discord.File(f"./gfGameImages/{character.filename}.webp", filename="gf.webp")
         embed.set_image(url="attachment://gf.webp")
-        await interaction.response.send_message(file=image, embed=embed)
+        await interaction.followup.send(file=image, embed=embed)
         #endregion
 
 
@@ -613,8 +613,8 @@ class OiaLt(commands.Cog):
         Parameters:
             - ctx : discord.ext.Context - discord-provided context to the command prompt.
         """
-        db = sqlite3.connect("main.sqlite")
-        cursor = db.cursor()
+        await interaction.response.defer()
+
         discordID = str(interaction.user.id)
 
         # Get UID
@@ -625,9 +625,7 @@ class OiaLt(commands.Cog):
         results = await self.updateDatabase(uid, gf)
         # Build and send Embed
         await self.createAndSendEmbed(interaction, character=gf, results=results)
-            
-        cursor.close()
-        db.close()
+
 
     @app_commands.guilds(GUILD)
     @app_commands.command(name="oialt_harem", description="View a user's progress on the OiaLt harem collection (ex oharem). Defaults to your User ID")

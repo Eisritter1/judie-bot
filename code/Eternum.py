@@ -186,7 +186,7 @@ class Eternum(commands.Cog):
         embed = await HelperClass.createEmbed(title=character.name, text=text, color=color, footer=footer)
         embed.add_field(name=effect_description, value=aliases)
         embed.set_image(url="attachment://gf.webp")
-        await interaction.response.send_message(file=image, embed=embed)
+        await interaction.followup.send(file=image, embed=embed)
         return True
 
 
@@ -364,6 +364,7 @@ class Eternum(commands.Cog):
         Parameters:
             - ctx : discord.ext.Context - discord-provided context to the command prompt.
         """
+        await interaction.response.defer()
         discordID = str(interaction.user.id)
         
         uid = await self.accountManager.getUserID(discordID=discordID)
