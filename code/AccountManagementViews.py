@@ -115,16 +115,19 @@ class GiveCharacterView(discord.ui.View):
         
         await self.terminate()
         await self.message.edit(embed=embed, view=self)
+        await interaction.response.defer()
 
     @discord.ui.button(label="AMEND CHOICE", style=discord.ButtonStyle.red)
     async def change_choice(self, interaction: discord.Interaction, button: discord.ui.Button):
         await self.switch_to_dropdown()
         await self.message.edit(view=self)
+        await interaction.response.defer()
 
     @discord.ui.button(label="CANCEL", style=discord.ButtonStyle.primary)
     async def cancel_interaction(self, interaction: discord.Interaction, button: discord.ui.Button):
         await self.terminate()
         await self.message.edit(view=self)
+        await interaction.response.defer()
 
 class Selection:
     def __init__(self):
