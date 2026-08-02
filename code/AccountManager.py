@@ -2,13 +2,14 @@
 import discord
 from discord import app_commands
 from discord.ext import commands
+from discord.ext.commands import Bot
 # EXTERNAL LIBRARIES
 import enum, os
 import sqlite3
 from dotenv import load_dotenv
 # JUDIE LIBRARIES
 from Utilities import HelperClass, check_channel
-from AccountManagementViews import DeleteAccView
+from AccountManagementViews import DeleteAccView, GiveCharacterView
 
 
 class RoleHierarchy(enum.Enum):
@@ -121,7 +122,7 @@ class AccountManager(commands.Cog):
     """A stop-gap for the permissions system. Please use the [AccountManager-instance].client variable for all intents and purposes."""
 
     def __init__(self, client):
-        self.client = client
+        self.client: Bot = client
         client.accountManager = self
         AccountManager.static_client = client
         self.db_path = client.db_path
@@ -136,7 +137,7 @@ class AccountManager(commands.Cog):
 
     # HELPER FUNCTIONS
 
-    async def getUserID(self, discordID):
+    async def getUserID(self, discordID: str):
         """
         Fetches a user's ID in the database paired to their discord ID.
 
@@ -329,9 +330,6 @@ class AccountManager(commands.Cog):
         Returns:
             Nothing, why are you looking? This is a command.
         """
-
-        db = sqlite3.connect("main.sqlite")
-        cursor = db.cursor()
         discordID = str(interaction.user.id)
 
         uid = await self.getUserID(discordID=discordID)
@@ -347,14 +345,12 @@ class AccountManager(commands.Cog):
             await interaction.response.send_message(embed=embed, view=view)
             view.message = await interaction.original_response()
 
-        cursor.close()
-        db.close()
 
     @app_commands.guilds(GUILD)
     @app_commands.command(name="port_progress", description="Transfer a user's progress to another user's database, preserving existing progress.")
     @app_commands.check(check_channel)
     @app_commands.check(check_permission)
-    @check_permission(RoleHierarchy.MODERATOR)
+    @check_permission(RoleHierarchy.MASTER_BOTTER)
     async def port_progress(self, interaction: discord.Interaction, source_user_id: str, target_user_id: str):
         source_user_duid = await AccountManager.receiveDiscordIDFromInput(interaction, source_user_id)
         # return if value invalid (error msg in function already.)
@@ -392,31 +388,27 @@ class AccountManager(commands.Cog):
 
 
     @app_commands.guilds(GUILD)
-    @app_commands.command(name="force_delete", description="Forcibly removes a registered user from the database. Command available to moderators only.")
+    @app_commands.command(name="give_character", description="Grants a user a specific collectible 'free of charge'.")
+    @app_commands.check(check_channel)
     @app_commands.check(check_permission)
-    @check_permission(RoleHierarchy.MODERATOR)          # Command available to master botter and higher in the hierarchy.
-    async def force_delete(self, interaction: discord.Interaction, discord_id: int):
-        """
-        [MOD ONLY] Deletes the data of a given user
+    @check_permission(RoleHierarchy.MASTER_BOTTER)
+    async def give_character(self, interaction: discord.Interaction, discord_id: str):
+        discordID = await AccountManager.receiveDiscordIDFromInput(interaction, discord_id)
 
-        Parameters:
-            - uid: int
-                the user ID of the user whose data is to be obliterated.
+        uid = await self.getUserID(discordID=discordID)
 
-        Returns:
-            Nothing.
-        """
-        # SQL Injection prevention: Only accept discord_ids that can be converted to integers. 
-        # invalid ctx would just result in a regular error.
-        try:
-            int(discord_id)
-            success = await self.removeUserFromDB(interaction, discord_id)
-            title = "Success!" if success else "Error!"
-            description = f"Deleted account of user {discord_id}." if success else f"User {discord_id} is not registered to Judie's DB!"
-            await interaction.response.send_message(embed=discord.Embed(title=title, description=description, color=HelperClass.eternumBlue))
-        except:
-            await interaction.response.send_message("Unsafe input, please only supply discord ID's as integers to this command!")
+        if uid is not None:
+            user = await self.client.fetch_user(discordID)
 
+            view = GiveCharacterView(user)
+            embed = discord.Embed(
+                title=f"Selecting a character to give to  {user.display_name}.", 
+                description="Select the game of the character you want to grant:",
+                color=HelperClass.eternumBlue
+            )
+            await interaction.response.send_message(embed=embed, view=view)
+            view.message = await interaction.original_response()
 
     async def setup(client):
         await client.add_cog(AccountManager(client))
+        

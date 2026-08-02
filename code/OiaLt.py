@@ -268,7 +268,6 @@ class OiaLt(commands.Cog):
         Returns:
             - OgfResults: A struct containing context around the draw - duplicate collectible, protected against a villain, and chosen victim.
         """
-        # <editor-fold desc="Setup">
         # Setup: DB connections
         db = sqlite3.connect("main.sqlite")
         cursor = db.cursor()
@@ -277,14 +276,11 @@ class OiaLt(commands.Cog):
         duplicate = False
         target = None
         protected = False
-        # </editor-fold>
 
         # Update last obtained character
         cursor.execute("UPDATE oialt SET last_gf=? WHERE user_id=?", [character.name, uid])
 
-        # <editor-fold desc="Collections">
         # Switch Collections:
-        # <editor-fold desc="Harem">
         if character.collection == Collections.HAREM:
             # Update collection's last obtained
             cursor.execute("UPDATE oialt_harem SET last_li=? WHERE user_id=?", [character.filename, uid])
@@ -293,14 +289,12 @@ class OiaLt(commands.Cog):
             cursor.execute("SELECT %s FROM oialt_harem WHERE user_id=?" % character.filename, [uid])
             check = cursor.fetchone()
             # If not, add to collection
-            if check[0] == "NONE":
-                cursor.execute("UPDATE oialt_harem SET %s=? WHERE user_id=?" % character.filename,
-                               [character.name, uid])
+            if not check[0]:
+                cursor.execute("UPDATE oialt_harem SET %s=1 WHERE user_id=?" % character.filename, [uid])
             # Else mark as duplicate
             else:
                 duplicate = True
-        # </editor-fold>
-        # <editor-fold desc="Stabby Mikes">
+        
         elif character.collection == Collections.STABBIES:
             # Update collection's last obtained
             cursor.execute("UPDATE stabby_mikes SET last_mike=? WHERE user_id=?", [character.filename, uid])
@@ -309,14 +303,12 @@ class OiaLt(commands.Cog):
             cursor.execute("SELECT %s FROM stabby_mikes WHERE user_id=?" % character.filename, [uid])
             check = cursor.fetchone()
             # If not, add to collection
-            if check[0] == "NONE":
-                cursor.execute("UPDATE stabby_mikes SET %s=? WHERE user_id=?" % character.filename,
-                               [character.name, uid])
+            if not check[0]:
+                cursor.execute("UPDATE stabby_mikes SET %s=1 WHERE user_id=?" % character.filename, [uid])
             # Else mark as duplicate
             else:
                 duplicate = True
-        # </editor-fold>
-        # <editor-fold desc="The Boys">
+        
         elif character.collection == Collections.BOYS:
             # Update Collection's last obtained
             cursor.execute("UPDATE the_boys SET last_boi=? WHERE user_id=?", [character.filename, uid])
@@ -325,13 +317,12 @@ class OiaLt(commands.Cog):
             cursor.execute("SELECT %s FROM the_boys WHERE user_id=?" % character.filename, [uid])
             check = cursor.fetchone()
             # If not, add to collection
-            if check[0] == "NONE":
-                cursor.execute("UPDATE the_boys SET %s=? WHERE user_id=?" % character.filename, [character.name, uid])
+            if not check[0]:
+                cursor.execute("UPDATE the_boys SET %s=1 WHERE user_id=?" % character.filename, [uid])
             # Else mark as duplicate
             else:
                 duplicate = True
-        # </editor-fold>
-        # <editor-fold desc="Potential LI's">
+        
         elif character.collection == Collections.POTENTIALS:
             # Update Collection's last obtained
             cursor.execute("UPDATE li_potential SET last_potential_li=? WHERE user_id=?", [character.filename, uid])
@@ -340,84 +331,80 @@ class OiaLt(commands.Cog):
             cursor.execute("SELECT %s FROM li_potential WHERE user_id=?" % character.filename, [uid])
             check = cursor.fetchone()
             # If not, add to collection
-            if check[0] == "NONE":
-                cursor.execute("UPDATE li_potential SET %s=? WHERE user_id=?" % character.filename,
-                               [character.name, uid])
+            if not check[0]:
+                cursor.execute("UPDATE li_potential SET %s=1 WHERE user_id=?" % character.filename, [uid])
             # Else mark as duplicate
             else:
                 duplicate = True
-        # </editor-fold>
-        # </editor-fold>
-
-        # <editor-fold desc="Effects">
-        # <editor-fold desc="Saviours">
+        
+        # Switch Effectors:
         if character.effect in [Effects.HAREM_SAVER, Effects.STABBY_SAVER, Effects.BOYS_SAVER, Effects.POTENTIAL_SAVER]:
             # Check if protection is already obtained
             cursor.execute("SELECT %s FROM oialt WHERE user_id=?" % character.filename, [uid])
             check = cursor.fetchone()
             # If not, add to user
-            if check[0] == 0:
+            if not check[0]:
                 cursor.execute("UPDATE oialt SET %s=1 WHERE user_id=?" % character.filename, [uid])
             # else mark as duplicate
             else:
                 duplicate = True
-        # </editor-fold>
-        # <editor-fold desc="Orochi - Lauren > MH Lauren > Any // Funtime">
+        
         elif character.effect == Effects.HAREM_BUYER:
-            # <editor-fold desc="Target Hunt">
-            # Hunt for target - Lauren > MH Lauren > last LI -> if none, no victim.
+            # Hunt for target - Lauren > Messy Hair Lauren > Last LI -> If none, no victim
             cursor.execute("SELECT lauren FROM oialt_harem WHERE user_id=?", [uid])
-            victim = cursor.fetchone()
-            if victim[0] == 'NONE':
-                cursor.execute("SELECT messy_hair_lauren FROM oialt_harem WHERE user_id=?", [uid])
-                victim = cursor.fetchone()
-                if victim[0] == 'NONE':
-                    cursor.execute("SELECT last_li FROM oialt_harem WHERE user_id=?", [uid])
-                    victim = cursor.fetchone()
+            lauren = cursor.fetchone()
 
-            # Set target name - Full name, or 'Nobody' if no victim.
-            target = await self.characterList.searchNameWithFilename(victim[0]) if victim[0] not in ['NONE', None] else "Nobody"
-            if target is None:  # None returned when nothing is found in GetName
-                target = victim[0]
-            # </editor-fold>
-            # <editor-fold desc="Target handling">
+            if lauren[0]:
+                target = "Lauren"
+            else:
+                cursor.execute("SELECT messy_hair_lauren FROM oialt_harem WHERE user_id=?", [uid])
+                mhlauren = cursor.fetchone()
+                if mhlauren[0]:
+                    target = "Messy Hair Lauren"
+                else:
+                    cursor.execute("SELECT last_li FROM oialt_harem WHERE user_id=?", [uid])
+                    lastgf = cursor.fetchone()
+
+                    if lastgf[0] in Collections.HAREM.members():
+                        target = (await self.characterList.getCharacterWithFilename(lastgf[0])).name
+                    else:
+                        target = "Nobody"
+
             # If target resolved, check for protection [Funtime]
             if target != "Nobody":
                 cursor.execute("SELECT funtime FROM oialt WHERE user_id=?", [uid])
                 protection = cursor.fetchone()
+
                 # If protection, discard it and deny the aggressor
-                if protection[0] != 0:
+                if protection[0]:
                     cursor.execute("UPDATE oialt SET funtime=0 WHERE user_id=?", [uid])
                     protected = True
                 # Else remove target from collection
                 else:
                     filename = (await self.characterList.getCharacter(target)).filename
                     try:
-                        cursor.execute("UPDATE oialt_harem SET %s='NONE' WHERE user_id=?" % filename, [uid])
+                        cursor.execute("UPDATE oialt_harem SET %s=0 WHERE user_id=?" % filename, [uid])
                     except Exception as e:
                         print(e)
                     cursor.execute("UPDATE oialt_harem SET last_li='NONE' WHERE user_id=?", [uid])
 
             # If no target, fail
-            # </editor-fold>
-        # </editor-fold>
-        # <editor-fold desc="Astaroth - Father Mitchell > Any // MC">
+
         elif character.effect == Effects.STABBY_KILLER:
-            # <editor-fold desc="Target Hunt">
             # Hunt for target - Father Mitchell > Last Mike -> If none, no victim
             cursor.execute("SELECT priest FROM stabby_mikes WHERE user_id=?", [uid])
             victim = cursor.fetchone()
-            if victim[0] == 'NONE':
+
+            if victim[0]:
+                target = "Father Mitchell"
+            else:
                 cursor.execute("SELECT last_mike FROM stabby_mikes WHERE user_id=?", [uid])
                 victim = cursor.fetchone()
+                if victim[0] in Collections.STABBIES.members():
+                    target = (await self.characterList.getCharacterWithFilename(victim[0])).name
+                else:
+                    target = "Nobody"
 
-            # Set target name - Full name, or 'Nobody' if no victim.
-            target = await self.characterList.searchNameWithFilename(victim[0]) if victim[0] not in ['NONE', None] else "Nobody"
-            if target is None:      # None returned when nothing is found in GetName
-                target = victim[0]
-
-            # </editor-fold>
-            # <editor-fold desc="Target Handling">
             # If target resolved check for protection [MC]
             if target != "Nobody":
                 cursor.execute("SELECT mc FROM oialt WHERE user_id=?", [uid])
@@ -430,29 +417,27 @@ class OiaLt(commands.Cog):
                 else:
                     filename = (await self.characterList.getCharacter(target)).filename
                     try:
-                        cursor.execute("UPDATE stabby_mikes SET %s='NONE' WHERE user_id=?" % filename, [uid])
+                        cursor.execute("UPDATE stabby_mikes SET %s=0 WHERE user_id=?" % filename, [uid])
                     except Exception as e:
                         print(e)
                     cursor.execute("UPDATE stabby_mikes SET last_mike='NONE' WHERE user_id=?", [uid])
             # If no target, fail
-            # </editor-fold>
-        # </editor-fold>
-        # <editor-fold desc="Azazel - MC > Any // Aiko">
+            
         elif character.effect == Effects.BOYS_KILLER:
-            # <editor-fold desc="Target Hunt">
             # Hunt for target - MC > Last Homie -> If none, no victim
             cursor.execute("SELECT mc FROM the_boys WHERE user_id=?", [uid])
             victim = cursor.fetchone()
-            if victim[0] == 'NONE':
+            if victim[0]:
+                target = "MC"
+            else:
                 cursor.execute("SELECT last_boi FROM the_boys WHERE user_id=?", [uid])
                 victim = cursor.fetchone()
+                if victim[0] in Collections.BOYS.members():
+                    target = (await self.characterList.getCharacterWithFilename(victim[0])).name
+                else:
+                    target = "Nobody"
 
-            # Set target name - Full name, or 'Nobody' if no victim.
-            target = await self.characterList.searchNameWithFilename(victim[0]) if victim[0] not in ['NONE', None] else "Nobody"
-            if target is None:  # None returned when nothing is found in GetName
-                target = victim[0]
-            # </editor-fold>
-            # <editor-fold desc="Target Handling">
+            
             # If target resolved check for protection [MC]
             if target != "Nobody":
                 cursor.execute("SELECT aiko FROM oialt WHERE user_id=?", [uid])
@@ -465,16 +450,13 @@ class OiaLt(commands.Cog):
                 else:
                     filename = (await self.characterList.getCharacter(target)).filename
                     try:
-                        cursor.execute("UPDATE the_boys SET %s='NONE' WHERE user_id=?" % filename, [uid])
+                        cursor.execute("UPDATE the_boys SET %s=0 WHERE user_id=?" % filename, [uid])
                     except Exception as e:
                         print(e)
                     cursor.execute("UPDATE the_boys SET last_boi='NONE' WHERE user_id=?", [uid])
             # If no target, fail
-            # </editor-fold>
-        # </editor-fold>
-        # <editor-fold desc="Monster Lilith - Lilith > Any // 93">
+            
         elif character.effect == Effects.POTENTIAL_MUTATOR:
-            # <editor-fold desc="Target Hunt">
             # Hunt for target - Lilith > Last Potential LI -> If none, no victim
             cursor.execute("SELECT lilith FROM li_potential WHERE user_id=?", [uid])
             victim = cursor.fetchone()
@@ -482,13 +464,19 @@ class OiaLt(commands.Cog):
                 cursor.execute("SELECT last_potential_li FROM li_potential WHERE user_id=?", [uid])
                 victim = cursor.fetchone()
 
-            # Set target name - Full name, or 'Nobody' if no victim.
-            target = await self.characterList.searchNameWithFilename(victim[0]) if victim[0] not in ['NONE', None] else "Nobody"
-            if target is None:  # None returned when nothing is found in GetName
-                target = victim[0]
+            cursor.execute("SELECT lilith FROM li_potential WHERE user_id=?", [uid])
+            victim = cursor.fetchone()
+            if victim[0]:
+                target = "Lilith"
+            else:
+                cursor.execute("SELECT last_potential_li FROM li_potential WHERE user_id=?", [uid])
+                victim = cursor.fetchone()
+                if victim[0] in Collections.POTENTIALS.members():
+                    target = (await self.characterList.getCharacterWithFilename(victim[0])).name
+                else:
+                    target = "Nobody"
 
-            # </editor-fold>
-            # <editor-fold desc="Target Handling">
+            
             # If target resolved check for protection [93]
             if target != "Nobody":
                 cursor.execute("SELECT nine_three FROM oialt WHERE user_id=?", [uid])
@@ -501,14 +489,11 @@ class OiaLt(commands.Cog):
                 else:
                     filename = (await self.characterList.getCharacter(target)).filename
                     try:
-                        cursor.execute("UPDATE li_potential SET %s='NONE' WHERE user_id=?" % filename, [uid])
+                        cursor.execute("UPDATE li_potential SET %s=0 WHERE user_id=?" % filename, [uid])
                     except Exception as e:
                         print(e)
                     cursor.execute("UPDATE li_potential SET last_potential_li='NONE' WHERE user_id=?", [uid])
-                # If no target, fail
-                # </editor-fold>
-        # </editor-fold>
-        # </editor-fold>
+            # If no target, fail
 
         db.commit()
         cursor.close()
@@ -573,7 +558,7 @@ class OiaLt(commands.Cog):
 
     async def resolveUser(self, uid: str, interaction: discord.Interaction):
 
-        user = SimpleNamespace(id=-1, display_name="Dummy#0001")
+        user = None
         if uid != "None":
             uid = await AccountManager.receiveDiscordIDFromInput(interaction, uid)
             if uid == -1:
@@ -582,8 +567,7 @@ class OiaLt(commands.Cog):
             if uid == interaction.user.id:
                 user = interaction.user
             else:
-                user.id = uid
-                user.display_name = f"User {uid}"
+                user = await interaction.client.fetch_user(int(uid))
         else:
             user = interaction.user
 

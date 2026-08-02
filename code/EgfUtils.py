@@ -127,7 +127,7 @@ class Collections(Enum):
         if self == Collections.NONE:
             return []
         if self == Collections.HAREM:
-            return ['alex', 'annie', 'dalia', 'luna', 'nancy', 'nova', 'penny', 'calypso']
+            return ['alex', 'annie', 'calypso', 'dalia', 'luna', 'nancy', 'nova', 'penny']
         if self == Collections.SIDE_DISHES:
             return ['bluefoxmaiden', 'lorelei', 'eva', 'idriel', 'maat', 'redfoxmaiden', 'wenlin']
         if self == Collections.THE_HOMIES:

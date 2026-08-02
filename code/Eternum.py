@@ -335,7 +335,7 @@ class Eternum(commands.Cog):
 
     async def resolveUser(self, uid: str, interaction: discord.Interaction):
 
-        user = SimpleNamespace(id=-1, display_name="Dummy#0001")
+        user = None
         if uid != "None":
             uid = await AccountManager.receiveDiscordIDFromInput(interaction, uid)
             if uid == -1:
@@ -344,8 +344,7 @@ class Eternum(commands.Cog):
             if uid == interaction.user.id:
                 user = interaction.user
             else:
-                user.id = uid
-                user.display_name = f"User {uid}"
+                user = await interaction.client.fetch_user(int(uid))
         else:
             user = interaction.user
 
@@ -417,7 +416,7 @@ class Eternum(commands.Cog):
             return
 
         # if user is registered, proceed.
-        await interaction.response.send_message(embed=await self.collectionOverview(interaction.user, Collections.THE_HOMIES))
+        await interaction.response.send_message(embed=await self.collectionOverview(user, Collections.THE_HOMIES))
         
     @app_commands.guilds(GUILD)
     @app_commands.command(name="eternum_side_girls", description="View a user's progress on the Eternum side girls collection (ex sidegirls). Defaults to your User ID")
@@ -436,7 +435,7 @@ class Eternum(commands.Cog):
             return
 
         # if user is registered, proceed.
-        await interaction.response.send_message(embed=await self.collectionOverview(interaction.user, Collections.SIDE_DISHES))
+        await interaction.response.send_message(embed=await self.collectionOverview(user, Collections.SIDE_DISHES))
 
     @app_commands.guilds(GUILD)
     @app_commands.command(name="eternum_pets", description="View a user's progress on the Eternum pets collection (ex creatures). Defaults to your User ID")
@@ -456,7 +455,7 @@ class Eternum(commands.Cog):
             return
 
         # if user is registered, proceed.
-        await interaction.response.send_message(embed=await self.collectionOverview(interaction.user, Collections.CREATURES))
+        await interaction.response.send_message(embed=await self.collectionOverview(user, Collections.CREATURES))
 
     @app_commands.guilds(GUILD)
     @app_commands.command(name="eternum_protectors", description="View a user's Eternum protection racket (ex eprotectors). Defaults to your User ID")
