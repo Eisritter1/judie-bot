@@ -15,15 +15,15 @@ That being said, let's dive in!
 
 ## Contents:
 1. [Home Deployment Guide](#1-home-deployment-guide) 
-1.A) [Set up a discord bot](#a-set-up-a-discord-bot)
-1.B) [Set up the code project](#b-set-up-the-code-project)
-1.C) [Set up the .env file](#c-set-up-the-env-file) 
-1.D) [Set up the bot's config values](#d-set-up-the-bots-configuration)
+- 1.A) [Set up a discord bot](#a-set-up-a-discord-bot)
+- 1.B) [Set up the code project](#b-set-up-the-code-project)
+- 1.C) [Set up the .env file](#c-set-up-the-env-file) 
+- 1.D) [Set up the bot's config values](#d-set-up-the-bots-configuration)
 2. [Modder's Guide](#2-modders-guide)
-2.A) [Adding a custom, non-collectible character](#a-adding-a-custom-character-to-the-gf-games-non-collectible)
-2.B) [Adding a character to an existing collection](#b-adding-a-character-to-an-existing-collection)
-2.C) [Adding a new collection](#c-adding-a-new-collection)
-2.D) [Other additions](#d-other-additions)
+- 2.A) [Adding a custom, non-collectible character](#a-adding-a-custom-character-to-the-gf-games-non-collectible)
+- 2.B) [Adding a character to an existing collection](#b-adding-a-character-to-an-existing-collection)
+- 2.C) [Adding a new collection](#c-adding-a-new-collection)
+- 2.D) [Other additions](#d-other-additions)
 
 # 1. Home Deployment Guide
 
