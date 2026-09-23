@@ -25,8 +25,13 @@ root/
     ├── README.md           // This should reflect the project accurately,
     │                       //  so always contains information about the bot 
     │                       //  and its functions. 
-    ├── CHANGELOG           // Logs all the update notes for the latest general update and latest major update!
+    ├── CHANGELOG           // Logs all the update notes for the latest 
+    │                       //  general update and latest major update!
     └── code/               // Project code and attachements are in here!
+    └── visual/             // Any graphics (icons, emotes) used for Judie's 
+    │                       //  Application profile are included here.
+    └── instructions.md     // Instructions on how to use this repository to 
+    │                       //  import Judie to your servers + modding!
 ```
 
 ## Changelog Judie V2.5.0
@@ -41,6 +46,11 @@ Big content update up to and including Eternum version 0.8!
 - Added content up to Eternum v0.8:
     - Added characters *Tatiana, Anastasia, Col. Wagner, Harley Jones, Clonk, Anna Piaget, Gemini, Sister Baek, Elliot Cook, the Saloon Bartender, the General Store Clerk, Tony Mack, the Sheriff of Blackridge, Boone/El Coyote, El (fake) Coyote, Ruth, Father Bakhar, Mortimer, Lazarus Iliescu, Lysandra Iliescu, Duke, Burpee, Tissle, Fangrend, Zippy, Lily, Aspen Simmons, the Tortuga Tavern Keeper, Junkie 1, JJ/Junkie 2, Blackheart Reddss, Lorrdy Silverhook, Red Scarlet, Mr. Tartaria, Zap, Phil, the Mermaid, Morty, Ed, Anton Eggrik, Eulalie, Giuseppe Bellini, Anna Kellegan, Samir, Hassan Al-Rashid, Zahra Al-Nabi, Alfonso, Arannis Thornvale, Lorelei Thornvale.*
     - Added too many pictures to count; All resized to the newly standardized egf aspect ratio of 225x350 px
+
+## Self-hosting Judie & Modding:
+
+The main instance of Judie in Caribdis' server is deliberately not invitable to your private servers, for missing scalability and flexibility. You *can* however download this repository and make your own clone of Judie to invite yourself! I've made a full guide to do so [here](instructions.md)!
+> This guide also explains how you can modify certain features of the bot for your deployment, to make it more fun and personal :) 
 
 ## Judie's OiaLt gf game description:
 
