@@ -18,6 +18,8 @@ from Timekeeper import Timekeeper
 #region Bot config
 intents = discord.Intents().default()
 intents.guilds = True
+# IF YOU HAVE ENABLED ALL INTENTS ON YOUR BOT, DELETE THE TWO LINES ABOVE AND UNCOMMENT THIS NEXT LINE BY REMOVING THE # SYMBOL!
+#intents = discord.Intents().all()
 
 client = commands.Bot(command_prefix="-", help_command=None, case_insensitive=True, intents=intents)
 client.config = BotConfig(client)
