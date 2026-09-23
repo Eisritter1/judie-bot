@@ -530,7 +530,6 @@ class OiaLt(commands.Cog):
         db = sqlite3.connect(self.db_path)
         cursor = db.cursor()
 
-        #   search thru 'eternum_harem' table for entries
         uid = await self.accountManager.getUserID(discordID=discordID)
 
         count = 0
@@ -778,7 +777,7 @@ class OiaLt(commands.Cog):
         discordID = str(user.id)
         user_name = str(user.display_name)
 
-        embed_title = f"Eternum Collections of **{user_name}**:"
+        embed_title = f"OiaLt Collections of **{user_name}**:"
         embed = discord.Embed(title=embed_title, color=HelperClass.orange)
 
         # HAREM
