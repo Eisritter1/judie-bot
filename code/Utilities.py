@@ -26,7 +26,7 @@ async def check_channel(interaction: discord.Interaction) -> bool:
             true = the channel is the bot & spam channel.
     """
     client = interaction.client
-    result = interaction.channel.id == client.config.botSpamChannel
+    result = client.config.botSpamChannel == -1 or interaction.channel.id == client.config.botSpamChannel
     if not result:
         embed = discord.Embed(title="Wrong channel!",
                               description=f"Please take this to {client.get_channel(client.config.botSpamChannel).mention}",
