@@ -8,7 +8,7 @@
 | Developer | `Eisritter` |
 | Target Platform(s) | `Discord` |
 | Start Date | July 2021 |
-| Current Version | 2.5.1 |
+| Current Version | 3.0.2 |
 
 ### Abstract
 
@@ -34,18 +34,23 @@ root/
     │                       //  import Judie to your servers + modding!
 ```
 
-## Changelog Judie V2.5.0
+## Changelog Judie V3.0.0
 
-*Deployed on Feb 3rd, 2025*
-Big content update up to and including Eternum version 0.8!
+*Deployed on Aug. 2nd, 2026*
+Big functional update, bringing required support for slash commands + persistent cooldowns + mod-exclusive commands
 
 ### Changes:
+- Another huge chunk of __behind-the-scenes refactoring__ which has finally reached the last files of the project, so that major rew*rk is now behind me! I'm now working on making test scenarios to make at least the database changes more robust to change, but that was rudely interrupted by the need to switch to slash commands.
+- the `-gf` and `-update` commands, which were easter egg remnants of Judie's earliest days have been __retired__, as they weren't worth updating to slash 🫡 
+- `/timers` are __safe to use__ again after a hotfix earlier this month
+- Added the **moderator-exclusive** commands to: 
+> - **gift characters** (to make up for individual, accidental losses that seem to have cropped up over time. Characters will not be granted without explicit proof they have been robbed in some way), 
+> - **Port progress** from one account to another, for the case you should want to switch to a different main account for whatever reason. (community-requested command)
+> - **Reset cooldowns** again to make up for individual breaks, or to reward the whole server.
+- Added the ability to __view others' progress on collections__! Just feed the discord ID as an option to collections commands!
+- Switched the __cooldown__ mapping to use a similar approach to the one used for Nancy a while ago, meaning cooldowns are now *persistent to outages*. (Cooldowns can still be reset as described above as apologies for unexpected outages or bigger updates, don't worry :)
 
-- egf and ogf cooldowns reduced to 20h
-- NSFW command revamp to include GIFs instead of still images
-- Added content up to Eternum v0.8:
-    - Added characters *Tatiana, Anastasia, Col. Wagner, Harley Jones, Clonk, Anna Piaget, Gemini, Sister Baek, Elliot Cook, the Saloon Bartender, the General Store Clerk, Tony Mack, the Sheriff of Blackridge, Boone/El Coyote, El (fake) Coyote, Ruth, Father Bakhar, Mortimer, Lazarus Iliescu, Lysandra Iliescu, Duke, Burpee, Tissle, Fangrend, Zippy, Lily, Aspen Simmons, the Tortuga Tavern Keeper, Junkie 1, JJ/Junkie 2, Blackheart Reddss, Lorrdy Silverhook, Red Scarlet, Mr. Tartaria, Zap, Phil, the Mermaid, Morty, Ed, Anton Eggrik, Eulalie, Giuseppe Bellini, Anna Kellegan, Samir, Hassan Al-Rashid, Zahra Al-Nabi, Alfonso, Arannis Thornvale, Lorelei Thornvale.*
-    - Added too many pictures to count; All resized to the newly standardized egf aspect ratio of 225x350 px
+And that's about it, thank you for your patience, and I wish you a happy time pulling characters again!
 
 ## Self-hosting Judie & Modding:
 
